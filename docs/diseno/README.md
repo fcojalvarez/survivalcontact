@@ -58,6 +58,16 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 - **Tocar la cabecera del grupo:** información con foto, nombre, «N personas · creado por…», botones Invitar / Ver en el mapa / Silenciar y lista de miembros con estado y distancia. Solo el administrador cambia nombre y color (lápiz) y expulsa (mantener pulsado); al expulsar, el grupo cambia de clave.
 - **Mapa desde un chat privado:** centrado en esa persona, con línea entre ambos, distancia, dirección, hace cuánto y batería; «Abrir chat» y «Guiarme» (brújula a pantalla completa). Solo aparece si esa persona comparte su ubicación contigo en algún grupo.
 
+## 4. Mapa (aprobada)
+
+![Mapa](06-mapa.png)
+
+- Mapa grande con todas las personas de tus grupos; aro del color de su grupo (naranja si no hay noticias) y nombre.
+- Filtros arriba: Todos / cada grupo con su color. Etiqueta de estado («Mapa guardado · sin internet»).
+- Botón para centrarte en ti.
+- Abajo, lista deslizable (se sube con el dedo) con nombre, grupo, hace cuánto, distancia y dirección.
+- Tocar a alguien: ficha con distancia, dirección, «Abrir chat» y «Guiarme» (brújula a pantalla completa).
+
 ## Pendientes de diseñar
 
-Mapa, Ajustes, crear grupo, invitar (enlace/QR), aceptar invitación, bienvenida y permisos.
+Ajustes, crear grupo, invitar (enlace/QR), aceptar invitación, bienvenida y permisos.
