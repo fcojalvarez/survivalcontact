@@ -93,13 +93,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="v${FARO_VERSION_NAME}"
+          base="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}"
           cp faro-prueba.apk faro.apk
-          sha=$(sha256sum faro.apk | cut -d' ' -f1)
-          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/faro.apk"
-          printf '{"versionCode":%s,"versionName":"%s","apkUrl":"%s","sha256":"%s"}\n' \
-            "$FARO_VERSION_CODE" "$FARO_VERSION_NAME" "$url" "$sha" > version.json
+          cp faro-prueba-arm64.apk faro-arm64.apk
+          cp "$(ls app/build/outputs/apk/debug/*armeabi-v7a*.apk | head -n1)" faro-armv7.apk
+          sha() { sha256sum "$1" | cut -d' ' -f1; }
+          printf '{"versionCode":%s,"versionName":"%s","apkUrl":"%s","sha256":"%s","apks":{"arm64-v8a":{"url":"%s","sha256":"%s"},"armeabi-v7a":{"url":"%s","sha256":"%s"}}}\n' \
+            "$FARO_VERSION_CODE" "$FARO_VERSION_NAME" \
+            "$base/faro.apk" "$(sha faro.apk)" \
+            "$base/faro-arm64.apk" "$(sha faro-arm64.apk)" \
+            "$base/faro-armv7.apk" "$(sha faro-armv7.apk)" > version.json
           cat version.json
-          gh release create "$tag" faro.apk version.json \
+          gh release create "$tag" faro.apk faro-arm64.apk faro-armv7.apk version.json \
             --target "$GITHUB_SHA" \
             --latest \
             --title "Faro ${FARO_VERSION_NAME}" \

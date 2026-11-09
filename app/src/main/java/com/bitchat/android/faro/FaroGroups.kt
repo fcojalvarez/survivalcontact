@@ -288,9 +288,20 @@ object FaroGroups {
             FaroProtocol.Kind.TEXT -> {
                 val text = runCatching { inner.body.toString(Charsets.UTF_8) }.getOrNull() ?: return
                 addMessage(FaroMessage(g.id, inner.authorId, inner.authorName, text, inner.timestampMs, mine = false))
+                appContext?.let { FaroNotifications.message(it, g.id, g.name, inner.authorName, text) }
             }
             FaroProtocol.Kind.LOCATION -> {
                 val pos = FaroProtocol.Position.decode(inner.body) ?: return
+                val wasHelp = _positions.value[g.id]?.get(inner.authorId)?.position?.status == FaroProtocol.Position.Status.NEED_HELP
+                if (pos.status == FaroProtocol.Position.Status.NEED_HELP && !wasHelp) {
+                    val me = FaroLocation.myLocation.value
+                    val distance = me?.let {
+                        val target = android.location.Location("faro").apply { latitude = pos.lat; longitude = pos.lon }
+                        val m = it.distanceTo(target)
+                        if (m < 1000) "${m.toInt()} m" else "%.1f km".format(m / 1000)
+                    }
+                    appContext?.let { FaroNotifications.help(it, g.id, g.name, inner.authorName, distance) }
+                }
                 _positions.update { all ->
                     val current = all[g.id].orEmpty()
                     val old = current[inner.authorId]

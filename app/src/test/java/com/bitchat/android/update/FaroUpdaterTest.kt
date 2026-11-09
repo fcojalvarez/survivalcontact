@@ -24,6 +24,15 @@ class FaroUpdaterTest {
     }
 
     @Test
+    fun `elige el APK de su procesador y si no el universal`() {
+        val json = """{"versionCode":7,"apkUrl":"https://e.org/u.apk","sha256":"$sha",
+            "apks":{"arm64-v8a":{"url":"https://e.org/a64.apk","sha256":"${"b".repeat(64)}"}}}"""
+        assertEquals("https://e.org/a64.apk", FaroUpdater.parseVersion(json, listOf("arm64-v8a", "armeabi-v7a"))!!.apkUrl)
+        assertEquals("b".repeat(64), FaroUpdater.parseVersion(json, listOf("arm64-v8a"))!!.sha256)
+        assertEquals("https://e.org/u.apk", FaroUpdater.parseVersion(json, listOf("x86_64"))!!.apkUrl)
+    }
+
+    @Test
     fun `rechaza enlaces que no son https`() {
         assertNull(
             FaroUpdater.parseVersion(

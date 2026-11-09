@@ -83,13 +83,19 @@ object FaroUpdater {
         )
     }
 
-    internal fun parseVersion(json: String): VersionInfo? = runCatching {
+    /**
+     * Lee version.json. Si trae APK por tipo de procesador ("apks"), elige el primero que
+     * encaje con [abis] (así cada móvil descarga solo lo suyo); si no, usa el universal.
+     */
+    internal fun parseVersion(json: String, abis: List<String> = Build.SUPPORTED_ABIS.toList()): VersionInfo? = runCatching {
         val o = JSONObject(json)
+        val perAbi = o.optJSONObject("apks")
+        val chosen = abis.firstNotNullOfOrNull { abi -> perAbi?.optJSONObject(abi) }
         val info = VersionInfo(
             versionCode = o.getLong("versionCode"),
             versionName = o.optString("versionName", ""),
-            apkUrl = o.getString("apkUrl"),
-            sha256 = o.getString("sha256").lowercase(),
+            apkUrl = chosen?.getString("url") ?: o.getString("apkUrl"),
+            sha256 = (chosen?.getString("sha256") ?: o.getString("sha256")).lowercase(),
         )
         if (!info.apkUrl.startsWith("https://")) return null
         if (!Regex("^[0-9a-f]{64}$").matches(info.sha256)) return null

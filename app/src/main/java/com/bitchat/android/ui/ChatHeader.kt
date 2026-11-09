@@ -754,15 +754,8 @@ private fun MainHeader(
                     .weight(1f)
                     .offset(x = (-6).dp)
             ) {
-                Text(
-                    text = "/",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = HeaderTextSize,
-                    // Dimmed: the slash is a separator, not content. At full brightness it competed
-                    // with the nickname beside it.
-                    color = colorScheme.primary.copy(alpha = 0.45f),
-                    modifier = Modifier.padding(end = 2.dp)
-                )
+                // Faro: sin la barra «/» de estilo terminal antes del nombre.
+                Spacer(modifier = Modifier.width(6.dp))
 
                 NicknameEditor(
                     value = nickname,
