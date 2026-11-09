@@ -1,0 +1,49 @@
+name: Compilar APK de Faro
+
+# Compila un APK de prueba (debug) en cada push y permite lanzarlo a mano
+# desde la pestaña Actions. El APK se descarga desde el resumen de la ejecución.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: faro-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SETUP_JAVA_VERSION: 21.0.11+10.0.LTS
+
+jobs:
+  apk:
+    name: APK de prueba
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Preparar Java
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.SETUP_JAVA_VERSION }}
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+
+      - name: Compilar
+        run: ./gradlew :app:assembleDebug
+
+      - name: Subir el APK
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: faro-apk-prueba
+          # El APK "universal" funciona en cualquier móvil; los demás son por arquitectura.
+          path: app/build/outputs/apk/debug/*universal*.apk
+          if-no-files-found: error
+          retention-days: 30
