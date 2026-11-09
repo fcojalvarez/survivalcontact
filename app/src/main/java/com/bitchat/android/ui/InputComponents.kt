@@ -331,8 +331,9 @@ fun MessageInput(
     var isLiveRecording by remember { mutableStateOf(false) }
     var elapsedMs by remember { mutableStateOf(0L) }
     var amplitude by remember { mutableStateOf(0) }
+    // Faro: los pagos con Cashu se han quitado.
     val cashuToken = remember(value.text) {
-        CashuTokenDecoder.bareToken(value.text)
+        null as String?
     }
 
     // Slide-to-cancel: while recording, the mic button streams the finger position (root

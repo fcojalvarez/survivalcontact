@@ -120,34 +120,6 @@ fun ChatUserSheet(
                             )
                         }
 
-                        // Slap action
-                        item {
-                            UserActionRow(
-                                title = stringResource(R.string.action_slap_title, targetNickname),
-                                subtitle = stringResource(R.string.action_slap_subtitle),
-                                titleColor = standardBlue,
-                                onClick = {
-                                    // Send slap command
-                                    viewModel.sendMessage("/slap $targetNickname")
-                                    onDismiss()
-                                }
-                            )
-                        }
-                        
-                        // Hug action  
-                        item {
-                            UserActionRow(
-                                title = stringResource(R.string.action_hug_title, targetNickname),
-                                subtitle = stringResource(R.string.action_hug_subtitle),
-                                titleColor = standardGreen,
-                                onClick = {
-                                    // Send hug command
-                                    viewModel.sendMessage("/hug $targetNickname")
-                                    onDismiss()
-                                }
-                            )
-                        }
-                        
                         // Block action
                         item {
                             UserActionRow(

@@ -23,11 +23,8 @@ class CommandProcessor(
         CommandSuggestion("/block", emptyList(), "[nickname]", "block or list blocked peers"),
         CommandSuggestion("/channels", emptyList(), null, "show all discovered channels"),
         CommandSuggestion("/clear", emptyList(), null, "clear chat messages"),
-        CommandSuggestion("/hug", emptyList(), "<nickname>", "send someone a warm hug"),
         CommandSuggestion("/j", listOf("/join"), "<channel>", "join or create a channel"),
         CommandSuggestion("/m", listOf("/msg"), "<nickname> [message]", "send private message"),
-        CommandSuggestion("/pay", emptyList(), "<token> [public]", "send a Cashu ecash token"),
-        CommandSuggestion("/slap", emptyList(), "<nickname>", "slap someone with a trout"),
         CommandSuggestion("/unblock", emptyList(), "<nickname>", "unblock a peer"),
         CommandSuggestion("/w", emptyList(), null, "see who's online")
     )
@@ -42,14 +39,11 @@ class CommandProcessor(
         when (cmd) {
             "/j", "/join" -> handleJoinCommand(parts, myPeerID)
             "/m", "/msg" -> handleMessageCommand(parts, meshService, viewModel)
-            "/pay" -> handlePayCommand(command, meshService, myPeerID, onSendMessage, viewModel)
             "/w" -> handleWhoCommand(meshService, viewModel)
             "/clear" -> handleClearCommand()
             "/pass" -> handlePassCommand(parts, myPeerID)
             "/block" -> handleBlockCommand(parts, meshService)
             "/unblock" -> handleUnblockCommand(parts, meshService)
-            "/hug" -> handleActionCommand(parts, "gives", "a warm hug 🫂", meshService, myPeerID, onSendMessage, viewModel)
-            "/slap" -> handleActionCommand(parts, "slaps", "around a bit with a large trout 🐟", meshService, myPeerID, onSendMessage, viewModel)
             "/channels" -> handleChannelsCommand()
             else -> handleUnknownCommand(cmd)
         }

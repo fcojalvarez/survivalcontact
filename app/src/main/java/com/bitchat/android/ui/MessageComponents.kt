@@ -722,8 +722,9 @@ private fun SpamVerdict.debugLabel(): String = when (this) {
         return
     }
 
+    // Faro: los pagos con Cashu se han quitado; los tokens se muestran como texto normal.
     val cashuTokens = remember(message.content) {
-        CashuTokenDecoder.extractTokens(message.content)
+        emptyList<String>()
     }
     if (cashuTokens.isNotEmpty() && message.sender != "system") {
         CashuMessageContent(

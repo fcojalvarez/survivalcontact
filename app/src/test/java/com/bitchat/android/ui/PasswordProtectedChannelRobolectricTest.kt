@@ -98,38 +98,6 @@ class PasswordProtectedChannelRobolectricTest {
     }
 
     @Test
-    fun `action command to a protected channel is refused visibly`() {
-        joinAndProtect()
-
-        process("/hug synthetic-peer")
-
-        assertRefusedVisibly()
-    }
-
-    @Test
-    fun `action command to a protected channel without a restored key is not sent as plaintext`() {
-        restoreProtectedChannelWithoutKey()
-
-        process("/slap synthetic-peer")
-
-        assertRefusedVisibly()
-    }
-
-    @Test
-    fun `public cashu token to a protected channel is refused without a sent notice`() {
-        joinAndProtect()
-        val token = "cashuA" + Base64.getUrlEncoder().withoutPadding().encodeToString(
-            """{"token":[{"proofs":[{"amount":1}]}],"unit":"sat"}"""
-                .toByteArray(StandardCharsets.UTF_8)
-        )
-
-        process("/pay $token public")
-
-        assertRefusedVisibly()
-        assertTrue(timeline().none { it.content.startsWith("sent ") })
-    }
-
-    @Test
     fun `media to a protected channel is refused visibly and not broadcast`() {
         joinAndProtect()
         val file = kotlin.io.path.createTempFile("synthetic-media", ".jpg").toFile()
@@ -151,16 +119,6 @@ class PasswordProtectedChannelRobolectricTest {
         } finally {
             file.delete()
         }
-    }
-
-    @Test
-    fun `action command to an unprotected channel is still sent`() {
-        assertTrue(channels.joinChannel(channel, null, myPeerID))
-
-        process("/hug synthetic-peer")
-
-        assertEquals(listOf(channel), forwarded.map { it.second })
-        assertEquals(1, userMessages().size)
     }
 
     @Test

@@ -392,14 +392,6 @@ internal fun AboutHowToUseSection(modifier: Modifier = Modifier) {
             iconRes = R.drawable.ic_spec_mention,
             text = stringResource(R.string.about_howto_mention)
         )
-        AboutInstructionRow(
-            iconRes = R.drawable.ic_spec_command,
-            text = stringResource(R.string.about_howto_commands)
-        )
-        AboutInstructionRow(
-            iconRes = R.drawable.ic_spec_waveform,
-            text = stringResource(R.string.about_howto_panic)
-        )
     }
 }
 

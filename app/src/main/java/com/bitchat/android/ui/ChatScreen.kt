@@ -812,7 +812,8 @@ private fun ChatFloatingHeader(
                 }
             },
             onSidebarClick = onSidebarToggle,
-            onTripleClick = onPanicClear,
+            // Faro: el borrado de emergencia (triple toque) se ha quitado.
+            onTripleClick = { },
             onShowAppInfo = onShowAppInfo,
             onLocationChannelsClick = onLocationChannelsClick,
             onLocationNotesClick = {

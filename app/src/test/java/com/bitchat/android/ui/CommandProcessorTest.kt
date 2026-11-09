@@ -143,28 +143,6 @@ class CommandProcessorTest {
   }
 
   @Test
-  fun `pay feedback is added to active geohash channel`() {
-    val geohash = "u0nd"
-    chatState.setSelectedLocationChannel(
-      ChannelID.Location(GeohashChannel(GeohashChannelLevel.PROVINCE, geohash))
-    )
-
-    commandProcessor.processCommand(
-      command = "/pay invalid",
-      meshService = meshService,
-      myPeerID = "peer-id",
-      onSendMessage = { _, _, _ -> },
-      viewModel = null
-    )
-
-    assertEquals(
-      "invalid cashu token — not sending it",
-      chatState.getChannelMessagesValue()["geo:$geohash"]?.single()?.content
-    )
-    assertEquals(0, chatState.getMessagesValue().size)
-  }
-
-  @Test
   fun `join command leaves active geohash selection for mesh channel routing`() {
     chatState.setSelectedLocationChannel(
       ChannelID.Location(GeohashChannel(GeohashChannelLevel.REGION, "9q"))
