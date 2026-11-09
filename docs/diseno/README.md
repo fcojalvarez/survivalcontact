@@ -26,6 +26,15 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 - **Pedir ayuda:** botón (no deslizar) con confirmación antes de enviar.
 - **Barra inferior:** Inicio · Chats · Mapa, compacta (unos 48 dp de alto: icono de 20 y texto de 11), suficiente para tocar con comodidad.
 
+## 2. Chats (aprobada)
+
+![Chats](02-chats.png)
+
+- Título «Chats» con lupa (buscar) y «＋» (crear grupo, unirse con enlace o QR).
+- Tres pestañas: **Grupos** (privados, con candado y el color del grupo), **Personas** (chats privados uno a uno) y **Cerca**.
+- **Cerca** es una sola sala abierta, «Gente cerca», con quien esté al alcance de la malla (sin internet). Muestra cuántas personas hay y quiénes, y avisa de que lo escrito ahí lo lee cualquiera cerca. La pestaña muestra el número de personas al alcance («Cerca · 4»).
+- **Se quitan los canales públicos por zona (geohash):** solo funcionaban con internet, justo cuando no hacen falta, y exponían la IP y la zona. Internet queda para grupos y chats privados, ubicación de la familia y actualizaciones.
+
 ## Pendientes de diseñar
 
-Chats, conversación, Mapa, Ajustes, crear grupo, invitar (enlace/QR), aceptar invitación, bienvenida y permisos.
+Conversación, Mapa, Ajustes, crear grupo, invitar (enlace/QR), aceptar invitación, bienvenida y permisos.
