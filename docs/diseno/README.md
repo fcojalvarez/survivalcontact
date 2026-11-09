@@ -116,3 +116,12 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 - **Actualizaciones:** versión instalada, «Buscar solo con Wi‑Fi» y «Buscar ahora».
 - **Idioma:** «Igual que el móvil» arriba y debajo los idiomas.
 - **Miembros:** buscador, etiqueta de administrador y menú al mantener pulsado (Escribir, Ver en el mapa y, solo para el administrador, Expulsar del grupo).
+
+### Ficha con la calle y «Seguir en directo»
+
+![Ficha y seguir en directo](12-ficha-y-seguir.png)
+
+- **Calle:** se saca del mapa guardado (nombres de calle de los datos del mapa), sin conectarse a ningún servicio. Fuera de la zona guardada y sin internet, se muestra solo la distancia. No se usa el buscador de direcciones de Android porque enviaría la ubicación a Google.
+- **Seguir en directo:** pide al móvil de esa persona que envíe su ubicación cada 30 s durante 10 min; después vuelve solo a su ritmo normal (5 o 15 min según batería). El mapa se centra en ella y dibuja su recorrido.
+- **Batería:** no se ofrece si a esa persona le queda menos del 20 %. Gasta algo más solo durante esos 10 min y se apaga sola.
+- **La persona seguida** ve un aviso discreto, sin sonido («Lucía te está siguiendo en el mapa · 8 min») con «Parar».
