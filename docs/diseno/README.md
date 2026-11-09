@@ -18,13 +18,13 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 
 - **Cabecera:** logo y «Faro», etiqueta de conexión («● Sin internet») y engranaje de ajustes.
 - **Personas:** todas las de todos tus grupos en una fila de caras con aro de estado (verde bien, naranja sin noticias), nombre y distancia o tiempo. Debajo, la leyenda de colores de cada grupo y «Gestionar».
-- **Importantes** (se quedan hasta que actúes): petición de ayuda, alguien sin señales, solicitud para entrar en tu grupo (con «Sí, dejarle entrar» / «No» en la propia tarjeta; solo para el administrador).
+- **Importantes** (se quedan hasta que actúes; sin texto explicativo en la cabecera del bloque): petición de ayuda, alguien sin señales, solicitud para entrar en tu grupo (con «Sí, dejarle entrar» / «No» en la propia tarjeta; solo para el administrador).
 - **Novedades** (desaparecen a las 24 h; los mensajes siguen en su chat).
 - Cada tarjeta lleva a la izquierda el color de su grupo. El tiempo va debajo del mensaje para dejarle todo el ancho.
 - **No leído:** texto en blanco intenso y hora en azul; lo leído, en gris. Sin puntos (parecen estado «conectado»).
 - La flecha ⌄ despliega con animación el mensaje completo y sus acciones (Responder, Leído, Descartar; Ver en el mapa; Llamar…).
 - **Pedir ayuda:** botón (no deslizar) con confirmación antes de enviar.
-- **Barra inferior:** Inicio · Chats · Mapa.
+- **Barra inferior:** Inicio · Chats · Mapa, compacta (unos 48 dp de alto: icono de 20 y texto de 11), suficiente para tocar con comodidad.
 
 ## Pendientes de diseñar
 
