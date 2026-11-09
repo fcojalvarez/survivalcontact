@@ -51,12 +51,16 @@ jobs:
         run: |
           apk=$(ls app/build/outputs/apk/debug/*universal*.apk | head -n1)
           cp "$apk" faro-prueba.apk
+          # Versión ligera solo para móviles arm64 (casi todos los actuales)
+          arm=$(ls app/build/outputs/apk/debug/*arm64-v8a*.apk | head -n1)
+          cp "$arm" faro-prueba-arm64.apk
+          ls -la faro-prueba*.apk
 
       - name: Subir el APK como artefacto
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: faro-apk-prueba
-          path: faro-prueba.apk
+          path: faro-prueba*.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -66,9 +70,9 @@ jobs:
         run: |
           notas="Versión de prueba compilada desde la rama ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}, el $(date -u '+%d/%m/%Y a las %H:%M') UTC.
 
-          Descarga **faro-prueba.apk** e instálalo en el móvil (acepta instalar apps de origen desconocido). Se instala encima de la versión anterior sin perder datos."
+          Descarga **faro-prueba-arm64.apk** (más ligera, para casi todos los móviles actuales) o, si no se instala, **faro-prueba.apk** (universal), e instálala en el móvil (acepta instalar apps de origen desconocido). Se instala encima de la versión anterior sin perder datos."
           gh release delete prueba --cleanup-tag --yes || true
-          gh release create prueba faro-prueba.apk \
+          gh release create prueba faro-prueba-arm64.apk faro-prueba.apk \
             --target "$GITHUB_SHA" \
             --prerelease \
             --title "Faro — versión de prueba" \
