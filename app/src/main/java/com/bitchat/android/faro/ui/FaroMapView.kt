@@ -40,7 +40,13 @@ data class MapPoint(val id: String, val name: String, val lat: Double, val lon: 
  * descargada por [FaroOfflineMap]. Pinta a los miembros y a uno mismo.
  */
 @Composable
-fun FaroMapView(points: List<MapPoint>, modifier: Modifier = Modifier) {
+fun FaroMapView(
+    points: List<MapPoint>,
+    modifier: Modifier = Modifier,
+    handle: MapHandle? = null,
+    onPointClick: ((String) -> Unit)? = null,
+) {
+    val clickState = androidx.compose.runtime.rememberUpdatedState(onPointClick)
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
@@ -79,7 +85,15 @@ fun FaroMapView(points: List<MapPoint>, modifier: Modifier = Modifier) {
                     )
                     styleReady = true
                 }
+                m.addOnMapClickListener { latLng ->
+                    val pt = m.projection.toScreenLocation(latLng)
+                    val r = 40f
+                    val hit = m.queryRenderedFeatures(android.graphics.RectF(pt.x - r, pt.y - r, pt.x + r, pt.y + r), "faro-puntos")
+                        .firstOrNull()?.getStringProperty("id")
+                    if (hit != null && hit != "yo") { clickState.value?.invoke(hit); true } else false
+                }
                 map = m
+                handle?.map = m
             }
         }
     }
@@ -139,7 +153,7 @@ private fun toGeoJson(points: List<MapPoint>): String {
         features.put(JSONObject().apply {
             put("type", "Feature")
             put("geometry", JSONObject().put("type", "Point").put("coordinates", JSONArray().put(p.lon).put(p.lat)))
-            put("properties", JSONObject().put("name", p.name).put("color", p.colorHex).put("me", p.isMe))
+            put("properties", JSONObject().put("id", p.id).put("name", p.name).put("color", p.colorHex).put("me", p.isMe))
         })
     }
     return JSONObject().put("type", "FeatureCollection").put("features", features).toString()
@@ -149,4 +163,39 @@ private fun toGeoJson(points: List<MapPoint>): String {
 fun mapPoints(members: Collection<MemberPosition>, me: Location?, meName: String, colorFor: (String) -> String): List<MapPoint> {
     val list = members.map { MapPoint(it.authorId, it.name, it.position.lat, it.position.lon, colorFor(it.authorId), false) }
     return if (me != null) list + MapPoint("yo", meName, me.latitude, me.longitude, "#A7C7E7", true) else list
+}
+
+/** Acceso al mapa ya dibujado: centrar en alguien y leer el nombre de la calle cercana. */
+class MapHandle {
+    internal var map: MapLibreMap? = null
+
+    fun focus(lat: Double, lon: Double, zoom: Double = 16.0, then: (() -> Unit)? = null) {
+        val m = map ?: return
+        m.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom), 500,
+            object : MapLibreMap.CancelableCallback {
+                override fun onFinish() { then?.invoke() }
+                override fun onCancel() { then?.invoke() }
+            }
+        )
+    }
+
+    /**
+     * Calle (y localidad) junto a un punto, sacada del propio mapa ya dibujado: no se pregunta
+     * a ningún servicio. Sin mapa de esa zona devuelve null.
+     */
+    fun streetNear(lat: Double, lon: Double): String? {
+        val m = map ?: return null
+        val p = m.projection.toScreenLocation(LatLng(lat, lon))
+        var street: String? = null
+        for (r in listOf(30f, 70f, 140f)) {
+            street = m.queryRenderedFeatures(android.graphics.RectF(p.x - r, p.y - r, p.x + r, p.y + r), "nombres-calles")
+                .firstNotNullOfOrNull { f -> runCatching { f.getStringProperty("name") }.getOrNull()?.takeIf { it.isNotBlank() } }
+            if (street != null) break
+        }
+        val big = 700f
+        val town = m.queryRenderedFeatures(android.graphics.RectF(p.x - big, p.y - big, p.x + big, p.y + big), "ciudades", "pueblos")
+            .firstNotNullOfOrNull { f -> runCatching { f.getStringProperty("name") }.getOrNull()?.takeIf { it.isNotBlank() } }
+        return listOfNotNull(street, town).distinct().joinToString(", ").ifBlank { null }
+    }
 }

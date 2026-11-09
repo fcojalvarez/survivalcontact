@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material.icons.outlined.WifiTethering
 import androidx.compose.material3.AlertDialog
@@ -80,7 +81,11 @@ internal sealed class Route {
     data class Group(val id: String) : Route()
     data class Info(val id: String) : Route()
     data class Invite(val id: String) : Route()
+    data class Guide(val personId: String) : Route()
 }
+
+/** Seguimiento en directo de una persona hasta [untilMs]. */
+internal data class Following(val personId: String, val untilMs: Long)
 
 internal enum class Tab { INICIO, CHATS, MAPA }
 
@@ -89,6 +94,10 @@ internal class FaroNav {
     val stack = mutableStateListOf<Route>(Route.Tabs)
     var tab by mutableStateOf(Tab.INICIO)
     var mapFilter by mutableStateOf<String?>(null)
+    /** Persona cuya ficha está abierta en el mapa. */
+    var selected by mutableStateOf<String?>(null)
+    var following by mutableStateOf<Following?>(null)
+    fun showPerson(id: String) { home(Tab.MAPA); mapFilter = null; selected = id }
     val top: Route get() = stack.last()
     fun go(r: Route) { stack.add(r) }
     fun back(): Boolean = if (stack.size > 1) { stack.removeAt(stack.lastIndex); true } else false
@@ -137,6 +146,7 @@ fun FaroMainScreen(chatViewModel: ChatViewModel) {
             is Route.Group -> Screen { GroupChatScreen(nav, r.id) }
             is Route.Info -> Screen { GroupInfoScreen(nav, r.id) }
             is Route.Invite -> Screen { InviteScreen(nav, r.id) }
+            is Route.Guide -> Screen { GuideScreen(nav, r.personId) }
         }
         if (sos && !sosHidden) SosActiveScreen(onOpenChat = { id -> sosHidden = true; nav.home(Tab.INICIO); nav.go(Route.Group(id)) })
     }
@@ -255,7 +265,7 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                             else -> me?.let { m -> p.location()?.let { l -> formatDistance(m.distanceTo(l)) } } ?: ago(p.pos.timestampMs).removePrefix("hace ")
                         }
                         Column(
-                            Modifier.width(64.dp).clickable { nav.mapFilter = null; nav.tab = Tab.MAPA },
+                            Modifier.width(64.dp).clickable { nav.showPerson(p.id) },
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Avatar(p.name, colorFor(p.id), 56.dp, ring)
@@ -284,6 +294,22 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                     modifier = Modifier.padding(start = 10.dp).clickable { nav.tab = Tab.CHATS })
             }
 
+            // Me están siguiendo en directo
+            val followers by FaroLocation.followers.collectAsStateWithLifecycle()
+            followers.firstOrNull()?.let { f ->
+                Row(
+                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().card(FaroColors.Line2).padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Outlined.Visibility, null, tint = FaroColors.Accent, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(10.dp))
+                    val mins = ((f.untilMs - System.currentTimeMillis()) / 60_000 + 1).coerceAtLeast(1)
+                    Text("${f.name} te está siguiendo en el mapa · $mins min", fontSize = 13.5.sp, modifier = Modifier.weight(1f), color = Color(0xFFD6D6D6))
+                    Text("Parar", color = FaroColors.Accent, fontWeight = FontWeight.SemiBold, fontSize = 14.sp,
+                        modifier = Modifier.padding(start = 10.dp).clickable { FaroLocation.stopFollowers() })
+                }
+            }
+
             // Importantes
             val help = ppl.filter { it.needsHelp }
             val silent = ppl.filter { !it.needsHelp && it.silent && (it.silentFor ?: 0L) < 48 * HOUR && it.id !in dismissed }
@@ -300,7 +326,8 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                             sub = (p.pos?.let { ago(it.timestampMs) } ?: "") + distanceSuffix(me, p),
                             subColor = FaroColors.Danger, alwaysOpen = true,
                         ) {
-                            Chip("Ver en el mapa", primary = true) { nav.mapFilter = null; nav.tab = Tab.MAPA }
+                            Chip("Ver en el mapa", primary = true) { nav.showPerson(p.id) }
+                            Chip("Guiarme") { nav.go(Route.Guide(p.id)) }
                             Chip("Escribir al grupo") { nav.go(Route.Group(gid)) }
                         }
                     }
@@ -313,7 +340,7 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                             title = bold(p.name, " sin señales desde hace ${hoursText(p.silentFor ?: 0L)}"),
                             sub = groups.firstOrNull { it.id == gid }?.name.orEmpty() + distanceSuffix(me, p, "última vez a "),
                         ) {
-                            Chip("Ver en el mapa", primary = true) { nav.mapFilter = null; nav.tab = Tab.MAPA }
+                            Chip("Ver en el mapa", primary = true) { nav.showPerson(p.id) }
                             Chip("Escribir al grupo") { nav.go(Route.Group(gid)) }
                             Chip("Ya sé que está bien") { dismissed.add(p.id) }
                         }
@@ -327,10 +354,14 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                 .filter { !it.mine && it.timestampMs > since && groups.any { g -> g.id == it.groupId } }
                 .sortedByDescending { it.timestampMs }.take(8)
             SectionTitle("Novedades", "últimas 24 h")
-            if (news.isEmpty()) {
+            val seenList by FaroGroups.seenBy.collectAsStateWithLifecycle()
+            if (news.isEmpty() && seenList.isNotEmpty()) {
+                Column(Modifier.padding(horizontal = 16.dp)) { SeenCard(open, nav) }
+            } else if (news.isEmpty()) {
                 Hint("Aquí verás lo último de tus grupos. Lo que tenga más de 24 h desaparece solo.")
             } else {
                 Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SeenCard(open, nav)
                     news.forEach { m ->
                         val unread = m.timestampMs > (lastRead[m.groupId] ?: 0L)
                         InfoCardRow(
@@ -342,7 +373,7 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                             dim = !unread,
                         ) {
                             Chip("Responder", primary = true) { nav.go(Route.Group(m.groupId)) }
-                            Chip("Ver en el mapa") { nav.mapFilter = m.groupId; nav.tab = Tab.MAPA }
+                            Chip("Ver en el mapa") { nav.showPerson(m.authorId) }
                         }
                     }
                 }
@@ -374,6 +405,57 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
             },
             dismissButton = { TextButton(onClick = { confirmSos = false }) { Text("Cancelar") } },
         )
+    }
+}
+
+/** Aviso de quién ha visto dónde estás, juntando a varias personas en uno. */
+@Composable
+private fun SeenCard(open: MutableList<String>, nav: FaroNav) {
+    val seen by FaroGroups.seenBy.collectAsStateWithLifecycle()
+    val since = System.currentTimeMillis() - 24 * HOUR
+    val list = seen.filter { it.timestampMs > since }.sortedByDescending { it.timestampMs }
+    if (list.isEmpty()) return
+    val names = list.map { it.viewerName }.distinct()
+    val who = when (names.size) {
+        1 -> names[0]
+        2 -> names[0] + " y " + names[1]
+        else -> names.take(2).joinToString(", ") + " y ${names.size - 2} más"
+    }
+    val key = "visto"
+    val isOpen = key in open
+    Column(
+        Modifier.fillMaxWidth().card().clickable { if (isOpen) open.remove(key) else open.add(key) }
+            .padding(horizontal = 12.dp, vertical = 11.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(34.dp).border(1.5.dp, FaroColors.Line2, CircleShape), contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.Visibility, null, tint = FaroColors.Accent, modifier = Modifier.size(18.dp))
+            }
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(bold(who, if (names.size == 1) " ha visto dónde estás" else " han visto dónde estás"), fontSize = 14.5.sp, lineHeight = 19.sp)
+                Text(ago(list.first().timestampMs), fontSize = 12.sp, color = FaroColors.Accent, fontWeight = FontWeight.SemiBold)
+            }
+            Icon(if (isOpen) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, null, tint = FaroColors.Muted, modifier = Modifier.size(20.dp))
+        }
+        if (isOpen) {
+            Gap(8.dp)
+            list.forEach { e ->
+                val how = when (e.how) {
+                    com.bitchat.android.faro.FaroProtocol.SeenHow.MAP -> "en el mapa"
+                    com.bitchat.android.faro.FaroProtocol.SeenHow.CARD -> "en su ficha"
+                    com.bitchat.android.faro.FaroProtocol.SeenHow.LIVE -> "en directo"
+                    com.bitchat.android.faro.FaroProtocol.SeenHow.GUIDE -> "con la brújula"
+                }
+                Text("${e.viewerName} · $how · ${ago(e.timestampMs)}", fontSize = 13.sp, color = Color(0xFFBDBDBD), modifier = Modifier.padding(start = 44.dp, top = 2.dp))
+            }
+            Gap(10.dp)
+            Row(Modifier.padding(start = 44.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val gid = list.first().groupId
+                Chip("Dejar de compartir") { nav.go(Route.Info(gid)) }
+                Chip("Abrir chat") { nav.go(Route.Group(gid)) }
+            }
+        }
     }
 }
 

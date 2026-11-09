@@ -77,6 +77,25 @@ object FaroNotifications {
         )
     }
 
+    fun seen(ctx: Context, name: String) {
+        if (!canNotify(ctx)) return
+        val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
+        ensureChannels(nm)
+        val id = ("seen" + name).hashCode()
+        nm.notify(
+            id,
+            NotificationCompat.Builder(ctx, CHANNEL_MESSAGES)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("$name ha visto dónde estás")
+                .setContentText("Lo ha mirado en el mapa de Faro.")
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setSilent(true)
+                .setContentIntent(openApp(ctx, id))
+                .setAutoCancel(true)
+                .build()
+        )
+    }
+
     fun help(ctx: Context, groupId: String, groupName: String, author: String, distance: String?) {
         if (!canNotify(ctx)) return
         val nm = ctx.getSystemService(NotificationManager::class.java) ?: return

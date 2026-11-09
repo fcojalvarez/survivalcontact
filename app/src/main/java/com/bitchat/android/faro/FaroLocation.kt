@@ -22,6 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
@@ -53,6 +54,34 @@ object FaroLocation {
 
     private val _sos = MutableStateFlow(false)
     val sosActive: StateFlow<Boolean> = _sos.asStateFlow()
+
+    /** Quien me está siguiendo en directo y hasta cuándo. */
+    data class Follower(val id: String, val name: String, val untilMs: Long)
+
+    private val _followers = MutableStateFlow<List<Follower>>(emptyList())
+    val followers: StateFlow<List<Follower>> = _followers.asStateFlow()
+
+    /**
+     * Alguien me pide seguirme en directo: envío mi ubicación cada 30 s durante como mucho
+     * 10 min. Gasta algo más de batería solo ese rato, así que no se acepta por debajo del 20 %.
+     */
+    fun onFollowRequest(id: String, name: String, minutes: Int) {
+        val ctx = appContext ?: return
+        if (minutes <= 0) {
+            _followers.update { list -> list.filterNot { it.id == id } }
+            return
+        }
+        if (batteryPercent(ctx) < 20) return
+        val until = System.currentTimeMillis() + minutes.coerceAtMost(10) * 60_000L
+        _followers.update { list -> list.filterNot { it.id == id } + Follower(id, name, until) }
+        lastSentAt = 0L
+        requestSoon()
+    }
+
+    /** La persona seguida corta el seguimiento desde su aviso. */
+    fun stopFollowers() {
+        _followers.value = emptyList()
+    }
 
     private var lastSent: Location? = null
     private var lastSentAt = 0L
@@ -102,18 +131,22 @@ object FaroLocation {
         if (targets.isEmpty() || !hasPermission(ctx)) return 60 * 60_000L
 
         val battery = batteryPercent(ctx)
+        val now0 = System.currentTimeMillis()
+        _followers.update { list -> list.filter { it.untilMs > now0 } }
+        val following = _followers.value.isNotEmpty() && battery >= 20
         val interval = when {
+            following -> 30_000L
             sos -> 2 * 60_000L
             battery > 50 -> 5 * 60_000L
             battery >= 20 -> 15 * 60_000L
             else -> return 30 * 60_000L // Batería crítica: solo SOS.
         }
 
-        val loc = currentLocation(allowFresh = true) ?: return interval
+        val loc = currentLocation(allowFresh = true, freshMs = if (following) 20_000L else FRESH_ENOUGH_MS) ?: return interval
         _myLocation.value = loc
         val now = System.currentTimeMillis()
         val moved = lastSent?.distanceTo(loc) ?: Float.MAX_VALUE
-        if (!sos && moved < MOVE_THRESHOLD_M && now - lastSentAt < MAX_SILENCE_MS) return interval
+        if (!sos && !following && moved < MOVE_THRESHOLD_M && now - lastSentAt < MAX_SILENCE_MS) return interval
 
         val pos = FaroProtocol.Position(
             lat = loc.latitude,
@@ -128,13 +161,13 @@ object FaroLocation {
         return interval
     }
 
-    private suspend fun currentLocation(allowFresh: Boolean): Location? {
+    private suspend fun currentLocation(allowFresh: Boolean, freshMs: Long = FRESH_ENOUGH_MS): Location? {
         val p = provider ?: return null
         val ctx = appContext ?: return null
         if (!hasPermission(ctx)) return null
         val last = suspendCancellableCoroutine<Location?> { c -> p.getLastKnownLocation { if (c.isActive) c.resume(it) } }
         val age = last?.let { System.currentTimeMillis() - it.time } ?: Long.MAX_VALUE
-        if (last != null && (age < FRESH_ENOUGH_MS || !allowFresh)) return last
+        if (last != null && (age < freshMs || !allowFresh)) return last
         val fresh = withTimeoutOrNull(30_000L) {
             suspendCancellableCoroutine<Location?> { c -> p.requestFreshLocation { if (c.isActive) c.resume(it) } }
         }

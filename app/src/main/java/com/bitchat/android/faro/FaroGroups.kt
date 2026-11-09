@@ -57,6 +57,15 @@ data class JoinRequest(
     val id: String get() = "$groupId:$memberKeyHex"
 }
 
+/** Alguien ha mirado dónde estoy. */
+data class SeenEvent(
+    val groupId: String,
+    val viewerId: String,
+    val viewerName: String,
+    val how: FaroProtocol.SeenHow,
+    val timestampMs: Long,
+)
+
 data class MemberPosition(
     val authorId: String,
     val name: String,
@@ -104,6 +113,13 @@ object FaroGroups {
         _lastRead.update { it + (groupId to last) }
         prefs?.edit()?.putString(KEY_READ, JSONObject(_lastRead.value as Map<*, *>).toString())?.apply()
     }
+
+    /** Quién ha mirado dónde estoy en las últimas 24 h (solo en memoria). */
+    private val _seen = MutableStateFlow<List<SeenEvent>>(emptyList())
+    val seenBy: StateFlow<List<SeenEvent>> = _seen.asStateFlow()
+
+    /** Última vez que avisé a cada persona de que la he mirado (para no repetir en 15 min). */
+    private val seenSentAt = HashMap<String, Long>()
 
     private var appContext: Context? = null
     private var prefs: SharedPreferences? = null
@@ -242,6 +258,56 @@ object FaroGroups {
         }
     }
 
+    /** Pide a una persona que envíe su ubicación cada 30 s durante [minutes] minutos (0 = parar). */
+    fun sendFollow(personId: String, minutes: Int) {
+        val target = personId.hexToBytes() ?: return
+        val g = _groups.value.firstOrNull { personId in it.members.keys || _positions.value[it.id]?.containsKey(personId) == true } ?: return
+        send(g, FaroProtocol.Kind.FOLLOW, FaroProtocol.encodeFollow(target, minutes), System.currentTimeMillis())
+    }
+
+    /**
+     * Avisa a las personas de que he mirado dónde están. Solo por internet y solo si lo hay:
+     * sin conexión, o si alguien ha pedido ayuda, es una emergencia y no se avisa.
+     * Como mucho un aviso por persona cada 15 min.
+     */
+    fun notifySeen(personIds: Collection<String>, how: FaroProtocol.SeenHow) {
+        val ctx = appContext ?: return
+        if (!isOnline(ctx) || FaroLocation.sosActive.value) return
+        val now = System.currentTimeMillis()
+        val helpRecent = { id: String ->
+            _positions.value.values.any { m ->
+                val p = m[id]
+                p != null && p.position.status == FaroProtocol.Position.Status.NEED_HELP && now - p.timestampMs < 12 * 3_600_000L
+            }
+        }
+        if (_positions.value.values.any { m -> m.values.any { helpRecent(it.authorId) } }) return
+        val due = personIds.filter { (seenSentAt[it] ?: 0L) < now - 15 * 60_000L }
+        if (due.isEmpty()) return
+        val pending = due.toMutableSet()
+        _groups.value.forEach { g ->
+            val here = pending.filter { it in g.members.keys || _positions.value[g.id]?.containsKey(it) == true }
+            if (here.isEmpty()) return@forEach
+            val body = FaroProtocol.encodeSeen(how, here.mapNotNull { it.hexToBytes() })
+            sendInternetOnly(g, FaroProtocol.Kind.SEEN, body, now)
+            here.forEach { seenSentAt[it] = now; pending.remove(it) }
+        }
+    }
+
+    private fun isOnline(ctx: Context): Boolean {
+        val cm = ctx.getSystemService(android.net.ConnectivityManager::class.java) ?: return false
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+        return caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+
+    private fun sendInternetOnly(g: FaroGroup, kind: FaroProtocol.Kind, body: ByteArray, ts: Long) {
+        scope.launch {
+            val key = crypto()?.getSigningPublicKey() ?: return@launch
+            val payload = FaroProtocol.seal(g.key, FaroProtocol.Inner(kind, ts, key, myName(), body), ::sign) ?: return@launch
+            FaroInternet.publish(payload, FaroProtocol.tagFor(g.key).toHex())
+        }
+    }
+
     /** Envía un paquete ya preparado por la malla (si está activa) y por internet (si hay). */
     private fun broadcastRaw(payload: ByteArray, tagHex: String) {
         MeshServiceHolder.unifiedMeshService?.sendFaroBroadcast(payload)
@@ -298,6 +364,21 @@ object FaroGroups {
                 }
             }
             FaroProtocol.Kind.HELLO -> Unit
+            FaroProtocol.Kind.FOLLOW -> {
+                val (target, minutes) = FaroProtocol.decodeFollow(inner.body) ?: return
+                if (target.toHex() != me || !g.shareLocation) return
+                FaroLocation.onFollowRequest(inner.authorId, inner.authorName, minutes)
+            }
+            FaroProtocol.Kind.SEEN -> {
+                val (how, targets) = FaroProtocol.decodeSeen(inner.body) ?: return
+                if (targets.none { it.toHex() == me }) return
+                // En una emergencia es normal mirar: no se avisa.
+                if (FaroLocation.sosActive.value) return
+                val ev = SeenEvent(g.id, inner.authorId, inner.authorName, how, inner.timestampMs)
+                val since = now - 24 * 3_600_000L
+                _seen.update { list -> (list.filter { it.timestampMs > since && it.viewerId != ev.viewerId } + ev).sortedBy { it.timestampMs } }
+                appContext?.let { FaroNotifications.seen(it, inner.authorName) }
+            }
         }
     }
 

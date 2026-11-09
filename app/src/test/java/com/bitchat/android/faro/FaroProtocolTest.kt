@@ -108,4 +108,22 @@ class FaroProtocolTest {
         assertEquals(64, d.batteryPct)
         assertEquals(FaroProtocol.Position.Status.ON_THE_WAY, d.status)
     }
+
+    @Test
+    fun `seguir en directo y aviso de visto se codifican y validan`() {
+        val a = ByteArray(32) { 1 }
+        val b = ByteArray(32) { 2 }
+        val (t, m) = FaroProtocol.decodeFollow(FaroProtocol.encodeFollow(a, 10))!!
+        assertArrayEquals(a, t)
+        assertEquals(10, m)
+        // Nunca más de 10 minutos, aunque lo pidan.
+        assertEquals(10, FaroProtocol.decodeFollow(FaroProtocol.encodeFollow(a, 60))!!.second)
+        assertNull(FaroProtocol.decodeFollow(ByteArray(5)))
+
+        val (how, keys) = FaroProtocol.decodeSeen(FaroProtocol.encodeSeen(FaroProtocol.SeenHow.LIVE, listOf(a, b)))!!
+        assertEquals(FaroProtocol.SeenHow.LIVE, how)
+        assertEquals(2, keys.size)
+        assertArrayEquals(b, keys[1])
+        assertNull(FaroProtocol.decodeSeen(ByteArray(10)))
+    }
 }

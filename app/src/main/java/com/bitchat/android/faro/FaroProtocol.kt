@@ -41,7 +41,11 @@ object FaroProtocol {
     enum class Kind(val code: Byte) {
         TEXT(1),
         LOCATION(2),
-        HELLO(3);
+        HELLO(3),
+        /** Pide a una persona que envíe su ubicación cada 30 s durante unos minutos. */
+        FOLLOW(4),
+        /** Aviso de que alguien ha mirado dónde están unas personas (solo por internet). */
+        SEEN(5);
 
         companion object {
             fun from(code: Byte): Kind? = entries.firstOrNull { it.code == code }
@@ -180,4 +184,35 @@ internal fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
 internal fun String.hexToBytes(): ByteArray? {
     if (length % 2 != 0) return null
     return runCatching { ByteArray(length / 2) { i -> substring(i * 2, i * 2 + 2).toInt(16).toByte() } }.getOrNull()
+
+    // ---------- Cuerpos de FOLLOW y SEEN ----------
+
+    /** FOLLOW: clave de la persona (32 bytes) + minutos (0 = parar). */
+    fun encodeFollow(target: ByteArray, minutes: Int): ByteArray {
+        require(target.size == PUB_SIZE)
+        return target + byteArrayOf(minutes.coerceIn(0, 10).toByte())
+    }
+
+    fun decodeFollow(body: ByteArray): Pair<ByteArray, Int>? {
+        if (body.size != PUB_SIZE + 1) return null
+        return body.copyOfRange(0, PUB_SIZE) to (body[PUB_SIZE].toInt() and 0xFF).coerceIn(0, 10)
+    }
+
+    /** Cómo se ha mirado: en el mapa, en la ficha, en directo o con la brújula. */
+    enum class SeenHow(val code: Byte) {
+        MAP(0), CARD(1), LIVE(2), GUIDE(3);
+        companion object { fun from(code: Byte) = entries.firstOrNull { it.code == code } ?: MAP }
+    }
+
+    /** SEEN: cómo (1 byte) + claves de las personas vistas (32 bytes cada una, máximo 50). */
+    fun encodeSeen(how: SeenHow, targets: List<ByteArray>): ByteArray {
+        val list = targets.filter { it.size == PUB_SIZE }.take(50)
+        return byteArrayOf(how.code) + list.fold(ByteArray(0)) { acc, k -> acc + k }
+    }
+
+    fun decodeSeen(body: ByteArray): Pair<SeenHow, List<ByteArray>>? {
+        if (body.isEmpty() || (body.size - 1) % PUB_SIZE != 0 || (body.size - 1) / PUB_SIZE > 50) return null
+        val keys = (0 until (body.size - 1) / PUB_SIZE).map { i -> body.copyOfRange(1 + i * PUB_SIZE, 1 + (i + 1) * PUB_SIZE) }
+        return SeenHow.from(body[0]) to keys
+    }
 }

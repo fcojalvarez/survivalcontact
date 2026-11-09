@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bitchat.android.faro.FaroGroups
 import com.bitchat.android.faro.FaroLocation
 import com.bitchat.android.faro.FaroOfflineMap
+import com.bitchat.android.faro.FaroProtocol
 import com.bitchat.android.ui.rememberIsOnline
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -57,6 +59,7 @@ internal fun MapTab(nav: FaroNav) {
         listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
     )
     LaunchedEffect(Unit) { FaroLocation.refreshForDisplay() }
+    val handle = remember { MapHandle() }
 
     val filter = nav.mapFilter?.takeIf { f -> groups.any { it.id == f } }
     val shown = groups.filter { filter == null || it.id == filter }
@@ -66,9 +69,20 @@ internal fun MapTab(nav: FaroNav) {
         MapPoint(p.id, p.name, p.pos!!.position.lat, p.pos.position.lon, colorFor(p.id), false)
     } + listOfNotNull(me?.let { MapPoint("yo", "Tú", it.latitude, it.longitude, "#A7C7E7", true) })
 
+    // Al mirar el mapa con internet, se avisa a quien aparece (como mucho cada 15 min por persona).
+    val locatedIds = located.map { it.id }
+    LaunchedEffect(locatedIds) { if (locatedIds.isNotEmpty()) FaroGroups.notifySeen(locatedIds, FaroProtocol.SeenHow.MAP) }
+
+    val following = nav.following
+    if (following != null) {
+        FollowView(nav, following, ppl.firstOrNull { it.id == following.personId }, points, handle)
+        return
+    }
+
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
-            FaroMapView(points = points, modifier = Modifier.fillMaxSize())
+            FaroMapView(points = points, modifier = Modifier.fillMaxSize(), handle = handle, onPointClick = { nav.selected = it })
             Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     MapChip("Todos", null, filter == null) { nav.mapFilter = null }
@@ -110,7 +124,7 @@ internal fun MapTab(nav: FaroNav) {
                 val loc = p.location()
                 val dist = me?.let { m -> loc?.let { m.distanceTo(it) } }
                 val bearing = me?.let { m -> loc?.let { m.bearingTo(it) } }
-                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth().clickable { nav.selected = p.id }.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Avatar(p.name, colorFor(p.id), 38.dp)
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
@@ -140,6 +154,9 @@ internal fun MapTab(nav: FaroNav) {
                 }
             }
         }
+    }
+    val sel = nav.selected?.let { id -> ppl.firstOrNull { it.id == id } ?: people(groups, positions, FaroGroups.myId()).firstOrNull { it.id == id } }
+    if (sel != null) PersonSheet(nav, sel, handle, onClose = { nav.selected = null })
     }
 }
 
