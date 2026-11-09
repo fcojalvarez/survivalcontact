@@ -108,20 +108,4 @@ class FaroProtocolTest {
         assertEquals(64, d.batteryPct)
         assertEquals(FaroProtocol.Position.Status.ON_THE_WAY, d.status)
     }
-
-    @Test
-    fun `invitacion valida, caducada y manipulada`() {
-        val id = FaroProtocol.newGroupId()
-        val code = FaroInvite.encode(id, key, "Familia", alice.pub, nowS = 1000, sign = alice::sign)!!
-        val ok = FaroInvite.decode(code, nowS = 1001, verify = ::verify)
-        assertTrue(ok is FaroInvite.Result.Ok)
-        ok as FaroInvite.Result.Ok
-        assertArrayEquals(key, ok.invite.groupKey)
-        assertEquals("Familia", ok.invite.groupName)
-
-        assertTrue(FaroInvite.decode(code, nowS = 1000 + 16 * 60, verify = ::verify) is FaroInvite.Result.Expired)
-        val tampered = code.dropLast(3) + if (code.endsWith("A")) "BBB" else "AAA"
-        assertTrue(FaroInvite.decode(tampered, nowS = 1001, verify = ::verify) is FaroInvite.Result.Invalid)
-        assertTrue(FaroInvite.decode("https://ejemplo.org", nowS = 1001, verify = ::verify) is FaroInvite.Result.NotFaro)
-    }
 }

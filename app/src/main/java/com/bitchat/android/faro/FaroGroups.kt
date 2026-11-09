@@ -24,7 +24,8 @@ data class FaroGroup(
     val name: String,
     val keyHex: String,
     val createdAtMs: Long,
-    val parentId: String? = null,
+    /** Lo creé yo: decido quién entra. */
+    val admin: Boolean = false,
     /** Consentimiento: si comparto mi ubicación con este grupo. Desactivado por defecto. */
     val shareLocation: Boolean = false,
     /** Miembros conocidos: clave pública (hex) → nombre. */
@@ -44,6 +45,18 @@ data class FaroMessage(
     val id: String get() = "$authorId:$timestampMs"
 }
 
+/** Alguien ha aceptado un enlace mío y espera a que le deje entrar. */
+data class JoinRequest(
+    val groupId: String,
+    val memberKeyHex: String,
+    val memberName: String,
+    val reply: ByteArray,
+    val replyTagHex: String,
+    val timestampMs: Long,
+) {
+    val id: String get() = "$groupId:$memberKeyHex"
+}
+
 data class MemberPosition(
     val authorId: String,
     val name: String,
@@ -59,6 +72,10 @@ object FaroGroups {
     private const val TAG = "FaroGroups"
     private const val PREFS = "faro_groups_secure"
     private const val KEY_GROUPS = "groups"
+    private const val KEY_REQUESTS = "join_requests"
+    private const val KEY_READ = "last_read"
+    /** Una solicitud sin respuesta caduca a los 7 días, como el enlace. */
+    private const val REQUEST_TTL_MS = 7L * 24 * 3_600_000
     private const val MAX_MESSAGES = 300
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -72,6 +89,21 @@ object FaroGroups {
     /** Última posición de cada miembro, por grupo. */
     private val _positions = MutableStateFlow<Map<String, Map<String, MemberPosition>>>(emptyMap())
     val positions: StateFlow<Map<String, Map<String, MemberPosition>>> = _positions.asStateFlow()
+
+    /** Solicitudes de entrada pendientes de que el administrador las acepte. */
+    private val _joinRequests = MutableStateFlow<List<JoinRequest>>(emptyList())
+    val joinRequests: StateFlow<List<JoinRequest>> = _joinRequests.asStateFlow()
+
+    /** Hasta cuándo he leído cada grupo (para marcar lo nuevo en Inicio y en Chats). */
+    private val _lastRead = MutableStateFlow<Map<String, Long>>(emptyMap())
+    val lastRead: StateFlow<Map<String, Long>> = _lastRead.asStateFlow()
+
+    fun markRead(groupId: String) {
+        val last = _messages.value[groupId]?.lastOrNull()?.timestampMs ?: System.currentTimeMillis()
+        if ((_lastRead.value[groupId] ?: 0L) >= last) return
+        _lastRead.update { it + (groupId to last) }
+        prefs?.edit()?.putString(KEY_READ, JSONObject(_lastRead.value as Map<*, *>).toString())?.apply()
+    }
 
     private var appContext: Context? = null
     private var prefs: SharedPreferences? = null
@@ -122,13 +154,13 @@ object FaroGroups {
 
     // ---------- Grupos ----------
 
-    fun createGroup(name: String, parentId: String? = null): FaroGroup {
+    fun createGroup(name: String): FaroGroup {
         val group = FaroGroup(
             id = FaroProtocol.newGroupId().toHex(),
             name = name.trim().take(40).ifBlank { "Grupo" },
             keyHex = FaroProtocol.newGroupKey().toHex(),
             createdAtMs = System.currentTimeMillis(),
-            parentId = parentId,
+            admin = true,
         )
         _groups.update { it + group }
         save()
@@ -136,7 +168,9 @@ object FaroGroups {
     }
 
     fun leaveGroup(groupId: String) {
-        _groups.update { list -> list.filterNot { it.id == groupId || it.parentId == groupId } }
+        _groups.update { list -> list.filterNot { it.id == groupId } }
+        _joinRequests.update { list -> list.filterNot { it.groupId == groupId } }
+        saveRequests()
         _messages.update { it - groupId }
         _positions.update { it - groupId }
         prefs?.edit()?.remove(msgKey(groupId))?.apply()
@@ -152,27 +186,6 @@ object FaroGroups {
     fun group(groupId: String): FaroGroup? = _groups.value.firstOrNull { it.id == groupId }
 
     // ---------- Invitaciones ----------
-
-    fun inviteCode(groupId: String): String? {
-        val g = group(groupId) ?: return null
-        val me = crypto()?.getSigningPublicKey() ?: return null
-        return FaroInvite.encode(
-            groupId = g.id.hexToBytes() ?: return null,
-            groupKey = g.key,
-            groupName = g.name,
-            inviterKey = me,
-            nowS = System.currentTimeMillis() / 1000,
-            sign = ::sign,
-        )
-    }
-
-    sealed class JoinResult {
-        data class Joined(val group: FaroGroup) : JoinResult()
-        data class AlreadyMember(val group: FaroGroup) : JoinResult()
-        object NotAnInvite : JoinResult()
-        object Invalid : JoinResult()
-        object Expired : JoinResult()
-    }
 
     /** Crea un enlace de invitación (sin la clave del grupo) para enviarlo por cualquier app. */
     fun inviteLink(groupId: String): String? {
@@ -195,31 +208,6 @@ object FaroGroups {
         val me = crypto()?.getSigningPublicKey() ?: return
         val (payload, tag) = FaroJoin.buildRequest(invite, me, myName())
         broadcastRaw(payload, tag)
-    }
-
-    /** Lee una invitación sin unirse todavía (para mostrar la ventana de confirmación). */
-    fun previewCode(code: String): FaroInvite.Result =
-        FaroInvite.decode(code.trim(), System.currentTimeMillis() / 1000, ::verify)
-
-    /**
-     * Se une al grupo de la invitación. Aceptar implica consentir compartir la ubicación con el
-     * grupo para emergencias (la ventana lo explica); se puede desactivar después.
-     */
-    fun joinInvite(invite: FaroInvite.Invite, shareLocation: Boolean): JoinResult {
-        val id = invite.groupId.toHex()
-        group(id)?.let { return JoinResult.AlreadyMember(it) }
-        val g = FaroGroup(
-            id = id,
-            name = invite.groupName,
-            keyHex = invite.groupKey.toHex(),
-            createdAtMs = System.currentTimeMillis(),
-            shareLocation = shareLocation,
-        )
-        _groups.update { it + g }
-        save()
-        sendHello(g)
-        if (shareLocation) FaroLocation.requestSoon()
-        return JoinResult.Joined(g)
     }
 
     // ---------- Envío ----------
@@ -319,8 +307,19 @@ object FaroGroups {
         } ?: return
         when (incoming) {
             is FaroJoin.Incoming.Request -> {
-                rememberMember(incoming.groupId, incoming.memberKey.toHex(), incoming.memberName)
-                broadcastRaw(incoming.reply, incoming.replyTagHex)
+                // No entra nadie sin que el administrador lo acepte.
+                val req = JoinRequest(
+                    groupId = incoming.groupId,
+                    memberKeyHex = incoming.memberKey.toHex(),
+                    memberName = incoming.memberName,
+                    reply = incoming.reply,
+                    replyTagHex = incoming.replyTagHex,
+                    timestampMs = System.currentTimeMillis(),
+                )
+                _joinRequests.update { list -> list.filterNot { it.id == req.id } + req }
+                saveRequests()
+                val g = group(incoming.groupId)
+                if (g != null) appContext?.let { FaroNotifications.joinRequest(it, g.id, g.name, incoming.memberName) }
             }
             is FaroJoin.Incoming.Granted -> {
                 val id = incoming.groupId.toHex()
@@ -331,6 +330,7 @@ object FaroGroups {
                         keyHex = incoming.groupKey.toHex(),
                         createdAtMs = System.currentTimeMillis(),
                         shareLocation = true, // Aceptado en la ventana que lo explica.
+                        admin = false,
                     )
                     _groups.update { it + g }
                     save()
@@ -339,6 +339,21 @@ object FaroGroups {
                 }
             }
         }
+    }
+
+    /** El administrador deja entrar a quien lo ha pedido: le envía la clave del grupo cifrada. */
+    fun approve(request: JoinRequest) {
+        if (group(request.groupId)?.admin != true) return
+        rememberMember(request.groupId, request.memberKeyHex, request.memberName)
+        broadcastRaw(request.reply, request.replyTagHex)
+        _joinRequests.update { list -> list.filterNot { it.id == request.id } }
+        saveRequests()
+    }
+
+    /** Rechaza la solicitud: no se le envía nada y el enlace ya no sirve. */
+    fun reject(request: JoinRequest) {
+        _joinRequests.update { list -> list.filterNot { it.id == request.id } }
+        saveRequests()
     }
 
     private fun rememberMember(groupId: String, authorId: String, name: String) {
@@ -366,12 +381,25 @@ object FaroGroups {
         _groups.value.forEach { g ->
             arr.put(JSONObject().apply {
                 put("id", g.id); put("name", g.name); put("key", g.keyHex); put("created", g.createdAtMs)
-                g.parentId?.let { put("parent", it) }
+                put("admin", g.admin)
                 put("share", g.shareLocation)
                 put("members", JSONObject(g.members))
             })
         }
         p.edit().putString(KEY_GROUPS, arr.toString()).apply()
+    }
+
+    private fun saveRequests() {
+        val p = prefs ?: return
+        val arr = JSONArray()
+        _joinRequests.value.forEach { r ->
+            arr.put(JSONObject().apply {
+                put("g", r.groupId); put("k", r.memberKeyHex); put("n", r.memberName)
+                put("r", android.util.Base64.encodeToString(r.reply, android.util.Base64.NO_WRAP))
+                put("t", r.replyTagHex); put("ts", r.timestampMs)
+            })
+        }
+        p.edit().putString(KEY_REQUESTS, arr.toString()).apply()
     }
 
     private fun saveMessages(groupId: String) {
@@ -397,13 +425,31 @@ object FaroGroups {
                     name = o.getString("name"),
                     keyHex = o.getString("key"),
                     createdAtMs = o.optLong("created"),
-                    parentId = o.optString("parent").ifBlank { null },
+                    // Los grupos de versiones anteriores no lo guardaban: los trato como míos.
+                    admin = o.optBoolean("admin", true),
                     shareLocation = o.optBoolean("share", false),
                     members = membersObj.keys().asSequence().associateWith { membersObj.getString(it) },
                 )
             }.getOrNull()
         }
         _groups.value = list
+        val readObj = runCatching { JSONObject(p.getString(KEY_READ, "{}") ?: "{}") }.getOrDefault(JSONObject())
+        _lastRead.value = readObj.keys().asSequence().associateWith { readObj.optLong(it) }
+        val ra = JSONArray(p.getString(KEY_REQUESTS, "[]"))
+        val now = System.currentTimeMillis()
+        _joinRequests.value = (0 until ra.length()).mapNotNull { i ->
+            runCatching {
+                val o = ra.getJSONObject(i)
+                JoinRequest(
+                    groupId = o.getString("g"),
+                    memberKeyHex = o.getString("k"),
+                    memberName = o.getString("n"),
+                    reply = android.util.Base64.decode(o.getString("r"), android.util.Base64.NO_WRAP),
+                    replyTagHex = o.getString("t"),
+                    timestampMs = o.getLong("ts"),
+                )
+            }.getOrNull()
+        }.filter { now - it.timestampMs < REQUEST_TTL_MS && list.any { g -> g.id == it.groupId } }
         _messages.value = list.associate { g ->
             val ma = JSONArray(p.getString(msgKey(g.id), "[]"))
             g.id to (0 until ma.length()).mapNotNull { i ->

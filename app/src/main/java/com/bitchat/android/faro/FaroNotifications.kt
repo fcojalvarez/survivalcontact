@@ -60,6 +60,23 @@ object FaroNotifications {
         )
     }
 
+    fun joinRequest(ctx: Context, groupId: String, groupName: String, name: String) {
+        if (!canNotify(ctx)) return
+        val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
+        ensureChannels(nm)
+        val id = ("join" + groupId + name).hashCode()
+        nm.notify(
+            id,
+            NotificationCompat.Builder(ctx, CHANNEL_MESSAGES)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(groupName)
+                .setContentText("$name quiere entrar. Abre Faro para dejarle entrar o no.")
+                .setContentIntent(openApp(ctx, id))
+                .setAutoCancel(true)
+                .build()
+        )
+    }
+
     fun help(ctx: Context, groupId: String, groupName: String, author: String, distance: String?) {
         if (!canNotify(ctx)) return
         val nm = ctx.getSystemService(NotificationManager::class.java) ?: return

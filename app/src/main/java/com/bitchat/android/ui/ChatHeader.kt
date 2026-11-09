@@ -770,38 +770,6 @@ private fun MainHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                // Faro: acceso directo a los grupos privados (familia, mapa y chat).
-                var showFaroGroups by remember { mutableStateOf(false) }
-                HeaderIconButton(
-                    onClick = { showFaroGroups = true },
-                    contentDescription = "Grupos"
-                ) {
-                    Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Filled.Groups,
-                        contentDescription = "Grupos",
-                        modifier = Modifier.size(HeaderIconSize + 2.dp),
-                        tint = colorScheme.primary
-                    )
-                }
-                if (showFaroGroups) {
-                    com.bitchat.android.faro.ui.FaroGroupsDialog(onDismiss = { showFaroGroups = false })
-                }
-                // Enlace de invitación abierto desde fuera: abre los grupos con la confirmación.
-                val incomingLink by com.bitchat.android.faro.FaroDeepLink.pending.collectAsState()
-                var linkToShow by remember { mutableStateOf<String?>(null) }
-                LaunchedEffect(incomingLink) {
-                    incomingLink?.let {
-                        linkToShow = it
-                        com.bitchat.android.faro.FaroDeepLink.consume()
-                    }
-                }
-                linkToShow?.let { link ->
-                    com.bitchat.android.faro.ui.FaroGroupsDialog(
-                        onDismiss = { linkToShow = null },
-                        pendingInvite = link
-                    )
-                }
-
                 if (hasUnreadPrivateMessages.isNotEmpty()) {
                     HeaderIconButton(
                         onClick = { viewModel.openLatestUnreadPrivateChat() },
