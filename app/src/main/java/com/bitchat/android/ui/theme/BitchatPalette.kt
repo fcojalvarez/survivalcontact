@@ -48,26 +48,27 @@ data class BitchatPalette(
     val peerColors: PeerColorStyle,
 )
 
+// Faro: grises neutros cálidos; el ámbar marca lo tuyo (tus mensajes, menciones a ti).
 val DarkBitchatPalette = BitchatPalette(
-    inputOutline = Color(0xFF333635),
-    inputOutlineFocused = Color(0xFF5A605D),
-    inputSurface = Color(0xFF0B0B0B),
-    inputSurfaceFocused = Color(0xFF151515),
-    inputButton = Color(0xFF1E1E1E),
-    textTertiary = Color(0xFF6B776B),
-    accentOrange = Color(0xFFFF9F0A),
+    inputOutline = Color(0xFF1C1C1F),
+    inputOutlineFocused = Color(0xFF4A4740),
+    inputSurface = Color(0xFF1C1C1F),
+    inputSurfaceFocused = Color(0xFF232327),
+    inputButton = Color(0xFF26262A),
+    textTertiary = Color(0xFF6D6A64),
+    accentOrange = Color(0xFFFFB300),
     accentPurple = Color(0xFFBF5AF2),
     peerColors = PeerColorStyle.Dark,
 )
 
 val LightBitchatPalette = BitchatPalette(
-    inputOutline = Color(0xFFCFD3D1),
-    inputOutlineFocused = Color(0xFF8E9490),
-    inputSurface = Color(0xFFFAFAFA),
-    inputSurfaceFocused = Color(0xFFF2F2F2),
-    inputButton = Color(0xFFE8E8E8),
-    textTertiary = Color(0xFF757F75),
-    accentOrange = Color(0xFFFF9500),
+    inputOutline = Color(0xFFEAE5DB),
+    inputOutlineFocused = Color(0xFFB8B0A0),
+    inputSurface = Color(0xFFEFEAE0),
+    inputSurfaceFocused = Color(0xFFE8E2D6),
+    inputButton = Color(0xFFE0D9CC),
+    textTertiary = Color(0xFF8A857B),
+    accentOrange = Color(0xFFB86E00),
     accentPurple = Color(0xFFAF52DE),
     peerColors = PeerColorStyle.Light,
 )

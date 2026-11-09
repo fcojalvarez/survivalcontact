@@ -29,13 +29,13 @@
     <string name="battery_optimization_not_required">Optimización de batería no requerida</string>
     <string name="battery_optimization_checking">Verificando optimización de batería</string>
     <string name="battery_optimization_why_disable">¿Por qué deshabilitar la optimización de batería?</string>
-    <string name="battery_optimization_explanation">Faro funciona en segundo plano para mantener conexiones de red mesh con dispositivos cercanos. La optimización de batería puede interrumpir estas conexiones, causando que los mensajes lleguen tarde o se pierdan.\n\nDeshabilitar la optimización de batería asegura una comunicación peer-to-peer confiable.</string>
+    <string name="battery_optimization_explanation">Faro funciona en segundo plano para mantener conexiones de red con dispositivos cercanos. La optimización de batería puede interrumpir estas conexiones, causando que los mensajes lleguen tarde o se pierdan.\n\nDeshabilitar la optimización de batería asegura una comunicación fiable de móvil a móvil.</string>
     <string name="battery_optimization_disable_button">Deshabilitar optimización de batería</string>
     <string name="battery_optimization_note">Nota: Puedes cambiar esto más tarde en Configuración de Android > Apps > Faro > Batería.</string>
     <string name="battery_optimization_not_supported_explanation">Tu dispositivo no requiere configuraciones de optimización de batería. Faro funcionará normalmente.</string>
     <string name="battery_optimization_not_supported_message">Tu dispositivo no requiere configuraciones de optimización de batería. Faro funcionará normalmente.</string>
-    <string name="battery_optimization_success_message">Faro puede funcionar de manera confiable en segundo plano</string>
-    <string name="battery_optimization_benefits">• Entrega confiable de mensajes\n• Mantiene conexión de red mesh\n• Retransmisión de mensajes en segundo plano\n• Previene desconexiones</string>
+    <string name="battery_optimization_success_message">Faro puede funcionar de manera fiable en segundo plano</string>
+    <string name="battery_optimization_benefits">• Entrega fiable de mensajes\n• Mantiene conexión de red\n• Retransmisión de mensajes en segundo plano\n• Previene desconexiones</string>
     <string name="battery_optimization_check_again">Verificar de nuevo</string>
     <string name="battery_optimization_skip">Omitir por ahora</string>
     <string name="battery_optimization_continue">Continuar</string>
@@ -60,8 +60,8 @@
     <string name="notification_geohash_summary_title_mentions">Faro – %1$d menciones</string>
     <string name="notification_geohash_summary_title">Faro – Chats de ubicación</string>
     <string name="notification_geohash_summary_text">%1$d mensajes desde %2$d ubicaciones</string>
-    <string name="notification_mesh_mention_title_singular">Mencionado en chat mesh</string>
-    <string name="notification_mesh_mention_title_plural">%1$d menciones en chat mesh</string>
+    <string name="notification_mesh_mention_title_singular">Mencionado en chat de la red</string>
+    <string name="notification_mesh_mention_title_plural">%1$d menciones en chat de la red</string>
     <string name="notification_more_locations">y %1$d ubicaciones más</string>
     <string name="notification_and_more">y %1$d más</string>
 
@@ -75,12 +75,12 @@
     <string name="cd_unread_private_messages">Mensajes privados sin leer</string>
     <string name="cd_teleported">Teletransportado</string>
     <string name="cd_open_location_channels">Abrir ajustes de ubicación y canales</string>
-    <string name="cd_connected_peers">Pares conectados</string>
+    <string name="cd_connected_peers">Personas conectadas</string>
     <string name="cd_geohash_participants">Participantes geohash</string>
-    <string name="cd_ready_for_handshake">Listo para handshake</string>
-    <string name="cd_handshake_in_progress">Handshake en progreso</string>
+    <string name="cd_ready_for_handshake">Listo para conexión segura</string>
+    <string name="cd_handshake_in_progress">Estableciendo conexión segura</string>
     <string name="cd_encrypted">Cifrado de extremo a extremo</string>
-    <string name="cd_handshake_failed">Handshake fallido</string>
+    <string name="cd_handshake_failed">No se pudo establecer la conexión segura</string>
 
     <!-- Diálogo de visor de archivos -->
     <string name="file_viewer_title">📎 Archivo recibido</string>
@@ -92,10 +92,10 @@
     <string name="pick_image">Elegir imagen</string>
 
     <!-- Hoja Acerca de -->
-    <string name="about_offline_mesh_title">Chat mesh sin conexión</string>
+    <string name="about_offline_mesh_title">Chat sin internet</string>
     <string name="about_offline_mesh_desc">Comunícate directamente a través de Bluetooth LE sin internet o servidores. Los mensajes se retransmiten a través de dispositivos cercanos para extender el alcance.</string>
     <string name="about_online_geohash_title">Canales geohash en línea</string>
-    <string name="about_online_geohash_desc">Conéctate con personas cerca de ti a través de canales basados en geohash. Extiende la red mesh a través de repetidores de internet público.</string>
+    <string name="about_online_geohash_desc">Conéctate con personas cerca de ti a través de canales basados en geohash. Extiende la red a través de repetidores de internet público.</string>
     <string name="about_e2e_title">Cifrado de extremo a extremo</string>
     <string name="about_e2e_desc">Los mensajes privados están cifrados. Los mensajes de canal son públicos.</string>
     <string name="about_system">Sistema</string>
@@ -157,7 +157,7 @@
     <string name="cd_image_index_of">Imagen %1$d de %2$d</string>
     <string name="cd_privacy_protected">Privacidad protegida</string>
     <string name="cd_record_voice">Grabar nota de voz</string>
-    <string name="cd_offline_mesh_chat">Chat mesh sin conexión</string>
+    <string name="cd_offline_mesh_chat">Chat sin internet</string>
     <string name="cd_online_geohash_channels">Canales geohash en línea</string>
     <string name="cd_end_to_end_encryption">Cifrado de extremo a extremo</string>
 
@@ -199,7 +199,7 @@
     <string name="teleport">teletransportar</string>
     <string name="disable_location_services">Deshabilitar servicios de ubicación</string>
     <string name="enable_location_services">Habilitar servicios de ubicación</string>
-    <string name="mesh_label">mesh</string>
+    <string name="mesh_label">red</string>
     <string name="location_level_block">Cuadra</string>
     <string name="location_level_neighborhood">Barrio</string>
     <string name="location_level_city">Ciudad</string>
@@ -211,7 +211,7 @@
     <string name="debug_tools">Herramientas de depuración</string>
     <string name="debug_tools_desc">Herramientas de desarrollador para diagnóstico y control</string>
     <string name="debug_verbose_logging">registro detallado</string>
-    <string name="debug_verbose_hint">Registra uniones/salidas de pares, dirección de conexión, retransmisión de paquetes y repetidores</string>
+    <string name="debug_verbose_hint">Registra entradas y salidas de personas, dirección de conexión, retransmisión de paquetes y repetidores</string>
     <string name="debug_bluetooth_roles">Roles de Bluetooth</string>
     <string name="debug_gatt_server">Servidor GATT</string>
     <string name="debug_connections_fmt">Conexiones: %1$d / %2$d</string>
@@ -246,7 +246,7 @@
     <string name="privacy_first">Privacidad primero</string>
     <string name="location_explanation">Faro NO rastrea tu ubicación.\n\nLos servicios de ubicación son requeridos para el escaneo Bluetooth y la función de chat geohash.</string>
     <string name="location_needs_for">Faro necesita servicios de ubicación para:</string>
-    <string name="location_needs_bullets">• Escaneo de dispositivos Bluetooth\n• Descubrir usuarios cercanos en la red mesh\n• Función de chat geohash\n• Sin rastreo o recolección de ubicación</string>
+    <string name="location_needs_bullets">• Escaneo de dispositivos Bluetooth\n• Descubrir usuarios cercanos en la red\n• Función de chat geohash\n• Sin rastreo o recolección de ubicación</string>
     <string name="open_location_settings">Abrir configuraciones de ubicación</string>
     <string name="check_again">Verificar de nuevo</string>
     <string name="location_services_unavailable">Servicios de ubicación no disponibles</string>
@@ -254,28 +254,28 @@
     <string name="checking_location_services">Verificando servicios de ubicación…</string>
     <string name="bluetooth_required">Bluetooth requerido</string>
     <string name="bluetooth_needs_for">Faro necesita Bluetooth para:</string>
-    <string name="bluetooth_needs_bullets">• Descubrir usuarios cercanos\n• Crear conexiones de red mesh\n• Enviar y recibir mensajes\n• Funcionar sin internet o servidores</string>
+    <string name="bluetooth_needs_bullets">• Descubrir usuarios cercanos\n• Crear conexiones de red\n• Enviar y recibir mensajes\n• Funcionar sin internet o servidores</string>
     <string name="enable_bluetooth">Habilitar Bluetooth</string>
     <string name="bluetooth_not_supported">Bluetooth no soportado</string>
-    <string name="bluetooth_unsupported_explanation">Este dispositivo no soporta Bluetooth Low Energy (BLE), que es requerido para que Faro funcione.\n\nFaro requiere BLE para crear redes mesh y comunicarse con dispositivos cercanos sin internet.</string>
+    <string name="bluetooth_unsupported_explanation">Este dispositivo no soporta Bluetooth de bajo consumo, que es requerido para que Faro funcione.\n\nFaro requiere Bluetooth de bajo consumo para crear redes entre móviles y comunicarse con dispositivos cercanos sin internet.</string>
     <string name="checking_bluetooth_status">Verificando estado de Bluetooth…</string>
     <string name="battery_optimization_detected_title">Optimización de batería detectada</string>
     <string name="battery_optimization_enabled_title">Optimización de batería habilitada</string>
-    <string name="battery_optimization_explanation_short">Faro necesita funcionar en segundo plano para mantener conexiones mesh. La optimización de batería puede interrumpir estas conexiones.</string>
+    <string name="battery_optimization_explanation_short">Faro necesita funcionar en segundo plano para mantener conexiones de la red. La optimización de batería puede interrumpir estas conexiones.</string>
     <string name="benefits_of_disabling">Beneficios de deshabilitar</string>
-    <string name="battery_benefits_short">• entrega confiable de mensajes\n• mantiene conectividad mesh\n• previene desconexiones</string>
+    <string name="battery_benefits_short">• entrega fiable de mensajes\n• mantiene conexión a la red\n• previene desconexiones</string>
     <string name="disable_battery_optimization">Deshabilitar optimización de batería</string>
     <string name="battery_optimization_disabled_title">Optimización de batería deshabilitada</string>
     <string name="continue_btn">Continuar</string>
-    <string name="initializing_mesh_network">Inicializando red mesh</string>
-    <string name="setting_up_bluetooth">Configurando red mesh Bluetooth…</string>
+    <string name="initializing_mesh_network">Iniciando red</string>
+    <string name="setting_up_bluetooth">Configurando red Bluetooth…</string>
     <string name="should_take_seconds">Esto debería tomar solo unos segundos</string>
     <string name="setup_not_complete">Configuración no completada</string>
     <string name="try_again">Intentar de nuevo</string>
-    <string name="privacy_protected">Tu privacidad está protegida</string>
-    <string name="privacy_bullets">• sin rastreo o recolección de datos\n• chats mesh Bluetooth son completamente offline\n• chats geohash usan internet</string>
-    <string name="permissions_header">Permisos</string>
-    <string name="grant_permissions">Otorgar permisos</string>
+    <string name="privacy_protected">Privado de verdad</string>
+    <string name="privacy_bullets">• Sin cuentas, sin número de teléfono y sin servidores\n• Los mensajes van de móvil a móvil, sin internet\n• Nadie guarda ni rastrea tu ubicación</string>
+    <string name="permissions_header">Para funcionar, Faro necesita</string>
+    <string name="grant_permissions">Continuar</string>
     <string name="location_tracking_warning">Faro NO rastrea tu ubicación</string>
     <string name="nobody_around">nadie por aquí…</string>
     <string name="you_suffix"> (tú)</string>
@@ -302,7 +302,7 @@
     <string name="perm_location_system">Faro necesita esto para escanear dispositivos cercanos</string>
     <string name="perm_notifications_desc">Recibir notificaciones cuando recibas mensajes privados</string>
     <string name="perm_notifications_system">Permitir que Faro te envíe notificaciones</string>
-    <string name="perm_battery_desc">Deshabilitar optimización de batería para asegurar que Faro funcione de manera confiable en segundo plano y mantenga conexiones de red mesh</string>
+    <string name="perm_battery_desc">Deshabilitar optimización de batería para asegurar que Faro funcione de manera fiable en segundo plano y mantenga conexiones de red</string>
     <string name="perm_battery_system">Permitir que Faro funcione sin restricciones de batería</string>
 
     <!-- Tipos de permisos -->
@@ -345,7 +345,7 @@
   <string name="dismiss">cerrar</string>
   <string name="location_notes_input_placeholder">agrega una nota para este lugar</string>
     <string name="bluetooth_recommended">Bluetooth recomendado</string>
-    <string name="mesh_service_notification_content">Mesh en ejecución — %1$d pares</string>
+    <string name="mesh_service_notification_content">Red activa — %1$d personas cerca</string>
 
   <string name="verify_title">verificar</string>
   <string name="verify_my_qr_title">escanear para verificarme</string>
@@ -374,7 +374,7 @@
   <string name="fingerprint_not_verified_label">no verificado</string>
   <string name="fingerprint_not_verified_message_fmt">compara huellas con %1$s por canal seguro.</string>
   <string name="fingerprint_mark_verified">marcar verificado</string>
-  <string name="fingerprint_start_handshake">iniciar handshake</string>
+  <string name="fingerprint_start_handshake">iniciar conexión segura</string>
   <string name="fingerprint_copy">copiar</string>
   <string name="verify_mutual_match_title">Verificación mutua</string>
   <string name="verify_mutual_match_body">Tú y %1$s se verificaron</string>

@@ -11,27 +11,26 @@ import androidx.compose.ui.unit.sp
 import com.bitchat.android.R
 
 /**
- * The bundled Geist Mono family used throughout the app.
- *
- * Keeping the fonts in the APK preserves offline behavior and guarantees that the design-spec
- * metrics do not depend on which monospace family a device happens to provide.
+ * Faro: letra Inter (licencia OFL, ver docs/licencias/Inter-OFL.txt), recortada a
+ * caracteres latinos. Va dentro del APK para que la app se vea igual sin internet
+ * en cualquier móvil.
  */
 internal val BitchatFontFamily = FontFamily(
-    Font(R.font.geist_mono_regular, FontWeight.Normal),
-    Font(R.font.geist_mono_medium, FontWeight.Medium),
-    Font(R.font.geist_mono_semibold, FontWeight.SemiBold),
-    Font(R.font.geist_mono_bold, FontWeight.Bold),
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+    Font(R.font.inter_bold, FontWeight.Bold),
 )
 
 /** Exact typography, spacing, and opacity values exported for the chat transcript. */
 internal object ChatVisualTokens {
-    val MessageBodyFontSize: TextUnit = 14.sp
-    val MessageBodyLineHeight: TextUnit = 20.sp
-    val SenderFontSize: TextUnit = 14.sp
+    val MessageBodyFontSize: TextUnit = 15.sp
+    val MessageBodyLineHeight: TextUnit = 21.sp
+    val SenderFontSize: TextUnit = 13.sp
     val SenderLineHeight: TextUnit = 16.sp
     val SystemActionFontSize: TextUnit = 12.sp
     val SystemActionLineHeight: TextUnit = 16.sp
-    val SystemTimeFontSize: TextUnit = 10.sp
+    val SystemTimeFontSize: TextUnit = 11.sp
 
     val MessageItemSpacing: Dp = 8.dp
     val SenderTopPadding: Dp = 8.dp
@@ -40,17 +39,17 @@ internal object ChatVisualTokens {
     // MARK: - Bubble geometry (ChatUiMode.Bubbles)
 
     /** Rounded corner on the three "free" corners of a message bubble. */
-    val BubbleCornerRadius: Dp = 16.dp
+    val BubbleCornerRadius: Dp = 20.dp
 
     /** Tightened corner on the speaker's own side, giving the bubble a subtle tail. */
-    val BubbleTailRadius: Dp = 4.dp
+    val BubbleTailRadius: Dp = 6.dp
 
     /** Padding inside a bubble, around the text. */
-    val BubblePaddingHorizontal: Dp = 12.dp
-    val BubblePaddingVertical: Dp = 8.dp
+    val BubblePaddingHorizontal: Dp = 14.dp
+    val BubblePaddingVertical: Dp = 10.dp
 
     /** A bubble never grows past this fraction of the list width, so long lines still wrap. */
-    const val BubbleMaxWidthFraction: Float = 0.80f
+    const val BubbleMaxWidthFraction: Float = 0.78f
 
     /**
      * Author-colour wash inside a bubble. Matches the mention-chip treatment so a tinted

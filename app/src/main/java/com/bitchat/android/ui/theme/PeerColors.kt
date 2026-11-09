@@ -24,7 +24,7 @@ data class PeerColorStyle(
 ) {
     companion object {
         /** Soft pastels that stay bright enough on near-black chat surfaces. */
-        val Dark = PeerColorStyle(saturation = 0.55f, value = 0.82f)
+        val Dark = PeerColorStyle(saturation = 0.45f, value = 0.95f)
 
         /** Deeper, less saturated tones that stay readable on near-white surfaces. */
         val Light = PeerColorStyle(saturation = 0.70f, value = 0.42f)

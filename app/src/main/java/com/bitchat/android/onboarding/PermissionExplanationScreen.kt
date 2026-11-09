@@ -23,6 +23,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import com.bitchat.android.ui.theme.BitchatFontFamily
 import com.bitchat.android.R
 
@@ -59,35 +64,45 @@ fun PermissionExplanationScreen(
                     .padding(bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Bottom,
-                    modifier = Modifier.fillMaxWidth()
+                // Faro: logo, nombre grande y lema.
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color.Black)
                 ) {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.headlineLarge.copy(
-                            fontFamily = BitchatFontFamily,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 32.sp
-                        ),
-                        color = colorScheme.onBackground
+                    Image(
+                        painter = painterResource(R.drawable.ic_launcher_foreground),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontFamily = BitchatFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 40.sp,
+                        lineHeight = 44.sp
+                    ),
+                    color = colorScheme.onBackground
+                )
 
                 Text(
                     text = stringResource(R.string.about_tagline),
-                    fontSize = 12.sp,
+                    fontSize = 19.sp,
+                    lineHeight = 26.sp,
                     fontFamily = BitchatFontFamily,
-                    color = colorScheme.onBackground.copy(alpha = 0.7f)
+                    color = colorScheme.onSurfaceVariant
                 )
             }
 
             // Privacy assurance section - matching AboutSheet card style
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = colorScheme.surfaceVariant.copy(alpha = 0.25f),
-                shape = RoundedCornerShape(12.dp)
+                color = colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(20.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -144,16 +159,21 @@ fun PermissionExplanationScreen(
         // Fixed button at the bottom
         Button(
             onClick = onContinue,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(percent = 50),
             colors = ButtonDefaults.buttonColors(
-                containerColor = colorScheme.primary
+                containerColor = colorScheme.primary,
+                contentColor = colorScheme.onPrimary
             )
         ) {
             Text(
                 text = stringResource(R.string.grant_permissions),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontFamily = BitchatFontFamily,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp
                 )
             )
         }
