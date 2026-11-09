@@ -77,6 +77,16 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 - General, con el estado a la derecha: Avisos, Ahorro de batería, Mapa sin conexión (zona y tamaño), Compartir Faro, Actualizaciones, Privacidad y seguridad, Idioma.
 - Pie: versión y «código abierto».
 
+## 6. Crear grupo, invitar y entrar (aprobado)
+
+![Crear, invitar y entrar](08-grupo-invitar-flujo.png)
+
+1. **Crear grupo** (desde «＋» en Chats): nombre y color (5 pastel). Quien lo crea es el administrador.
+2. **Invitar:** QR grande para quien está contigo y botón «Enviar enlace…», que abre el **menú nativo de compartir** de Android (WhatsApp, Telegram, SMS…). Ni el QR ni el enlace dan acceso por sí solos.
+3. **Quien recibe la invitación** (QR o enlace): ventana con el grupo, quién invita, caras y nombres de quienes están, aviso de que compartirá su ubicación para emergencias (desactivable) y «No, gracias» / «Pedir entrar».
+4. **Esperando la aceptación:** «Esperando a Fran…». El administrador lo ve en Inicio › Importantes con «Sí, dejarle entrar» / «No». Al aceptar, la clave del grupo llega cifrada solo para esa persona.
+- **Cambio de seguridad:** el QR ya no da acceso inmediato; también necesita la aceptación del administrador.
+
 ## Pendientes de diseñar
 
-Crear grupo, invitar (enlace/QR), aceptar invitación, bienvenida y permisos.
+Bienvenida y permisos.
