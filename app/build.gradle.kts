@@ -36,8 +36,10 @@ android {
         applicationId = "com.bitchat.droid"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 42
-        versionName = "2.2.0"
+        // Faro: GitHub Actions pasa un número creciente en cada compilación para que las
+        // actualizaciones se detecten; en local se usa el valor de partida.
+        versionCode = providers.environmentVariable("FARO_VERSION_CODE").orNull?.toIntOrNull() ?: 42
+        versionName = providers.environmentVariable("FARO_VERSION_NAME").orNull ?: "0.1.0-local"
         buildConfigField(
             "String",
             "GITHUB_RELEASE_CERT_SHA256",

@@ -10,4 +10,8 @@
     <cache-path
         name="apk_share"
         path="apk_share/" />
+    <!-- Faro: APK de actualización descargado -->
+    <cache-path
+        name="updates"
+        path="updates/" />
 </paths>

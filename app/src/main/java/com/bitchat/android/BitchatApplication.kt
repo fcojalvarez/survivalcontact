@@ -16,6 +16,9 @@ class BitchatApplication : Application() {
         // Faro: español por defecto la primera vez que se abre la app.
         try { com.bitchat.android.ui.LanguagePreferenceManager.applyDefaultLanguageOnce(this) } catch (_: Exception) { }
 
+        // Faro: comprobación diaria de actualizaciones (solo Wi‑Fi y batería suficiente).
+        try { com.bitchat.android.update.FaroUpdater.schedule(this) } catch (_: Exception) { }
+
         // Start the single process-wide power policy before transport components are constructed.
         com.bitchat.android.mesh.PowerManager.getInstance(this).start()
 

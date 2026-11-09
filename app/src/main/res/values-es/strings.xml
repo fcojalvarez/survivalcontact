@@ -632,4 +632,9 @@
     <string name="tor_not_available_in_this_build">Tor no está disponible en esta versión</string>
     <string name="checking">Comprobando…</string>
     <string name="apk_not_ready_please_prepare_it_first">El APK no está listo. Prepáralo primero.</string>
+    <!-- Faro: actualizaciones -->
+    <string name="faro_update_channel_name">Actualizaciones de Faro</string>
+    <string name="faro_update_channel_desc">Avisa cuando hay una versión nueva de Faro lista para instalar</string>
+    <string name="faro_update_title">Nueva versión de Faro</string>
+    <string name="faro_update_text">La versión %1$s está lista. Toca para instalarla.</string>
 </resources>

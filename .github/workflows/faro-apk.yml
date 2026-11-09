@@ -17,6 +17,9 @@ concurrency:
 
 env:
   SETUP_JAVA_VERSION: 21.0.11+10.0.LTS
+  # Número de versión creciente: las actualizaciones OTA comparan este número.
+  FARO_VERSION_CODE: ${{ github.run_number }}00
+  FARO_VERSION_NAME: 0.1.${{ github.run_number }}
 
 jobs:
   apk:
@@ -46,6 +49,9 @@ jobs:
 
       - name: Compilar
         run: ./gradlew :app:assembleDebug
+
+      - name: Tests de Faro
+        run: ./gradlew :app:testDebugUnitTest --tests 'com.bitchat.android.update.*'
 
       - name: Preparar el APK
         run: |
@@ -77,3 +83,28 @@ jobs:
             --prerelease \
             --title "Faro — versión de prueba" \
             --notes "$notas"
+
+      # Publica la versión en el repositorio público fcojalvarez/faro-releases, del que la
+      # app descarga las actualizaciones. Necesita el secreto FARO_RELEASES_TOKEN (un token
+      # con permiso de escritura solo en ese repositorio); sin él, este paso se salta.
+      - name: Publicar en faro-releases (actualizaciones OTA)
+        env:
+          GH_TOKEN: ${{ secrets.FARO_RELEASES_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::Falta el secreto FARO_RELEASES_TOKEN; no se publica en faro-releases."
+            exit 0
+          fi
+          repo="fcojalvarez/faro-releases"
+          tag="v${FARO_VERSION_NAME}"
+          cp faro-prueba.apk faro.apk
+          sha=$(sha256sum faro.apk | cut -d' ' -f1)
+          url="https://github.com/${repo}/releases/download/${tag}/faro.apk"
+          printf '{"versionCode":%s,"versionName":"%s","apkUrl":"%s","sha256":"%s"}\n' \
+            "$FARO_VERSION_CODE" "$FARO_VERSION_NAME" "$url" "$sha" > version.json
+          cat version.json
+          gh release create "$tag" faro.apk version.json \
+            -R "$repo" \
+            --latest \
+            --title "Faro ${FARO_VERSION_NAME}" \
+            --notes "Compilada desde ${GITHUB_REPOSITORY}@${GITHUB_SHA::7}. Descarga faro.apk para instalar Faro."

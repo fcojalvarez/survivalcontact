@@ -670,4 +670,9 @@
     <string name="cd_show_whole_globe">Show the whole globe</string>
     <string name="cd_globe_activity">%1$d active chats, %2$d people online</string>
     <string name="cd_channel_activity">%1$d people, %2$d messages in the last hour</string>
+    <!-- Faro: actualizaciones -->
+    <string name="faro_update_channel_name">Faro updates</string>
+    <string name="faro_update_channel_desc">Notifies when a new version of Faro is ready to install</string>
+    <string name="faro_update_title">New version of Faro</string>
+    <string name="faro_update_text">Version %1$s is ready. Tap to install.</string>
 </resources>

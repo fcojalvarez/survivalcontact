@@ -8,6 +8,7 @@ Una app Android, gratuita y sin servidores, para mantener el contacto en un apag
 
 - **Primera versión: solo Android.** iOS limita el Bluetooth en segundo plano y eso rompe el envío automático de ubicación.
 - **Sin internet en ningún momento** salvo para instalar la app y descargar el mapa antes de la emergencia.
+- **Única excepción: actualizaciones.** Si hay Wi‑Fi, la app comprueba como mucho una vez al día si hay versión nueva en el repositorio público `fcojalvarez/faro-releases`, la descarga, comprueba la huella y la firma, y avisa para instalarla. Nunca se usa internet para mensajes, ubicaciones ni otros datos. Las actualizaciones también se pueden pasar de móvil a móvil sin internet.
 - **Prioridad absoluta: batería.** Cada decisión técnica se mide por cuánto consume.
 - Fuera de alcance de la v1: llamadas de voz, fotos, iOS y publicación en tiendas.
 
@@ -117,7 +118,7 @@ Las cifras son de partida y hay que ajustarlas midiendo en móviles reales.
 - **"Pedir ubicación"**: un miembro puede solicitar tu posición actual en lugar de que la envíes sin parar.
 - **Pantalla**: tema oscuro puro (negro OLED), sin animaciones, y la brújula se actualiza solo con la pantalla encendida.
 - **Paquetes mínimos** y TTL más bajo para posiciones que para mensajes de texto.
-- **Sin trabajo en segundo plano innecesario**: nada de sincronizaciones, analíticas ni comprobaciones de actualizaciones.
+- **Sin trabajo en segundo plano innecesario**: nada de sincronizaciones ni analíticas. La comprobación de actualizaciones es la única tarea periódica: una vez al día, solo con Wi‑Fi y batería suficiente.
 
 ## Fases de desarrollo
 
