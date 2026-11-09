@@ -98,6 +98,7 @@ internal fun GroupChatScreen(nav: FaroNav, groupId: String) {
         if (msgs.isNotEmpty()) listState.scrollToItem(msgs.size - 1)
     }
 
+    Column(Modifier.fillMaxSize()) {
     Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = { nav.back() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver") }
         Row(
@@ -170,6 +171,7 @@ internal fun GroupChatScreen(nav: FaroNav, groupId: String) {
         ) { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Enviar", tint = FaroColors.AccentInk, modifier = Modifier.size(20.dp)) }
     }
 
+    }
     if (askLeave) LeaveDialog(g.name, onLeave = { askLeave = false; FaroGroups.leaveGroup(g.id); nav.home(Tab.CHATS) }, onCancel = { askLeave = false })
 }
 
