@@ -41,3 +41,7 @@
 -keepclassmembers class * implements android.location.LocationListener {
     public <methods>;
 }
+
+# Faro: grupos, mapa y actualizaciones (sin reflexión, se conservan por seguridad).
+-keep class com.bitchat.android.faro.** { *; }
+-keep class com.bitchat.android.update.** { *; }

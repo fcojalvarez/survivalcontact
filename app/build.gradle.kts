@@ -81,6 +81,10 @@ android {
             if (releaseUiTests) {
                 signingConfig = signingConfigs.getByName("debug")
                 proguardFiles("release-instrumentation.pro")
+            } else if (providers.environmentVariable("FARO_RELEASE_SIGNING").orNull == "debug") {
+                // Faro: versión optimizada firmada con la clave de pruebas (GitHub Actions),
+                // para que se instale encima de las versiones de prueba anteriores.
+                signingConfig = signingConfigs.getByName("debug")
             }
             isMinifyEnabled = true
             isShrinkResources = true
