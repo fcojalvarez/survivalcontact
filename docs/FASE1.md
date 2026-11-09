@@ -64,9 +64,11 @@ Es el paso delicado: toca el envío de mensajes.
 
 ### Paso 6 — Nombre, icono e identificador propios
 
-1. `res/values/strings.xml`: `app_name`. Hay 35 carpetas de traducciones (`values-*`) con el nombre «bitchat» en textos: buscar y sustituir.
-2. Icono: `res/mipmap-*` e `ic_launcher.xml` / `ic_launcher_round.xml`.
-3. `applicationId` en `app/build.gradle.kts` (hoy `com.bitchat.droid`): cambiarlo para que la app conviva con Bitchat en el mismo móvil.
+**Nombre elegido: Faro.** Lema: «Te guía hasta los tuyos en la oscuridad». Antes de publicar, comprobar que no choca con otra app en Google Play y F-Droid ni con una marca registrada en la OEPM; si choca, usar una variante como «Faro Familia».
+
+1. `res/values/strings.xml`: `app_name` = `Faro`. Hay 35 carpetas de traducciones (`values-*`) con el nombre «bitchat» en textos: buscar y sustituir.
+2. Icono: `res/mipmap-*` e `ic_launcher.xml` / `ic_launcher_round.xml`. Idea: un faro sencillo con un haz de luz, en blanco sobre negro (encaja con el tema oscuro OLED).
+3. `applicationId` en `app/build.gradle.kts` (hoy `com.bitchat.droid`): cambiarlo para que la app conviva con Bitchat en el mismo móvil. Propuesta: `io.github.fcojalvarez.faro` (formato habitual en F-Droid; no se puede cambiar después de publicar).
 4. El paquete Kotlin `com.bitchat.android` se puede dejar como está: renombrarlo toca los 290 ficheros y complica traer mejoras del proyecto original. No se ve desde fuera.
 5. Revisar `README.md`, `PRIVACY_POLICY.md`, `fastlane/metadata` y la pantalla «Acerca de»: créditos a bitchat (obligatorio por la GPL) y nombre nuevo.
 

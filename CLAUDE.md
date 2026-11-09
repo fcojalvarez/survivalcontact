@@ -1,4 +1,4 @@
-# survivalcontact
+# Faro (repositorio survivalcontact)
 
 App Android de comunicación offline para emergencias, basada en un fork de bitchat-android.
 

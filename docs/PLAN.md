@@ -1,4 +1,6 @@
-# Plan técnico: app de comunicación offline para emergencias
+# Faro — plan técnico: app de comunicación offline para emergencias
+
+**Nombre: Faro.** Lema: «Te guía hasta los tuyos en la oscuridad».
 
 ## Objetivo y alcance
 
@@ -121,7 +123,7 @@ Las cifras son de partida y hay que ajustarlas midiendo en móviles reales.
 
 Cinco fases, cada una termina con una prueba en móviles reales antes de pasar a la siguiente.
 
-1. **Fork y limpieza.** Compilar el proyecto, quitar Nostr, Tor y geohash, poner nombre e icono propios.
+1. **Fork y limpieza.** Compilar el proyecto, quitar Nostr, Tor y geohash, poner nombre (Faro) e icono propios.
    - Listo cuando: dos móviles en modo avión se envían mensajes.
 2. **Grupos y subgrupos.** Modelo de datos, claves de grupo, etiqueta de grupo en los paquetes, roles y rotación de clave.
    - Listo cuando: un tercer móvil sin la clave reenvía los mensajes pero no puede leerlos.
