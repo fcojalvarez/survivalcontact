@@ -66,7 +66,7 @@ class CommandProcessor(
             if (success) {
                 val systemMessage = BitchatMessage(
                     sender = "system",
-                    content = "joined channel $channel",
+                    content = "te has unido al canal $channel",
                     timestamp = Date(),
                     isRelay = false
                 )
@@ -75,7 +75,7 @@ class CommandProcessor(
         } else {
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "usage: /join <channel>",
+                content = "uso: /join <canal>",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -107,7 +107,7 @@ class CommandProcessor(
                     } else {
                         val systemMessage = BitchatMessage(
                             sender = "system",
-                            content = "started private chat with $targetName",
+                            content = "chat privado con $targetName iniciado",
                             timestamp = Date(),
                             isRelay = false
                         )
@@ -117,7 +117,7 @@ class CommandProcessor(
             } else {
                 val systemMessage = BitchatMessage(
                     sender = "system",
-                    content = "user '$targetName' not found. they may be offline or using a different nickname.",
+                    content = "no se encuentra a '$targetName'. puede que esté desconectado o use otro nombre.",
                     timestamp = Date(),
                     isRelay = false
                 )
@@ -126,7 +126,7 @@ class CommandProcessor(
         } else {
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "usage: /msg <nickname> [message]",
+                content = "uso: /msg <nombre> [mensaje]",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -216,7 +216,7 @@ class CommandProcessor(
         if (currentChannel == null) {
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "you must be in a channel to set a password.",
+                content = "tienes que estar en un canal para ponerle contraseña.",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -228,7 +228,7 @@ class CommandProcessor(
             if(!channelManager.isChannelCreator(channel = currentChannel, peerID = peerID)){
                 val systemMessage = BitchatMessage(
                     sender = "system",
-                    content = "you must be the channel creator to set a password.",
+                    content = "solo quien creó el canal puede ponerle contraseña.",
                     timestamp = Date(),
                     isRelay = false
                 )
@@ -239,7 +239,7 @@ class CommandProcessor(
             channelManager.setChannelPassword(currentChannel, newPassword)
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "password changed for channel $currentChannel",
+                content = "contraseña cambiada en el canal $currentChannel",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -248,7 +248,7 @@ class CommandProcessor(
         else{
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "usage: /pass <password>",
+                content = "uso: /pass <contraseña>",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -280,7 +280,7 @@ class CommandProcessor(
         } else {
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "usage: /unblock <nickname>",
+                content = "uso: /unblock <nombre>",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -344,7 +344,7 @@ class CommandProcessor(
         } else {
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "usage: /${parts[0].removePrefix("/")} <nickname>",
+                content = "uso: /${parts[0].removePrefix("/")} <nombre>",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -443,7 +443,7 @@ class CommandProcessor(
     private fun handleUnknownCommand(cmd: String) {
         val systemMessage = BitchatMessage(
             sender = "system",
-            content = "unknown command: $cmd. type / to see available commands.",
+            content = "comando desconocido: $cmd. escribe / para ver los comandos.",
             timestamp = Date(),
             isRelay = false
         )

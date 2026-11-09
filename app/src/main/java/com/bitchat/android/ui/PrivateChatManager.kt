@@ -63,7 +63,7 @@ class PrivateChatManager(
             val peerNickname = route.displayName ?: getPeerNickname(peerID, meshService)
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "cannot start chat with $peerNickname: user is blocked.",
+                content = "no puedes chatear con $peerNickname: está bloqueado.",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -109,7 +109,7 @@ class PrivateChatManager(
         if (isPeerBlocked(peerID)) {
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "cannot send message to $recipientNickname: user is blocked.",
+                content = "no puedes escribir a $recipientNickname: está bloqueado.",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -152,7 +152,7 @@ class PrivateChatManager(
         if (isPeerBlocked(peerID)) {
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "cannot send message to $recipientNickname: user is blocked.",
+                content = "no puedes escribir a $recipientNickname: está bloqueado.",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -272,7 +272,7 @@ class PrivateChatManager(
             val peerNickname = getPeerNickname(peerID, meshService)
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "blocked user $peerNickname",
+                content = "has bloqueado a $peerNickname",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -296,7 +296,7 @@ class PrivateChatManager(
             val peerNickname = getPeerNickname(peerID, meshService)
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "unblocked user $peerNickname",
+                content = "has desbloqueado a $peerNickname",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -314,7 +314,7 @@ class PrivateChatManager(
         } else {
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "user '$targetName' not found",
+                content = "no se encuentra a '$targetName'",
                 timestamp = Date(),
                 isRelay = false
             )
@@ -333,7 +333,7 @@ class PrivateChatManager(
             } else {
                 val systemMessage = BitchatMessage(
                     sender = "system",
-                    content = "user '$targetName' is not blocked",
+                    content = "'$targetName' no está bloqueado",
                     timestamp = Date(),
                     isRelay = false
                 )
@@ -343,7 +343,7 @@ class PrivateChatManager(
         } else {
             val systemMessage = BitchatMessage(
                 sender = "system",
-                content = "user '$targetName' not found",
+                content = "no se encuentra a '$targetName'",
                 timestamp = Date(),
                 isRelay = false
             )

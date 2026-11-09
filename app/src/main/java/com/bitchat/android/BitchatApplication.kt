@@ -13,6 +13,9 @@ class BitchatApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        // Faro: español por defecto la primera vez que se abre la app.
+        try { com.bitchat.android.ui.LanguagePreferenceManager.applyDefaultLanguageOnce(this) } catch (_: Exception) { }
+
         // Start the single process-wide power policy before transport components are constructed.
         com.bitchat.android.mesh.PowerManager.getInstance(this).start()
 

@@ -23,6 +23,20 @@ object LanguagePreferenceManager {
         )
     }
 
+    /**
+     * Faro: la primera vez que se abre la app, se pone en español aunque el móvil
+     * esté en otro idioma. Solo se hace una vez, para respetar lo que el usuario
+     * elija después en Ajustes (incluido «idioma del sistema»).
+     */
+    fun applyDefaultLanguageOnce(context: Context) {
+        val prefs = context.getSharedPreferences(FARO_PREFS, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_DEFAULT_APPLIED, false)) return
+        if (AppCompatDelegate.getApplicationLocales().isEmpty) {
+            setLanguage(DEFAULT_LANGUAGE_TAG)
+        }
+        prefs.edit().putBoolean(KEY_DEFAULT_APPLIED, true).apply()
+    }
+
     fun supportedLanguages(
         context: Context,
         @XmlRes localeConfig: Int = R.xml.locales_config,
@@ -57,5 +71,8 @@ object LanguagePreferenceManager {
         }
     }
 
+    private const val FARO_PREFS = "faro_language"
+    private const val KEY_DEFAULT_APPLIED = "default_language_applied"
+    private const val DEFAULT_LANGUAGE_TAG = "es"
     private const val ANDROID_NAMESPACE = "http://schemas.android.com/apk/res/android"
 }
