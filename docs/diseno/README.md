@@ -87,6 +87,14 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 4. **Esperando la aceptación:** «Esperando a Fran…». El administrador lo ve en Inicio › Importantes con «Sí, dejarle entrar» / «No». Al aceptar, la clave del grupo llega cifrada solo para esa persona.
 - **Cambio de seguridad:** el QR ya no da acceso inmediato; también necesita la aceptación del administrador.
 
-## Pendientes de diseñar
+## 7. Bienvenida y permisos (aprobado)
 
-Bienvenida y permisos.
+![Bienvenida y permisos](09-bienvenida-permisos.png)
+
+1. **Bienvenida:** faro, «Faro», lema y tres frases (Sabe dónde están los tuyos · Sin cobertura ni internet · Privado de verdad). «Empezar».
+2. **Tu nombre:** «¿Cómo te llamas?». Lo único que se pide; se cambia luego en Ajustes.
+3. **Permisos de uno en uno:** una pantalla por permiso con icono grande, «Paso N de 4», explicación sencilla, «Permitir» y «Ahora no»: móviles cercanos (Bluetooth), ubicación, avisos y funcionar en segundo plano.
+
+## Pantallas menores (se harán con el mismo estilo)
+
+Brújula «Guiarme» a pantalla completa, confirmación de «Pedir ayuda», ficha de una persona en el mapa, «Compartir Faro», subpantallas de Ajustes y lista completa de miembros.
