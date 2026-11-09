@@ -35,6 +35,29 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 - **Cerca** es una sola sala abierta, «Gente cerca», con quien esté al alcance de la malla (sin internet). Muestra cuántas personas hay y quiénes, y avisa de que lo escrito ahí lo lee cualquiera cerca. La pestaña muestra el número de personas al alcance («Cerca · 4»).
 - **Se quitan los canales públicos por zona (geohash):** solo funcionaban con internet, justo cuando no hacen falta, y exponían la IP y la zona. Internet queda para grupos y chats privados, ubicación de la familia y actualizaciones.
 
+### Cerca y sala «Gente cerca» (aprobada)
+
+![Cerca y sala](03-cerca-y-sala.png)
+
+- El aviso de que es público va abajo, pegado a la barra de navegación.
+- Dentro de la sala: nombre y **distancia** de cada persona sobre su mensaje; botón para ver la lista de personas y escribir en privado; recordatorio «Visible para cualquiera que esté cerca» bajo el campo de escribir.
+
+## 3. Conversación (aprobada)
+
+![Conversación](04-conversacion.png)
+
+- Cabecera: volver, foto y nombre, botón de mapa y menú ⋮. En grupos, «N personas»; en privados, si está cerca y a qué distancia (en verde).
+- Burbujas con borde (los demás a la izquierda en blanco, tú a la derecha en azul calma), nombre en color sobre cada mensaje en grupos, ✓ enviado y ✓✓ leído, avisos del grupo en gris centrados, ubicación compartida como tarjeta con mini mapa.
+- Abajo: «＋» (foto, ubicación, nota de voz), campo de texto y enviar; línea «🔒 Cifrado · llega por la red cercana / por internet».
+- **Sin mensajes predefinidos** (ni aquí ni en «Gente cerca»).
+- Grupos de cualquier tamaño, con un máximo propuesto de 50 personas para no saturar la red cercana. En Inicio, si no caben las caras, «+N».
+
+![Menú, información y mapa](05-menu-info-mapa.png)
+
+- **Menú ⋮:** se despliega desde el propio botón (arriba a la derecha), no desde abajo. Grupo: Miembros e información, Invitar, Compartir ubicación (interruptor), Silenciar, Buscar, Vaciar el chat y, separado en rojo, Salir del grupo. Privado: Silenciar, Buscar, Verificar identidad, Vaciar el chat y, en rojo, Bloquear.
+- **Tocar la cabecera del grupo:** información con foto, nombre, «N personas · creado por…», botones Invitar / Ver en el mapa / Silenciar y lista de miembros con estado y distancia. Solo el administrador cambia nombre y color (lápiz) y expulsa (mantener pulsado); al expulsar, el grupo cambia de clave.
+- **Mapa desde un chat privado:** centrado en esa persona, con línea entre ambos, distancia, dirección, hace cuánto y batería; «Abrir chat» y «Guiarme» (brújula a pantalla completa). Solo aparece si esa persona comparte su ubicación contigo en algún grupo.
+
 ## Pendientes de diseñar
 
-Conversación, Mapa, Ajustes, crear grupo, invitar (enlace/QR), aceptar invitación, bienvenida y permisos.
+Mapa, Ajustes, crear grupo, invitar (enlace/QR), aceptar invitación, bienvenida y permisos.
