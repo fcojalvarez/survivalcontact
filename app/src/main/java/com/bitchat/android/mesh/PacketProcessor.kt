@@ -136,6 +136,12 @@ class PacketProcessor(
         } catch (_: Exception) { }
         
         
+        // Faro: paquetes de grupo. Se entregan al centro de grupos (que solo los abre si tiene
+        // la clave) y luego se reenvían como cualquier otro paquete de difusión.
+        if (packet.type == com.bitchat.android.faro.FaroProtocol.PACKET_TYPE) {
+            try { com.bitchat.android.faro.FaroGroups.onMeshPayload(packet.payload) } catch (_: Exception) { }
+        }
+
         // Handle public packet types (no address check needed)
         when (messageType) {
             MessageType.ANNOUNCE -> validPacket = handleAnnounce(routed)

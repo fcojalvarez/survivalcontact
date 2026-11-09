@@ -1,0 +1,152 @@
+package com.bitchat.android.faro.ui
+
+import android.location.Location
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.bitchat.android.faro.FaroOfflineMap
+import com.bitchat.android.faro.MemberPosition
+import org.json.JSONArray
+import org.json.JSONObject
+import org.maplibre.android.MapLibre
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.sources.GeoJsonSource
+
+/** Un punto que pintar en el mapa. */
+data class MapPoint(val id: String, val name: String, val lat: Double, val lon: Double, val colorHex: String, val isMe: Boolean)
+
+/**
+ * Mapa de MapLibre con estilo oscuro. Con internet usa OpenFreeMap; sin conexión, la zona
+ * descargada por [FaroOfflineMap]. Pinta a los miembros y a uno mismo.
+ */
+@Composable
+fun FaroMapView(points: List<MapPoint>, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    var map by remember { mutableStateOf<MapLibreMap?>(null) }
+    var styleReady by remember { mutableStateOf(false) }
+    var cameraSet by remember { mutableStateOf(false) }
+
+    val mapView = remember {
+        MapLibre.getInstance(context.applicationContext)
+        MapView(context).apply {
+            onCreate(null)
+            getMapAsync { m ->
+                m.uiSettings.isLogoEnabled = false
+                m.uiSettings.isRotateGesturesEnabled = false
+                m.uiSettings.isTiltGesturesEnabled = false
+                m.setStyle(Style.Builder().fromUri(FaroOfflineMap.STYLE_URL)) { style ->
+                    style.addSource(GeoJsonSource(SOURCE_ID, EMPTY))
+                    style.addLayer(
+                        CircleLayer("faro-puntos", SOURCE_ID).withProperties(
+                            PropertyFactory.circleRadius(Expression.switchCase(Expression.get("me"), Expression.literal(7f), Expression.literal(9f))),
+                            PropertyFactory.circleColor(Expression.toColor(Expression.get("color"))),
+                            PropertyFactory.circleStrokeColor("#000000"),
+                            PropertyFactory.circleStrokeWidth(2f),
+                        )
+                    )
+                    style.addLayer(
+                        SymbolLayer("faro-nombres", SOURCE_ID).withProperties(
+                            PropertyFactory.textField(Expression.get("name")),
+                            PropertyFactory.textFont(arrayOf("Noto Sans Regular")),
+                            PropertyFactory.textSize(13f),
+                            PropertyFactory.textOffset(arrayOf(0f, -1.6f)),
+                            PropertyFactory.textColor("#F2F2F2"),
+                            PropertyFactory.textHaloColor("#000000"),
+                            PropertyFactory.textHaloWidth(1.5f),
+                            PropertyFactory.textAllowOverlap(true),
+                        )
+                    )
+                    styleReady = true
+                }
+                map = m
+            }
+        }
+    }
+
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                else -> Unit
+            }
+        }
+        lifecycle.addObserver(observer)
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) mapView.onStart()
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) mapView.onResume()
+        onDispose {
+            lifecycle.removeObserver(observer)
+            mapView.onPause()
+            mapView.onStop()
+            mapView.onDestroy()
+        }
+    }
+
+    LaunchedEffect(points, styleReady, map) {
+        val m = map ?: return@LaunchedEffect
+        if (!styleReady) return@LaunchedEffect
+        m.style?.getSourceAs<GeoJsonSource>(SOURCE_ID)?.setGeoJson(toGeoJson(points))
+        if (!cameraSet && points.isNotEmpty()) {
+            cameraSet = true
+            if (points.size == 1) {
+                m.cameraPosition = CameraPosition.Builder()
+                    .target(LatLng(points[0].lat, points[0].lon))
+                    .zoom(14.0)
+                    .build()
+            } else {
+                val b = LatLngBounds.Builder()
+                points.forEach { b.include(LatLng(it.lat, it.lon)) }
+                runCatching { m.moveCamera(CameraUpdateFactory.newLatLngBounds(b.build(), 120)) }
+                if (m.cameraPosition.zoom > 15.0) {
+                    m.moveCamera(CameraUpdateFactory.zoomTo(15.0))
+                }
+            }
+        }
+    }
+
+    AndroidView(factory = { mapView }, modifier = modifier)
+}
+
+private const val SOURCE_ID = "faro-familia"
+private const val EMPTY = """{"type":"FeatureCollection","features":[]}"""
+
+private fun toGeoJson(points: List<MapPoint>): String {
+    val features = JSONArray()
+    points.forEach { p ->
+        features.put(JSONObject().apply {
+            put("type", "Feature")
+            put("geometry", JSONObject().put("type", "Point").put("coordinates", JSONArray().put(p.lon).put(p.lat)))
+            put("properties", JSONObject().put("name", p.name).put("color", p.colorHex).put("me", p.isMe))
+        })
+    }
+    return JSONObject().put("type", "FeatureCollection").put("features", features).toString()
+}
+
+/** Convierte miembros y mi posición en puntos del mapa. */
+fun mapPoints(members: Collection<MemberPosition>, me: Location?, meName: String, colorFor: (String) -> String): List<MapPoint> {
+    val list = members.map { MapPoint(it.authorId, it.name, it.position.lat, it.position.lon, colorFor(it.authorId), false) }
+    return if (me != null) list + MapPoint("yo", meName, me.latitude, me.longitude, "#A7C7E7", true) else list
+}

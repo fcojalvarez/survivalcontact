@@ -20,6 +20,8 @@ interface MeshService {
     fun sendVerifyChallenge(peerID: String, noiseKeyHex: String, nonceA: ByteArray)
     fun sendVerifyResponse(peerID: String, noiseKeyHex: String, nonceA: ByteArray)
     fun sendFileBroadcast(file: BitchatFilePacket)
+    /** Faro: difunde por la malla un paquete de grupo ya cifrado (tipo propio de Faro). */
+    fun sendFaroBroadcast(payload: ByteArray) {}
     fun sendFilePrivate(recipientPeerID: String, file: BitchatFilePacket)
     fun sendVoiceFrame(recipientPeerID: String?, payload: ByteArray)
     fun prepareFilePrivate(

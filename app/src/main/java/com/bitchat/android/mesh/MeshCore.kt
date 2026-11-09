@@ -549,6 +549,24 @@ class MeshCore(
         }
     }
 
+    /** Faro: difunde un paquete de grupo cifrado. */
+    fun sendFaroBroadcast(payload: ByteArray) {
+        if (payload.isEmpty()) return
+        scope.launch {
+            val packet = BitchatPacket(
+                version = 1u,
+                type = com.bitchat.android.faro.FaroProtocol.PACKET_TYPE,
+                senderID = MeshPacketUtils.hexStringToByteArray(myPeerID),
+                recipientID = SpecialRecipients.BROADCAST,
+                timestamp = System.currentTimeMillis().toULong(),
+                payload = payload,
+                signature = null,
+                ttl = maxTtl
+            )
+            dispatchGlobal(RoutedPacket(signPacketBeforeBroadcast(packet)))
+        }
+    }
+
     private fun sendAuthenticatedPeerState(
         peerID: String,
         state: AuthenticatedPeerState,

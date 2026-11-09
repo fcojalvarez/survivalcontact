@@ -101,6 +101,13 @@ class UnifiedMeshService(
         }
     }
 
+    override fun sendFaroBroadcast(payload: ByteArray) {
+        when {
+            isBleEnabled() -> bluetooth.sendFaroBroadcast(payload)
+            else -> wifiService()?.sendFaroBroadcast(payload)
+        }
+    }
+
     override fun sendPrivateMessage(
         content: String,
         recipientPeerID: String,

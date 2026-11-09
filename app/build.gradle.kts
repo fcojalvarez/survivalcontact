@@ -203,6 +203,9 @@ dependencies {
     // Google Play Services Location
     implementation(libs.gms.location)
 
+    // Faro: mapa (MapLibre Native, BSD). Online con OpenFreeMap y zona descargada sin conexión.
+    implementation(libs.maplibre.android)
+
     // Security preferences
     implementation(libs.androidx.security.crypto)
     

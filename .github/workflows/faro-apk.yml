@@ -51,7 +51,7 @@ jobs:
         run: ./gradlew :app:assembleDebug
 
       - name: Tests de Faro
-        run: ./gradlew :app:testDebugUnitTest --tests 'com.bitchat.android.update.*'
+        run: ./gradlew :app:testDebugUnitTest --tests 'com.bitchat.android.update.*' --tests 'com.bitchat.android.faro.*'
 
       - name: Preparar el APK
         run: |
