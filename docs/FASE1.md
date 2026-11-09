@@ -64,13 +64,15 @@ Es el paso delicado: toca el envío de mensajes.
 
 ### Paso 6 — Nombre, icono e identificador propios
 
-**Nombre elegido: Faro.** Lema: «Te guía hasta los tuyos en la oscuridad». Antes de publicar, comprobar que no choca con otra app en Google Play y F-Droid ni con una marca registrada en la OEPM; si choca, usar una variante como «Faro Familia».
+**Nombre elegido: Faro.** Lema: «Te guía hasta los tuyos en la oscuridad». Búsqueda hecha (noviembre de 2026): no hay ninguna app de emergencias ni de mensajería llamada «Faro» en Google Play ni en F-Droid. Pero **FARO Technologies** (escáneres 3D) publica varias apps con la marca «FARO» y es probable que la tenga registrada para software. Antes de publicar en tiendas, consultar la OEPM y la EUIPO; si hay conflicto, usar una variante como «Faro Familia» o «Faro SOS». Para probar con la familia instalando el APK no hace falta.
+
+**Icono: hecho.** Ya están en el repositorio `drawable/ic_launcher_foreground.xml`, `ic_launcher_background.xml`, `ic_launcher_monochrome.xml`, los PNG de `mipmap-*` y el icono de la tienda (`fastlane/.../icon.png`). Falta: el icono de la app de reloj (`wear/`), si se mantiene.
 
 1. `res/values/strings.xml`: `app_name` = `Faro`. Hay 35 carpetas de traducciones (`values-*`) con el nombre «bitchat» en textos: buscar y sustituir.
-2. Icono: `res/mipmap-*` e `ic_launcher.xml` / `ic_launcher_round.xml`. Idea: un faro sencillo con un haz de luz, en blanco sobre negro (encaja con el tema oscuro OLED).
+2. ~~Icono~~ hecho (ver arriba).
 3. `applicationId` en `app/build.gradle.kts` (hoy `com.bitchat.droid`): cambiarlo para que la app conviva con Bitchat en el mismo móvil. Propuesta: `io.github.fcojalvarez.faro` (formato habitual en F-Droid; no se puede cambiar después de publicar).
 4. El paquete Kotlin `com.bitchat.android` se puede dejar como está: renombrarlo toca los 290 ficheros y complica traer mejoras del proyecto original. No se ve desde fuera.
-5. Revisar `README.md`, `PRIVACY_POLICY.md`, `fastlane/metadata` y la pantalla «Acerca de»: créditos a bitchat (obligatorio por la GPL) y nombre nuevo.
+5. Revisar `PRIVACY_POLICY.md`, `fastlane/metadata` y la pantalla «Acerca de»: créditos a bitchat (obligatorio por la GPL) y nombre nuevo. El `README.md` ya está hecho.
 
 ### Paso 7 — Prueba de la fase
 

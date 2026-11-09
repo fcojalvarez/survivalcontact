@@ -1,105 +1,45 @@
-<img width="256" height="256" alt="icon_128x128@2x" src="https://github.com/user-attachments/assets/90133f83-b4f6-41c6-aab9-25d0859d2a47" />
+<img width="160" height="160" alt="Icono de Faro: un faro blanco con dos haces de luz ámbar sobre fondo negro" src="fastlane/metadata/android/en-US/images/icon.png" />
 
-## bitchat for Android
+# Faro
 
-A decentralized peer-to-peer messaging app with dual transport architecture: local Bluetooth mesh networks for offline communication and internet-based Nostr protocol for global reach. No accounts, no phone numbers, no central servers.
+**Te guía hasta los tuyos en la oscuridad.**
 
-This is the Android implementation of bitchat, fully protocol-compatible with the [iOS version](https://github.com/permissionlesstech/bitchat) for cross-platform mesh communication.
+Faro es una app Android gratuita para mantener el contacto con tu familia y tus vecinos cuando no hay cobertura ni internet: un apagón, una DANA, un terremoto. Los mensajes saltan de móvil en móvil por Bluetooth hasta llegar a su destino, sin servidores, sin cuentas y sin número de teléfono.
 
-[bitchat.free](http://bitchat.free)
+> **Estado: en desarrollo.** Todavía no hay versión para instalar. El plan y las fases están en [`docs/PLAN.md`](docs/PLAN.md).
 
-[GitHub Releases](https://github.com/permissionlesstech/bitchat-android/releases)
+## Qué hace
 
-[<img alt="Get it on Google Play" height="60" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"/>](https://play.google.com/store/apps/details?id=com.bitchat.droid)
+- **Mensajes sin internet.** Cada móvil con Faro hace de repetidor: tu mensaje puede dar hasta 7 saltos para llegar más lejos.
+- **Grupos privados y públicos.** «Familia», «Vecinos del bloque», y subgrupos como «Familia > Abuelos». Solo los miembros leen los mensajes; los demás móviles los reenvían sin poder abrirlos.
+- **Invitaciones seguras.** En persona, escaneando un QR. A distancia, con un enlace que solo da acceso cuando el invitado lo acepta.
+- **Dónde están los tuyos.** Una brújula que apunta a cada miembro del grupo, con la distancia, y un mapa que funciona sin conexión.
+- **Botón SOS.** Envía tu posición y «necesito ayuda» a todos tus grupos con un toque.
+- **Pensada para durar.** La batería es la prioridad: la app reduce su consumo sola según la carga que te quede.
+- **Privada por diseño.** No hay servidores: tus mensajes y tu ubicación nunca salen de los móviles.
 
-## See it in action
+## Cómo funciona
 
-<table>
-  <tr>
-    <th>Offline mesh conversation</th>
-    <th>Geohash globe picker</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/readme-mesh-chat.png" alt="Active four-peer Bitchat mesh conversation with an image, voice messages, and text messages" width="360"/></td>
-    <td><img src="docs/screenshots/readme-geohash-globe.png" alt="Bitchat geohash location picker showing the whole Earth and geohash grid" width="360"/></td>
-  </tr>
-</table>
+Faro forma una **red en malla** con los móviles cercanos usando Bluetooth de bajo consumo (y Wi‑Fi Aware en los móviles que lo admiten). Cuantas más personas la tengan instalada a tu alrededor, más lejos llegan los mensajes.
 
-## License
+Todo va cifrado: las conversaciones entre dos personas usan el protocolo Noise, y cada grupo tiene su propia clave.
 
-This project is released into the public domain. See the [LICENSE](LICENSE.md) file for details.
+**Límite importante:** cada salto de Bluetooth alcanza decenas de metros. Si entre dos personas no hay suficientes móviles con la app, el mensaje no llega. Por eso conviene instalarla con antelación en la familia y el vecindario. Faro puede compartirse de móvil a móvil por Wi‑Fi, sin tienda ni internet.
 
-## Features
+## Compilar
 
-- **Dual Transport Architecture**: Bluetooth LE mesh for offline messaging, Nostr relays for internet-based messaging
-- **Location-Based Channels**: Geographic chat rooms using geohash coordinates over Nostr relays
-- **Intelligent Message Routing**: Automatically chooses the best transport, with queuing and retry when a peer is unreachable
-- **End-to-End Encryption**: [Noise Protocol](https://noiseprotocol.org) (XX pattern, X25519 + ChaCha20-Poly1305) for private messages over the mesh
-- **Decentralized Mesh Network**: Automatic peer discovery and multi-hop relay over Bluetooth LE (max 7 hops)
-- **Wi-Fi Aware Transport**: Higher-bandwidth local mesh on supported devices
-- **Channel Chats**: Topic-based group messaging with optional password protection (Argon2id + AES-256-GCM)
-- **IRC-Style Commands**: Familiar `/join`, `/msg`, `/who` style interface
-- **Tor Support**: Built-in Tor (Arti) for private internet connectivity
-- **Emergency Wipe**: Triple-tap to instantly clear all data
-- **Cross-Platform**: Binary protocol compatible with bitchat on iOS and macOS
-
-## Technical Architecture
-
-### Bluetooth Mesh Network (Offline)
-
-- Direct peer-to-peer within Bluetooth range, multi-hop relay through nearby devices
-- Noise Protocol sessions with forward secrecy; peer identities derived from static keys
-- Compact binary packet format with fragmentation, TTL routing, and deduplication
-- Adaptive duty cycling and connection limits for battery efficiency
-- Foreground service keeps the mesh alive within Android background execution limits
-
-### Nostr Protocol (Internet)
-
-- Global reach via public relays, geohash-based location channels
-- Private messages fall back to Nostr for mutual favorites when the mesh is unavailable
-- Ephemeral keys per geohash area
-
-### Android Stack
-
-- Kotlin, Jetpack Compose (Material 3), MVVM
-- Coroutines and Flow for all networking and state
-- Core components: `MeshForegroundService` (persistent connectivity), `BluetoothMeshService` / `WifiAwareMeshService` (transports), `UnifiedMeshService` (transport selection), `NoiseSessionManager` (encryption sessions), `MessageRouter` (mesh/Nostr routing with outbox retry)
-
-## Building
-
-Requires Android Studio and the Android SDK (API 26+).
+Necesitas Android Studio (SDK API 26 o superior) y, para probar de verdad, al menos dos móviles Android reales: el emulador no tiene Bluetooth.
 
 ```bash
-git clone https://github.com/permissionlesstech/bitchat-android.git
-cd bitchat-android
+git clone https://github.com/fcojalvarez/survivalcontact.git
+cd survivalcontact
 ./gradlew assembleDebug
 ```
 
-Install on a connected device:
+El APK queda en `app/build/outputs/apk/debug/`.
 
-```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
+## Créditos y licencia
 
-The app requests Bluetooth, location (required for BLE scanning), and notification permissions at runtime.
+Faro es un fork de [**bitchat-android**](https://github.com/permissionlesstech/bitchat-android), creado por [permissionlesstech](https://github.com/permissionlesstech) y sus colaboradores. La malla Bluetooth, el cifrado Noise y el formato de paquetes son obra suya. Faro no está afiliado al proyecto bitchat ni avalado por él.
 
-Release APKs and the Android App Bundle can be rebuilt byte-for-byte in the
-pinned Linux container. Maintainers should follow the
-[Android release guide](docs/maintainer-release-guide.md). See
-[Reproducible builds](docs/reproducible-builds.md) for the build trust model
-and public GitHub/Google Play verification procedures.
-
-## Testing
-
-```bash
-# Unit tests
-./gradlew test
-
-# Lint
-./gradlew lint
-
-# Instrumented tests (requires a device or emulator)
-./gradlew connectedAndroidTest
-```
-
-Note that BLE mesh behavior is difficult to emulate; protocol and session logic is covered by unit tests, while radio-level behavior needs real devices.
+Se distribuye bajo la **GNU General Public License v3**, igual que el proyecto original: puedes usarlo, estudiarlo, modificarlo y compartirlo, siempre que las versiones que distribuyas sigan siendo GPL v3 y con su código fuente disponible. Consulta [`LICENSE.md`](LICENSE.md).
