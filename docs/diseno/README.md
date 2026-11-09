@@ -135,3 +135,7 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 - En Inicio aparece en Novedades: «Mamá y Lucía han visto dónde estás». Varios avisos se juntan en uno. Al abrirlo se ve quién, cómo (en el mapa, en directo) y cuándo, con «Dejar de compartir» y «Abrir chat».
 - **Batería:** gasto despreciable: es un mensaje de unos pocos bytes por una conexión que ya está abierta, como mucho uno por persona cada 15 min, y no ocupa la radio Bluetooth.
 - Es un aviso de buena fe: el móvil de tu familia ya tiene tu ubicación al recibirla, así que avisa de lo que se ve dentro de Faro.
+
+## Demo navegable
+
+`demo.html` es una maqueta navegable con datos de ejemplo (sin radio real). Se puede abrir en el navegador para probar todos los flujos antes de programarlos.

@@ -1,0 +1,583 @@
+<title>Demo de Faro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Maqueta navegable: un móvil centrado en escritorio y la app a pantalla completa en el móvil. Solo tema oscuro, como la app. */
+:root{
+  --bg:#000;--fg:#F2F2F2;--muted:#9a9a9a;--dim:#6b6b6b;--line:#26262a;--line2:#2e2e33;--card:#0d0d0f;
+  --accent:#A7C7E7;--accent-ink:#0B1B2B;--danger:#FF6B5E;--warn:#FFB14A;--ok:#8FE3A8;--stage:#141416;
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--stage);color:var(--fg);font-family:var(--font);margin:0;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#stage{height:100%;display:flex;align-items:center;justify-content:center;gap:40px}
+#phone{position:relative;width:100%;height:100%;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+@media (min-width:760px){
+  #phone{width:392px;height:min(820px,calc(100% - 40px));border-radius:42px;border:10px solid #1f1f22;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+}
+#nota{display:none;max-width:300px;color:var(--muted);font-size:14px;line-height:1.55}
+#nota h1{color:var(--fg);font-size:22px;margin:0 0 8px;text-wrap:balance}
+#nota b{color:var(--fg)}
+#nota ul{padding-left:18px;margin:10px 0}
+@media (min-width:1100px){#nota{display:block}}
+#app{flex:1;display:flex;flex-direction:column;min-height:0}
+.scr{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
+.scroll{flex:1;overflow-y:auto;min-height:0;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.pad{padding:0 16px}
+/* Cabeceras */
+.top{display:flex;align-items:center;gap:10px;padding:14px 16px 10px}
+.top .logo{display:flex;align-items:center;gap:8px;font-size:24px;font-weight:700;flex:1}
+.pill{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line2);border-radius:999px;padding:6px 12px;font-size:13px;color:#d6d6d6}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.pill.on i{background:var(--ok)}
+.round{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--line2);display:grid;place-items:center;flex:none}
+.bar{display:flex;align-items:center;gap:10px;padding:12px 12px 10px 6px;min-height:58px}
+.bar .back{width:40px;height:40px;display:grid;place-items:center;flex:none}
+.bar h2{font-size:20px;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .who{flex:1;min-width:0;display:flex;align-items:center;gap:10px;text-align:left}
+.bar .who b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .who span{font-size:12px;color:var(--muted)}
+/* Avatares */
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#141414;flex:none;font-size:15px}
+.ring{box-shadow:0 0 0 2.5px var(--bg),0 0 0 4.5px var(--ok)}
+.ring.warn{box-shadow:0 0 0 2.5px var(--bg),0 0 0 4.5px var(--warn)}
+.people{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 4px;scrollbar-width:none}
+.people::-webkit-scrollbar{display:none}
+.person{display:flex;flex-direction:column;align-items:center;gap:6px;width:62px;flex:none}
+.person .av{width:50px;height:50px;font-size:18px}
+.person b{font-size:13px;font-weight:500}
+.person span{font-size:11.5px;color:var(--muted);margin-top:-4px}
+.legend{display:flex;align-items:center;gap:14px;padding:8px 16px 0;font-size:13px;color:#d6d6d6}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.legend .link{margin-left:auto;color:var(--accent);font-weight:500}
+.sec{display:flex;justify-content:space-between;align-items:baseline;padding:18px 16px 8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sec span{letter-spacing:0;text-transform:none;font-weight:400;font-size:12px}
+/* Tarjetas de Inicio */
+.cards{display:flex;flex-direction:column;gap:8px;padding:0 16px}
+.card{border:1.5px solid var(--line);border-left-width:3px;border-radius:16px;padding:11px 12px;text-align:left;width:100%;display:block}
+.card .row{display:flex;gap:10px;align-items:center}
+.card .av{width:34px;height:34px;font-size:13px}
+.card .tx{flex:1;min-width:0}
+.card .m{font-size:14.5px;line-height:1.3;color:var(--fg)}
+.card.read .m{color:#bdbdbd}
+.card .t{font-size:12px;color:var(--muted);display:block;margin-top:2px}
+.card.new .t{color:var(--accent);font-weight:600}
+.card .chev{transition:transform .2s}
+.card.open .chev{transform:rotate(180deg)}
+.card .more{margin:10px 0 2px 44px;font-size:13px;color:#bdbdbd;line-height:1.7}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0 44px}
+.chip{border:1.5px solid var(--line2);border-radius:999px;padding:7px 13px;font-size:13px;color:#d6d6d6}
+.chip.pri{border-color:var(--accent);color:var(--accent)}
+.eye{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line2);display:grid;place-items:center;flex:none}
+.sos{margin:18px 16px 16px;border:1.5px solid var(--danger);color:var(--danger);border-radius:999px;padding:15px;font-weight:700;font-size:17px;width:calc(100% - 32px)}
+/* Navegación */
+.nav{display:flex;border-top:1px solid var(--line);height:52px;flex:none}
+.nav button{flex:1;display:grid;place-items:center;color:var(--dim)}
+.nav button.on{color:var(--accent)}
+.nav button span{font-size:10.5px;margin-top:-6px}
+/* Chats */
+.seg{display:flex;margin:4px 16px 10px;border:1.5px solid var(--line2);border-radius:999px;padding:3px}
+.seg button{flex:1;padding:8px;border-radius:999px;font-size:14px;color:var(--muted);font-weight:500}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.crow{display:flex;gap:12px;align-items:center;padding:10px 16px;width:100%;text-align:left}
+.crow .tx{flex:1;min-width:0}
+.crow b{display:block;font-size:15.5px;font-weight:600}
+.crow .last{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.crow.unread .last{color:var(--fg)}
+.crow .h{font-size:12px;color:var(--muted);align-self:flex-start;margin-top:3px}
+.crow.unread .h{color:var(--accent);font-weight:600}
+.gicon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none;border:1.5px solid}
+.btn{display:block;width:100%;border-radius:999px;padding:14px;font-weight:600;font-size:15.5px;text-align:center}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.btn.out{border:1.5px solid var(--accent);color:var(--accent)}
+.btn.ghost{color:#bdbdbd}
+.btn.red{background:var(--danger);color:#1a0503}
+.btn.redout{border:1.5px solid var(--danger);color:var(--danger)}
+.btn[disabled]{opacity:.4;cursor:default}
+.nota{font-size:12.5px;color:var(--dim);line-height:1.5;padding:0 16px}
+.aviso{margin:10px 16px;border:1.5px solid var(--line2);border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:13.5px;color:#d6d6d6;line-height:1.4}
+/* Conversación */
+.msgs{padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.day{align-self:center;font-size:12px;color:var(--dim);margin:6px 0}
+.sys{align-self:center;font-size:12.5px;color:var(--muted);text-align:center;max-width:85%}
+.b{max-width:78%;border:1.5px solid #e8e8e8;border-radius:18px 18px 18px 6px;padding:8px 12px;font-size:15px;line-height:1.38;align-self:flex-start}
+.b.me{border-color:var(--accent);border-radius:18px 18px 6px 18px;align-self:flex-end}
+.b .au{font-size:12.5px;font-weight:600;display:block;margin-bottom:2px}
+.b .hh{display:block;font-size:11px;color:var(--dim);margin-top:3px;text-align:right}
+.b.sos-b{border-color:var(--danger)}
+.input{display:flex;gap:8px;align-items:center;padding:8px 12px 10px;border-top:1px solid var(--line)}
+.input input{flex:1;min-width:0;background:transparent;border:1.5px solid var(--line2);border-radius:999px;padding:11px 16px;color:var(--fg);font:inherit;font-size:15px;outline:none}
+.input input:focus{border-color:var(--accent)}
+.send{width:44px;height:44px;border-radius:50%;background:var(--accent);display:grid;place-items:center;flex:none}
+/* Mapa */
+.map{position:relative;flex:1;overflow:hidden;background:#000;min-height:0}
+.map>svg{position:absolute;inset:0;width:100%;height:100%}
+.flot{position:absolute;display:flex;gap:6px;flex-wrap:wrap}
+.chipm{background:var(--card);border:1.5px solid var(--line2);border-radius:999px;padding:7px 12px;font-size:13px;color:#d6d6d6;display:flex;gap:6px;align-items:center}
+.chipm.on{border-color:var(--accent);color:var(--accent)}
+.chipm i{width:9px;height:9px;border-radius:3px}
+.estm{background:var(--card);border:1.5px solid var(--line2);border-radius:999px;padding:6px 11px;font-size:12px;color:#bdbdbd}
+.btnr{width:44px;height:44px;border-radius:50%;background:var(--card);border:1.5px solid var(--line2);display:grid;place-items:center}
+.lista{border-top:1px solid var(--line);max-height:38%;overflow-y:auto;flex:none;padding:4px 0}
+.pr{display:flex;gap:12px;align-items:center;padding:8px 16px;width:100%;text-align:left}
+.pr .av{width:38px;height:38px;font-size:14px}
+.pr .n{flex:1;min-width:0}.pr .n b{display:block;font-size:15px;font-weight:600}.pr .n span{font-size:12.5px;color:var(--muted)}
+.pr .d{text-align:right}.pr .d b{display:block;font-size:15px}.pr .d span{font-size:12px;color:var(--muted)}
+.panel{position:absolute;left:12px;right:12px;bottom:12px;background:var(--card);border:1.5px solid var(--line2);border-radius:20px;padding:14px}
+.vivo{display:inline-flex;align-items:center;gap:6px;color:var(--ok);font-weight:600}
+.vivo i{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:lat 1.4s infinite}
+@keyframes lat{50%{box-shadow:0 0 0 5px rgba(143,227,168,.15)}}
+/* Capas: hoja inferior, modal, menú, aviso */
+#ov{position:absolute;inset:0;z-index:20;pointer-events:none}
+#ov.on{pointer-events:auto}
+.capa{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:fade .15s}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:24px 24px 0 0;padding:6px 18px 18px;animation:up .2s ease-out;max-height:90%;overflow-y:auto}
+.asa{width:40px;height:4px;border-radius:2px;background:#333;margin:6px auto 12px}
+.modal{position:absolute;left:22px;right:22px;top:50%;transform:translateY(-50%);background:var(--card);border:1.5px solid var(--line2);border-radius:24px;padding:22px;animation:fade .15s}
+.modal h3{margin:6px 0 8px;font-size:20px;text-wrap:balance}
+.modal p{color:#bdbdbd;font-size:14.5px;line-height:1.5;margin:0}
+.menu{position:absolute;min-width:220px;background:var(--card);border:1.5px solid var(--line2);border-radius:16px;padding:6px 0;box-shadow:0 12px 40px rgba(0,0,0,.7);animation:fade .12s}
+.menu button{display:block;width:100%;text-align:left;padding:11px 16px;font-size:14.5px}
+.menu .sep{border-top:1px solid var(--line)}
+.menu .red{color:var(--danger)}
+#toast{position:absolute;left:50%;bottom:72px;transform:translateX(-50%);background:#1c1c20;border:1px solid var(--line2);color:var(--fg);padding:10px 16px;border-radius:14px;font-size:13.5px;z-index:30;width:max-content;max-width:calc(100% - 40px);line-height:1.4;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+@keyframes fade{from{opacity:0}}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.stats{display:flex;gap:8px;margin-top:14px}
+.stat{flex:1;border:1.5px solid var(--line);border-radius:16px;padding:10px;min-width:0}
+.stat b{font-size:18px;display:block;white-space:nowrap}
+.stat span{font-size:12px;color:var(--muted)}
+.stat.warn{border-color:var(--warn)}.stat.warn b{color:var(--warn)}
+.two{display:flex;gap:10px}.two>*{flex:1}
+/* Ajustes */
+.grp{margin:0 16px 12px;border:1.5px solid var(--line);border-radius:18px;overflow:hidden}
+.fila{display:flex;align-items:center;gap:14px;padding:13px 14px;width:100%;text-align:left;font-size:15px;border-top:1px solid var(--line)}
+.grp>.fila:first-child,.grp>:first-child .fila{border-top:0}
+.fila .tx{flex:1;min-width:0}
+.fila small{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.35}
+.fila .v{color:var(--muted);font-size:14px}
+.sw{width:46px;height:28px;border-radius:999px;background:var(--accent);position:relative;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;top:4px;left:22px;width:20px;height:20px;border-radius:50%;background:var(--accent-ink);transition:left .15s}
+.sw.off{background:#2a2a2e}.sw.off::after{left:4px;background:#666}
+.radio{margin:0 16px 10px;border:1.5px solid var(--line);border-radius:18px;padding:13px 14px;display:flex;gap:12px;align-items:flex-start;width:calc(100% - 32px);text-align:left}
+.radio.on{border-color:var(--accent)}
+.radio .c{flex:none;width:20px;height:20px;border-radius:50%;border:1.5px solid #555;margin-top:1px}
+.radio.on .c{border:6px solid var(--accent)}
+.radio b{display:block;font-size:15px}.radio span{font-size:12.5px;color:var(--muted);line-height:1.4}
+.txt{padding:2px 20px 12px;font-size:13.5px;color:var(--muted);line-height:1.5}
+.dato{margin:0 16px 12px;border:1.5px solid var(--line);border-radius:18px;padding:14px}
+.dato b{font-size:18px;display:block}.dato span{font-size:13px;color:var(--muted);line-height:1.5}
+.perfil{display:flex;gap:14px;align-items:center;margin:0 16px 14px;border:1.5px solid var(--line);border-radius:18px;padding:14px;width:calc(100% - 32px);text-align:left}
+.campo{width:100%;background:transparent;border:1.5px solid var(--line2);border-radius:14px;padding:14px;color:var(--fg);font:inherit;font-size:16px;outline:none}
+.campo:focus{border-color:var(--accent)}
+/* Bienvenida, ayuda, brújula */
+.centro{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 28px;gap:12px}
+.centro h1{font-size:30px;margin:6px 0 0;text-wrap:balance}
+.centro p{color:#bdbdbd;font-size:15.5px;line-height:1.5;margin:0}
+.pie{padding:0 20px 22px;display:flex;flex-direction:column;gap:8px}
+.puntos{display:flex;gap:6px;justify-content:center;padding:10px}
+.puntos i{width:7px;height:7px;border-radius:50%;background:#333}.puntos i.on{background:var(--accent);width:20px;border-radius:4px}
+.ic-big{width:84px;height:84px;border-radius:26px;border:1.5px solid var(--line2);display:grid;place-items:center}
+.sosact{background:radial-gradient(ellipse 80% 45% at 50% 35%,rgba(255,107,94,.18),transparent 70%)}
+.dial{width:240px;height:240px;border-radius:50%;border:1.5px solid var(--line);position:relative;display:grid;place-items:center}
+.dial .nn{position:absolute;top:10px;font-size:13px;color:var(--dim);font-weight:700}
+.flecha{transition:transform 1s ease-in-out}
+.dist{font-size:52px;font-weight:700;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.qr{background:#fff;border-radius:18px;padding:14px;width:220px;height:220px;margin:0 auto}
+.qr canvas{width:100%;height:100%;image-rendering:pixelated;display:block}
+.vacio{text-align:center;color:var(--muted);padding:40px 30px;font-size:14px;line-height:1.5}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="stage">
+  <div id="phone"><div id="app"></div><div id="ov"></div><div id="toast" role="status"></div></div>
+  <aside id="nota">
+    <h1>Demo de Faro</h1>
+    <p>Maqueta navegable con datos de ejemplo. Todo se puede tocar.</p>
+    <ul>
+      <li>Toca <b>«Sin internet»</b> arriba para simular que vuelve la conexión.</li>
+      <li>En el <b>Mapa</b>, toca a Mamá y prueba <b>«Seguir en directo»</b> (aquí va 10 veces más rápido).</li>
+      <li>Acepta a <b>Pablo</b>, pide ayuda, crea un grupo o escribe en un chat.</li>
+      <li>En <b>Ajustes</b> puedes volver a ver la bienvenida.</li>
+    </ul>
+    <p>No hay radio real: Bluetooth, batería y ubicación son simulados.</p>
+  </aside>
+</div>
+
+<script>
+// ---------- Iconos ----------
+const S=(p,c='currentColor',w=22,sw=1.9)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const IC={
+  home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  back:'<path d="M15 18l-6-6 6-6"/>',
+  chev:'<path d="M6 9l6 6 6-6"/>',
+  right:'<path d="M9 6l6 6-6 6"/>',
+  dots:'<circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/>',
+  send:'<path d="M5 12h13M13 6l6 6-6 6"/>',
+  eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/>',
+  yo:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/>',
+  wave:'<path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.2" r="1"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a2 2 0 0 0 3.4 0"/>',
+  bat:'<rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2M6 10v4M9.5 10v4"/>',
+  share:'<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/>',
+  update:'<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>',
+  lock:'<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/>',
+  alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+  bt:'<path d="M7 7l10 10-5 4V3l5 4L7 17"/>',
+  qr:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h7v-4"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  faro:'<path d="M9 21l1.2-11h3.6L15 21z"/><path d="M8.5 10h7M10 6.5h4v3.5h-4z"/><path d="M12 3.5v3M4 7l4 1.5M20 7l-4 1.5"/>'
+};
+const ic=(n,c,w,sw)=>S(IC[n],c,w,sw);
+
+// ---------- Datos de ejemplo (sintéticos) ----------
+const G={
+  fam:{id:'fam',name:'Mi familia',color:'#A7C7E7',admin:true,members:['yo','mama','lucia','abuelo'],share:true,muted:false},
+  marta:{id:'marta',name:'Familia de Marta',color:'#C9A7E7',admin:false,members:['yo','marta','rosa','juan'],share:true,muted:false}
+};
+const P={
+  mama:{n:'Mamá',i:'M',c:'#FFB4A8',g:'fam',dist:'120 m',dir:'noreste',calle:'Calle Larios, Málaga',hace:'2 min',bat:64,x:250,y:250,st:'Bien'},
+  lucia:{n:'Lucía',i:'L',c:'#D7C2FF',g:'fam',dist:'contigo',dir:'',calle:'Plaza de la Constitución, Málaga',hace:'1 min',bat:81,x:214,y:398,st:'Bien'},
+  abuelo:{n:'Abuelo',i:'A',c:'#FFE08A',g:'fam',dist:'1,2 km',dir:'noroeste',calle:'Calle Victoria, Málaga',hace:'3 h',bat:14,x:84,y:170,st:'Sin noticias',warn:true},
+  rosa:{n:'Rosa',i:'R',c:'#C9E4A7',g:'marta',dist:'2,4 km',dir:'este',calle:'Paseo Marítimo, Málaga',hace:'5 min',bat:47,x:330,y:470,st:'Bien'},
+  juan:{n:'Juan',i:'J',c:'#8FE3E0',g:'marta',dist:'2,4 km',dir:'este',calle:'Paseo Marítimo, Málaga',hace:'20 min',bat:72,x:300,y:520,st:'Ha llegado a casa'},
+  marta:{n:'Marta',i:'M',c:'#F5C2E0',g:'marta',dist:'3,1 km',dir:'suroeste',calle:'Avenida de Andalucía, Málaga',hace:'8 min',bat:55,x:60,y:560,st:'Bien'},
+  pablo:{n:'Pablo',i:'P',c:'#8FE3E0',g:'fam',dist:'2 km',dir:'sur',calle:'Calle Comedias, Málaga',hace:'1 min',bat:90,x:180,y:600,st:'Bien'}
+};
+const ME={x:195,y:390};
+const CH={
+  fam:[{d:'sys',t:'Hoy'},{d:'mama',t:'¿Estáis todos bien?',h:'20:02'},{d:'lucia',t:'Yo estoy con papá en casa',h:'20:04'},{d:'yo',t:'Yo bien, voy para allá',h:'20:05'},{d:'mama',t:'Vale, aquí os espero',h:'20:06'}],
+  marta:[{d:'sys',t:'Hoy'},{d:'marta',t:'Se ha ido la luz en todo el barrio',h:'19:40'},{d:'juan',t:'He llegado a casa',h:'19:54'},{d:'rosa',t:'Estamos en casa, todo bien',h:'20:09'}],
+  'p-mama':[{d:'sys',t:'Ayer'},{d:'mama',t:'¿Mañana vienes a comer?',h:'14:10'},{d:'yo',t:'Sí, a las dos',h:'14:22'}],
+  cerca:[{d:'sys',t:'Sala abierta · la puede leer cualquiera que esté cerca'},{d:'v1',t:'¿Alguien sabe si el centro de salud está abierto?',h:'20:01'},{d:'v2',t:'Sí, el de la calle Carretería tiene luz',h:'20:03'},{d:'v3',t:'En el polideportivo reparten agua',h:'20:07'}]
+};
+const NOMBRE_V={v1:'Vecino 4F2A',v2:'Vecina 9C1E',v3:'Vecino 07BD'};
+const UNREAD={marta:true,fam:false};
+
+let st={
+  name:'',online:false,tab:'inicio',chatTab:'mis',mapFilter:'all',
+  stack:[{s:'bienvenida',step:0}],
+  open:{},read:{},pablo:'pend',abuelo:true,
+  batMode:'auto',lang:'es',av:{grupos:true,privados:true,cerca:false,senales:true},
+  mapWifi:true,updWifi:true,mapSaved:true,blocked:0,
+  follow:null,sos:null,seen:[]
+};
+try{const n=localStorage.getItem('faro-demo-nombre');if(n){st.name=n;st.stack=[{s:'main'}]}}catch(e){}
+
+// ---------- Utilidades ----------
+const $=s=>document.querySelector(s);
+const app=$('#app'),ov=$('#ov'),toastEl=$('#toast');
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cur=()=>st.stack[st.stack.length-1];
+const go=(s,o={})=>{st.stack.push({s,...o});closeOv();render();app.querySelector('.scroll')?.scrollTo(0,0)};
+const back=()=>{if(st.stack.length>1)st.stack.pop();closeOv();render()};
+const home=(tab)=>{st.stack=[{s:'main'}];if(tab)st.tab=tab;closeOv();render()};
+const hora=()=>{const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')};
+let tt;const toast=t=>{toastEl.textContent=t;toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('on'),2800)};
+const av=(id,size)=>{const p=P[id]||{i:(st.name||'T')[0].toUpperCase(),c:'#A7C7E7'};return `<div class="av" style="background:${p.c}${size?`;width:${size}px;height:${size}px;font-size:${Math.round(size*.38)}px`:''}">${esc(p.i)}</div>`};
+const nombre=id=>id==='yo'?'Tú':(P[id]?.n||NOMBRE_V[id]||id);
+const gchip=g=>`<div class="gicon" style="border-color:${g.color};color:${g.color}">${ic('users',g.color,22)}</div>`;
+
+// ---------- Capas ----------
+function closeOv(){ov.innerHTML='';ov.classList.remove('on')}
+function sheet(html){ov.innerHTML=`<div class="capa" data-a="cerrar"></div><div class="sheet" role="dialog"><div class="asa"></div>${html}</div>`;ov.classList.add('on')}
+function modal(html){ov.innerHTML=`<div class="capa" data-a="cerrar"></div><div class="modal" role="dialog">${html}</div>`;ov.classList.add('on')}
+function menu(el,items){
+  const r=el.getBoundingClientRect(),pr=$('#phone').getBoundingClientRect();
+  const right=Math.max(8,pr.right-r.right),top_=r.bottom-pr.top+4;
+  ov.innerHTML=`<div class="capa" style="background:rgba(0,0,0,.25)" data-a="cerrar"></div><div class="menu" style="right:${right}px;top:${top_}px">${items.map(i=>i==='-'?'<div class="sep"></div>':`<button class="${i[2]||''}" data-a="${i[1]}" ${i[3]||''}>${i[0]}</button>`).join('')}</div>`;
+  ov.classList.add('on');
+  const m=ov.querySelector('.menu');const mr=m.getBoundingClientRect();
+  if(mr.bottom>pr.bottom-10)m.style.top=(r.top-pr.top-mr.height-4)+'px';
+}
+function confirmar(titulo,texto,si,accion,rojo=true){
+  modal(`<h3>${titulo}</h3><p>${texto}</p><div style="display:flex;flex-direction:column;gap:8px;margin-top:18px"><button class="btn ${rojo?'red':'pri'}" data-a="${accion}">${si}</button><button class="btn ghost" data-a="cerrar">Cancelar</button></div>`);
+}
+
+// ---------- Pantallas ----------
+const V={};
+
+V.bienvenida=({step})=>{
+  const puntos=`<div class="puntos">${[0,1,2,3,4].map(i=>`<i class="${i===step?'on':''}"></i>`).join('')}</div>`;
+  if(step===0)return `<div class="scr"><div class="centro"><div class="ic-big" style="width:96px;height:96px">${ic('faro','#A7C7E7',52,1.6)}</div><h1>Faro</h1><p>Mensajes y ubicación para tu familia, aunque no haya cobertura.</p><p style="font-size:13.5px;color:var(--muted)">Funciona por Bluetooth entre móviles cercanos. Gratis, sin cuentas y sin anuncios.</p></div>${puntos}<div class="pie"><button class="btn pri" data-a="bstep">Empezar</button></div></div>`;
+  if(step===1)return `<div class="scr"><div class="centro" style="justify-content:flex-start;padding-top:70px;align-items:stretch;text-align:left"><h1 style="font-size:26px">¿Cómo te llamas?</h1><p style="font-size:14.5px">Así te verá tu familia. Puedes cambiarlo después.</p><input class="campo" id="nombre" maxlength="24" placeholder="Por ejemplo, Carmen" value="${esc(st.name)}" autocomplete="off" style="margin-top:10px"></div>${puntos}<div class="pie"><button class="btn pri" data-a="bnombre">Continuar</button></div></div>`;
+  const P_=[
+    ['bt','Encontrar móviles cercanos','Para enviar mensajes sin cobertura, Faro busca otros móviles con Faro a tu alrededor por Bluetooth.'],
+    ['pin','Tu ubicación','Solo la ven los grupos que tú elijas, y solo cuando lo actives. Nunca se envía a ningún servidor.'],
+    ['bell','Avisos','Para avisarte si alguien de tu familia pide ayuda, aunque tengas el móvil en silencio.']][step-2];
+  return `<div class="scr"><div class="centro"><div class="ic-big">${ic(P_[0],'#A7C7E7',40,1.7)}</div><h1 style="font-size:24px">${P_[1]}</h1><p>${P_[2]}</p></div>${puntos}<div class="pie"><button class="btn pri" data-a="bperm" data-ok="1">Permitir</button><button class="btn ghost" data-a="bperm">Ahora no</button></div></div>`;
+};
+
+function cabMain(){
+  return `<div class="top"><div class="logo">${ic('faro','#F2F2F2',28,1.7)}Faro</div><button class="pill ${st.online?'on':''}" data-a="internet"><i></i>${st.online?'Con internet':'Sin internet'}</button><button class="round" data-a="ir" data-s="ajustes" aria-label="Ajustes">${ic('gear','#F2F2F2',20)}</button></div>`;
+}
+function nav(){
+  const t=[['inicio','home','Inicio'],['chats','chat','Chats'],['mapa','map','Mapa']];
+  return `<nav class="nav">${t.map(([k,i,l])=>`<button class="${st.tab===k?'on':''}" data-a="tab" data-t="${k}" aria-label="${l}">${ic(i,'currentColor',22)}<span>${l}</span></button>`).join('')}</nav>`;
+}
+const miembros=()=>{const s=new Set();Object.values(G).forEach(g=>g.members.forEach(m=>m!=='yo'&&s.add(m)));return [...s]};
+
+function vInicio(){
+  const ppl=miembros().filter(id=>id!=='marta').concat(miembros().includes('marta')?['marta']:[]);
+  const card=(id,cls,av_,txt,t,more,acts,col)=>{const o=st.open[id];return `<div class="card ${cls} ${o?'open':''}" style="border-left-color:${col||'var(--line)'}"><button class="row" style="width:100%;text-align:left" data-a="card" data-id="${id}">${av_}<div class="tx"><div class="m">${txt}</div><span class="t">${t}</span></div><span class="chev">${ic('chev','#999',16,2.2)}</span></button>${o?(more?`<div class="more">${more}</div>`:'')+`<div class="acts">${acts}</div>`:''}</div>`};
+  let imp='';
+  if(st.abuelo)imp+=card('abuelo','',av('abuelo',34),'<b>Abuelo</b> sin señales desde hace 3 h','Mi familia · última vez a 1,2 km',`Su último aviso fue en Calle Victoria. Le quedaba un 14 % de batería.`,`<button class="chip pri" data-a="ficha" data-p="abuelo">Ver en el mapa</button><button class="chip" data-a="chatp" data-p="abuelo">Escribirle</button><button class="chip" data-a="abueloOk">Ya sé que está bien</button>`,G.fam.color);
+  if(st.pablo==='pend')imp+=`<div class="card" style="border-left-color:${G.fam.color}"><div class="row">${av('pablo',34)}<div class="tx"><div class="m"><b>Pablo</b> quiere entrar en Mi familia</div><span class="t">hace 1 min · con el enlace que enviaste</span></div></div><div class="acts"><button class="chip pri" data-a="pablo" data-v="si">Sí, dejarle entrar</button><button class="chip" data-a="pablo" data-v="no">No</button></div></div>`;
+  const nuevo=id=>st.read[id]?'read':'new';
+  let nov='';
+  const quien=['Mamá','Lucía'];
+  nov+=card('visto',nuevo('visto'),`<div class="eye">${ic('eye','#A7C7E7',18,2)}</div>`,`<b>${quien.join(' y ')}</b> han visto dónde estás`,'hace 3 min',`Mamá · en el mapa · hace 3 min<br>Lucía · en directo · hace 40 min`,`<button class="chip" data-a="ir" data-s="ubicacion">Dejar de compartir</button><button class="chip" data-a="chat" data-c="fam">Abrir chat</button>`);
+  nov+=card('rosa',nuevo('rosa'),av('rosa',34),'<b>Rosa</b>: Estamos en casa, todo bien','hace 5 min',null,`<button class="chip pri" data-a="chat" data-c="marta">Responder</button><button class="chip" data-a="ficha" data-p="rosa">Ver en el mapa</button>`,G.marta.color);
+  nov+=card('mama',nuevo('mama'),av('mama',34),'<b>Mamá</b>: Vale, aquí os espero','hace 12 min',null,`<button class="chip pri" data-a="chat" data-c="fam">Responder</button><button class="chip" data-a="ficha" data-p="mama">Ver en el mapa</button>`,G.fam.color);
+  nov+=card('juan','read',av('juan',34),'<b>Juan</b> ha llegado a casa','hace 20 min',null,`<button class="chip" data-a="ficha" data-p="juan">Ver en el mapa</button>`,G.marta.color);
+  return `<div class="scr">${cabMain()}<div class="scroll">
+  <div class="people">${ppl.map(id=>{const p=P[id];return `<button class="person" data-a="ficha" data-p="${id}"><div class="av ring ${p.warn?'warn':''}" style="background:${p.c}">${p.i}</div><b>${p.n}</b><span>${p.warn?p.hace:p.dist}</span></button>`}).join('')}</div>
+  <div class="legend">${Object.values(G).map(g=>`<span><i style="background:${g.color}"></i>${esc(g.name)}</span>`).join('')}<button class="link" data-a="ir" data-s="grupos">Gestionar</button></div>
+  ${imp?`<div class="sec">Importantes</div><div class="cards">${imp}</div>`:''}
+  <div class="sec">Novedades<span>últimas 24 h</span></div><div class="cards">${nov}</div>
+  <button class="sos" data-a="sosPedir">Pedir ayuda</button></div>${nav()}</div>`;
+}
+
+function lastOf(id){const m=CH[id].filter(x=>x.d!=='sys').slice(-1)[0];return m?{t:(m.d==='yo'?'Tú: ':m.d.startsWith('v')?'':nombre(m.d)+': ')+m.t,h:m.h}:{t:'',h:''}}
+function vChats(){
+  let body='';
+  if(st.chatTab==='mis'){
+    const rows=Object.values(G).map(g=>{const l=lastOf(g.id);return `<button class="crow ${UNREAD[g.id]?'unread':''}" data-a="chat" data-c="${g.id}">${gchip(g)}<div class="tx"><b>${esc(g.name)}</b><span class="last">${esc(l.t)}</span></div><span class="h">${l.h}</span></button>`});
+    Object.keys(CH).filter(k=>k.startsWith('p-')).forEach(k=>{const id=k.slice(2),l=lastOf(k);rows.push(`<button class="crow" data-a="chat" data-c="${k}">${av(id,44)}<div class="tx"><b>${P[id].n}</b><span class="last">${esc(l.t)}</span></div><span class="h">${l.h}</span></button>`)});
+    body=`<div class="scroll">${rows.join('')}<div style="padding:14px 16px"><button class="btn out" data-a="ir" data-s="crear">${'Crear un grupo'}</button></div><p class="nota">Tus grupos son privados: solo entra quien tú aceptes. Los mensajes van cifrados.</p></div>`;
+  }else{
+    body=`<div class="scroll"><div class="centro" style="padding-top:30px;flex:none"><div class="ic-big">${ic('wave','#A7C7E7',40,1.7)}</div><h1 style="font-size:22px">Gente cerca</h1><p style="font-size:14.5px">Hay <b style="color:var(--fg)">12 personas</b> con Faro a tu alrededor. Es una sala abierta para pedir o dar ayuda a quien esté cerca.</p><button class="btn pri" style="margin-top:12px" data-a="chat" data-c="cerca">Entrar en la sala</button></div></div>
+    <div class="aviso">${ic('alert','#FFB14A',20)}<span>Lo que escribas aquí lo puede leer cualquiera que esté cerca. Úsala solo en emergencias.</span></div>`;
+  }
+  return `<div class="scr">${cabMain()}<div class="seg"><button class="${st.chatTab==='mis'?'on':''}" data-a="ctab" data-t="mis">Mis chats</button><button class="${st.chatTab==='cerca'?'on':''}" data-a="ctab" data-t="cerca">Cerca</button></div>${body}${nav()}</div>`;
+}
+
+function mapSvg(){
+  const visibles=miembros().filter(id=>st.mapFilter==='all'||G[st.mapFilter].members.includes(id));
+  const f=st.follow;
+  const calle=(x,y,r,t)=>`<text x="${x}" y="${y}" transform="rotate(${r} ${x} ${y})" fill="#55555c" font-size="10.5" font-family="Inter">${t}</text>`;
+  let trail='';
+  if(f){const p=P[f.p];trail=`<polyline points="${f.trail.map(q=>q.join(',')).join(' ')} ${p.x},${p.y}" fill="none" stroke="${p.c}" stroke-width="3" stroke-dasharray="1 7" stroke-linecap="round" opacity=".85"/>`}
+  const dots=visibles.map(id=>{const p=P[id],g=G[p.g].color,isF=f&&f.p===id;return `<g data-a="ficha" data-p="${id}" style="cursor:pointer">${isF?`<circle cx="${p.x}" cy="${p.y}" r="30" fill="${p.c}" opacity=".12"/>`:''}<circle cx="${p.x}" cy="${p.y}" r="22" fill="transparent"/><circle cx="${p.x}" cy="${p.y}" r="${isF?13:10}" fill="${p.c}" stroke="#000" stroke-width="2.5"/><circle cx="${p.x}" cy="${p.y}" r="${isF?18:14}" fill="none" stroke="${p.warn?'#FFB14A':g}" stroke-width="2"/><text x="${p.x}" y="${p.y-(isF?24:20)}" fill="#F2F2F2" font-size="12.5" font-weight="600" text-anchor="middle" font-family="Inter">${p.n}</text></g>`}).join('');
+  return `<svg viewBox="0 0 390 700" preserveAspectRatio="xMidYMid slice" aria-label="Mapa">
+  <rect width="390" height="700" fill="#000"/>
+  <path d="M0 610 C100 585 190 630 290 600 S380 615 390 605 V700 H0Z" fill="#0B1622"/>
+  <path d="M250 60 L360 45 L372 150 L270 160Z" fill="#07120A"/>
+  <g stroke="#34343A" stroke-width="8" fill="none"><path d="M-10 300 L400 345"/><path d="M180 -10 L225 710"/></g>
+  <g stroke="#26262A" stroke-width="4" fill="none"><path d="M-10 140 L400 175"/><path d="M-10 470 L400 500"/><path d="M60 -10 L90 710"/><path d="M315 -10 L335 710"/><path d="M-10 230 L180 245"/></g>
+  ${calle(14,312,6,'Calle Larios')}${calle(198,40,84,'Alameda Principal')}${calle(14,150,5,'Calle Victoria')}${calle(14,482,4,'Calle Comedias')}${calle(150,598,-3,'Paseo Marítimo')}
+  ${trail}${dots}
+  <circle cx="${ME.x}" cy="${ME.y}" r="18" fill="#A7C7E7" opacity=".15"/><circle cx="${ME.x}" cy="${ME.y}" r="8" fill="#A7C7E7" stroke="#000" stroke-width="2"/>
+  </svg>`;
+}
+function vMapa(){
+  const f=st.follow;
+  const chips=`<div class="flot" style="top:10px;left:12px;right:12px"><button class="chipm ${st.mapFilter==='all'?'on':''}" data-a="filtro" data-f="all">Todos</button>${Object.values(G).map(g=>`<button class="chipm ${st.mapFilter===g.id?'on':''}" data-a="filtro" data-f="${g.id}"><i style="background:${g.color}"></i>${esc(g.name)}</button>`).join('')}</div>`;
+  const est=`<div class="flot" style="top:${f?12:54}px;left:12px"><span class="estm">${f?`<span class="vivo"><i></i>En directo</span> · quedan ${Math.max(1,Math.ceil(f.left/60))} min`:(st.online?'● Mapa en línea':'● Mapa guardado · sin internet')}</span></div>`;
+  if(f){const p=P[f.p];return `<div class="scr"><div class="map">${mapSvg()}${est}
+    <div class="panel"><div style="display:flex;gap:12px;align-items:center">${av(f.p,40)}<div style="flex:1;min-width:0"><b style="font-size:16px;display:block">${p.n}</b><span style="font-size:12.5px;color:#d6d6d6;display:flex;gap:4px;align-items:center">${ic('pin','#9a9a9a',14,2)}${p.calle.split(',')[0]} · ${f.ago} s</span></div><div style="text-align:right"><b style="font-size:16px;display:block">${p.dist}</b><span style="font-size:12px;color:var(--muted)">↗ ${p.dir}</span></div></div>
+    <div class="two" style="margin-top:12px"><button class="btn out" data-a="pararSeguir">Parar</button><button class="btn pri" data-a="guiar" data-p="${f.p}">Guiarme</button></div></div></div>${nav()}</div>`}
+  const vis=miembros().filter(id=>st.mapFilter==='all'||G[st.mapFilter].members.includes(id));
+  const lista=vis.map(id=>{const p=P[id];return `<button class="pr" data-a="ficha" data-p="${id}">${av(id)}<div class="n"><b>${p.n}</b><span style="${p.warn?'color:var(--warn)':''}">${esc(G[p.g].name)} · ${p.warn?'sin noticias · ':'hace '}${p.hace}</span></div><div class="d"><b>${p.dist}</b><span>${p.dir?'↗ '+p.dir:''}</span></div></button>`}).join('');
+  return `<div class="scr"><div class="map">${mapSvg()}${chips}${est}<div class="flot" style="right:12px;bottom:12px"><button class="btnr" data-a="centrar" aria-label="Centrar en mí">${ic('yo','#A7C7E7',20,2)}</button></div></div><div class="lista">${lista}</div>${nav()}</div>`;
+}
+
+V.main=()=>st.tab==='inicio'?vInicio():st.tab==='chats'?vChats():vMapa();
+
+V.chat=({c})=>{
+  const isG=!!G[c],isCerca=c==='cerca',pid=c.startsWith('p-')?c.slice(2):null;
+  const g=G[c];
+  const titulo=isG?esc(g.name):isCerca?'Gente cerca':P[pid].n;
+  const sub=isG?`${g.members.length} personas · ${st.online?'por internet y Bluetooth':'por Bluetooth'}`:isCerca?'12 personas cerca · sala abierta':(st.online?'por internet':'por Bluetooth · a '+P[pid].dist);
+  const ava=isG?gchip(g):isCerca?`<div class="gicon" style="border-color:#555;color:#bbb">${ic('wave','#bbb',22)}</div>`:av(pid);
+  const msgs=CH[c].map(m=>{
+    if(m.d==='sys')return `<div class="${m.t.length<8?'day':'sys'}">${esc(m.t)}</div>`;
+    const me=m.d==='yo';
+    return `<div class="b ${me?'me':''} ${m.sos?'sos-b':''}">${!me&&(isG||isCerca)?`<span class="au" style="color:${P[m.d]?.c||'#bdbdbd'}">${esc(nombre(m.d))}</span>`:''}${esc(m.t)}<span class="hh">${m.h}${me?' · ✓':''}</span></div>`}).join('');
+  return `<div class="scr"><div class="bar"><button class="back" data-a="back" aria-label="Atrás">${ic('back','#F2F2F2')}</button><button class="who" data-a="${isG?'info':isCerca?'nada':'ficha'}" data-g="${c}" data-p="${pid||''}">${ava}<div style="min-width:0"><b>${titulo}</b><span>${sub}</span></div></button><button class="round" style="border:0" data-a="menuChat" data-c="${c}" aria-label="Más opciones">${ic('dots','#F2F2F2')}</button></div>
+  <div class="scroll" id="msgs"><div class="msgs">${msgs}</div></div>
+  ${isCerca?`<div class="aviso" style="margin:6px 12px">${ic('alert','#FFB14A',18)}<span style="font-size:12.5px">Cualquiera cerca puede leer esta sala. No pongas datos personales.</span></div>`:''}
+  <form class="input" data-c="${c}"><input id="msg" placeholder="Escribe un mensaje" autocomplete="off" aria-label="Mensaje"><button class="send" aria-label="Enviar">${ic('send','#0B1B2B',20,2.2)}</button></form></div>`;
+};
+
+V.info=({g:gid})=>{
+  const g=G[gid];
+  const filas=g.members.map(id=>{const yo=id==='yo';const p=P[id];return `<button class="pr" data-a="${yo?'nada':'miembro'}" data-p="${id}" data-g="${gid}">${av(id)}<div class="n"><b>${yo?'Tú':p.n}${(yo&&g.admin)||(!yo&&!g.admin&&id==='marta')?' <span style="font-size:11px;border:1px solid var(--line2);border-radius:999px;padding:1px 7px;color:var(--muted);font-weight:500">Administrador</span>':''}</b><span style="${p?.warn?'color:var(--warn)':''}">${yo?(g.share?'Compartes tu ubicación':'No compartes tu ubicación'):(p.warn?'Sin noticias · '+p.hace:p.st+' · '+(p.dist==='contigo'?'contigo':'a '+p.dist))}</span></div></button>`}).join('');
+  return `<div class="scr"><div class="bar"><button class="back" data-a="back" aria-label="Atrás">${ic('back','#F2F2F2')}</button><h2>${esc(g.name)}</h2></div><div class="scroll">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 0 16px">${gchip(g).replace('44px','72px')}<span style="color:var(--muted);font-size:13.5px">${g.members.length} personas · grupo privado</span></div>
+  <div class="grp"><button class="fila" data-a="share" data-g="${gid}"><div class="tx">Compartir mi ubicación<small>Para emergencias. Tu familia ve dónde estás.</small></div><span class="sw ${g.share?'':'off'}"></span></button><button class="fila" data-a="mute" data-g="${gid}"><div class="tx">Silenciar avisos</div><span class="sw ${g.muted?'':'off'}"></span></button></div>
+  <div class="sec" style="padding-top:8px">Personas</div>${filas}
+  <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px">${g.admin?`<button class="btn out" data-a="ir" data-s="invitar" data-g="${gid}">Invitar a alguien</button>`:''}<button class="btn ghost" style="color:var(--danger)" data-a="salirQ" data-g="${gid}">Salir del grupo</button></div>
+  ${g.admin?'<p class="nota" style="padding-bottom:16px">Eres el administrador: tú decides quién entra. Mantén pulsado a alguien (o tócalo) para ver opciones.</p>':''}</div></div>`;
+};
+
+V.grupos=()=>`<div class="scr"><div class="bar"><button class="back" data-a="back" aria-label="Atrás">${ic('back','#F2F2F2')}</button><h2>Mis grupos</h2></div><div class="scroll">
+  ${Object.values(G).map(g=>`<button class="crow" data-a="info" data-g="${g.id}">${gchip(g)}<div class="tx"><b>${esc(g.name)}</b><span class="last">${g.members.length} personas${g.admin?' · eres administrador':''}</span></div>${ic('right','#666',18)}</button>`).join('')}
+  <div style="padding:14px 16px"><button class="btn out" data-a="ir" data-s="crear">Crear un grupo</button></div><p class="nota">Para unirte a un grupo, pide a quien lo creó un enlace o que te enseñe su código QR.</p></div></div>`;
+
+V.crear=()=>`<div class="scr"><div class="bar"><button class="back" data-a="back" aria-label="Atrás">${ic('back','#F2F2F2')}</button><h2>Crear un grupo</h2></div><div class="scroll pad">
+  <label for="gname" style="font-size:14px;color:var(--muted);display:block;margin:6px 0 8px">Nombre del grupo</label><input class="campo" id="gname" maxlength="30" placeholder="Por ejemplo, Los primos" autocomplete="off">
+  <p style="font-size:13.5px;color:var(--muted);line-height:1.5;margin:14px 0 20px">Serás el administrador: nadie entra sin que tú lo aceptes.</p>
+  <button class="btn pri" data-a="crearG">Crear grupo</button></div></div>`;
+
+V.invitar=({g:gid})=>{const g=G[gid];return `<div class="scr"><div class="bar"><button class="back" data-a="back" aria-label="Atrás">${ic('back','#F2F2F2')}</button><h2>Invitar a ${esc(g.name)}</h2></div><div class="scroll">
+  <p class="txt" style="text-align:center">Si estáis juntos, que escanee este código con Faro.</p>
+  <div class="qr"><canvas id="qr" width="29" height="29"></canvas></div>
+  <p class="nota" style="text-align:center;margin:12px 0 22px">Válido 15 minutos</p>
+  <div class="pad" style="display:flex;flex-direction:column;gap:10px"><button class="btn out" data-a="enlace">${'Enviar enlace…'}</button></div>
+  <div class="aviso">${ic('lock','#A7C7E7',20)}<span>Con el código o con el enlace, te llegará un aviso y tú decides si entra.</span></div></div></div>`};
+
+V.guiar=({p:pid})=>{const p=P[pid];return `<div class="scr"><div class="bar"><button class="back" data-a="back" aria-label="Atrás">${ic('back','#F2F2F2')}</button><div class="who">${av(pid,36)}<div><b>Hacia ${p.n}</b><span>posición de hace ${p.hace}</span></div></div></div>
+  <div class="centro" style="gap:22px"><div class="dial"><span class="nn">N</span><svg class="flecha" id="flecha" width="120" height="120" viewBox="0 0 24 24" style="transform:rotate(35deg)"><path d="M12 2l6.5 18-6.5-4.2L5.5 20z" fill="#A7C7E7"/></svg></div><div><div class="dist" id="gdist">${p.dist==='contigo'?'5 m':p.dist}</div><div style="color:var(--muted);font-size:15px">sigue la flecha · al ${p.dir||'norte'}</div></div></div>
+  <p class="nota" style="text-align:center;padding-bottom:20px">Gira el móvil: la flecha siempre apunta hacia ${p.n}.</p></div>`};
+
+V.sosact=()=>{const s=st.sos;return `<div class="scr sosact"><div class="centro">${ic('alert','#FF6B5E',48,1.8)}<div style="font-size:26px;font-weight:700;color:var(--danger)">Has pedido ayuda</div><p style="font-size:14.5px">Tu familia ve dónde estás. Tu ubicación se envía cada 2 minutos.</p>
+  <div style="text-align:left;font-size:14px;color:#bdbdbd;line-height:1.8;margin-top:10px;width:100%;max-width:280px">${s.vistos.map(v=>`<div>${ic('check','#8FE3A8',16,2.4)} ${v}</div>`).join('')}${s.vistos.length<2?`<div style="color:var(--dim)">· Esperando a que lo vean…</div>`:''}</div></div>
+  <div class="pie"><button class="btn redout" data-a="sosFin">Ya estoy bien</button><button class="btn ghost" data-a="sosChat">Abrir chat de Mi familia</button></div></div>`};
+
+// Ajustes
+const fila=(icon,t,act,extra='',sub='')=>`<button class="fila" data-a="${act}">${ic(icon,'#A7C7E7',22)}<div class="tx">${t}${sub?`<small>${sub}</small>`:''}</div>${extra||ic('right','#555',16)}</button>`;
+const tit=t=>`<div class="bar"><button class="back" data-a="back" aria-label="Atrás">${ic('back','#F2F2F2')}</button><h2>${t}</h2></div>`;
+const sw=(on,act,t,sub='',extra='')=>`<button class="fila" data-a="${act}" ${extra}><div class="tx">${t}${sub?`<small>${sub}</small>`:''}</div><span class="sw ${on?'':'off'}"></span></button>`;
+const BAT={auto:'Automático',ahorro:'Ahorro siempre',max:'Máximo ahorro'};
+V.ajustes=()=>`<div class="scr">${tit('Ajustes')}<div class="scroll">
+  <button class="perfil" data-a="ir" data-s="perfil">${av('yo',52)}<div style="flex:1"><b style="font-size:17px;display:block">${esc(st.name||'Sin nombre')}</b><span style="font-size:13px;color:var(--muted)">Así te ve tu familia · cambiar</span></div>${ic('right','#555',16)}</button>
+  <div class="grp">${fila('pin','Compartir mi ubicación','ir" data-s="ubicacion','<span class="v">'+Object.values(G).filter(g=>g.share).length+' de '+Object.keys(G).length+'</span>')}${fila('bell','Avisos','ir" data-s="avisos')}${fila('bat','Batería','ir" data-s="bateria','<span class="v">'+BAT[st.batMode]+'</span>')}${fila('map','Mapa sin conexión','ir" data-s="mapaoff','<span class="v">'+(st.mapSaved?'Málaga':'Ninguno')+'</span>')}</div>
+  <div class="grp">${fila('share','Compartir Faro','ir" data-s="compartir','','Pásala a quien no la tenga, sin internet')}${fila('update','Actualizaciones','ir" data-s="actualiza')}${fila('lock','Privacidad y seguridad','ir" data-s="privacidad')}${fila('globe','Idioma','ir" data-s="idioma','<span class="v">Español</span>')}${fila('help','Ver la bienvenida otra vez','verBienvenida')}</div>
+  <p class="nota" style="text-align:center;padding-bottom:20px">Faro 0.1.21 · software libre (GPL v3)<br>Sin cuentas, sin anuncios, sin servidores propios.</p></div></div>`;
+V.perfil=()=>`<div class="scr">${tit('Tu nombre')}<div class="scroll pad"><input class="campo" id="nombre2" maxlength="24" value="${esc(st.name)}" placeholder="Tu nombre" autocomplete="off"><p class="txt" style="padding:12px 4px">Es lo que verán tus grupos y la gente cerca.</p><button class="btn pri" data-a="guardarNombre">Guardar</button></div></div>`;
+V.ubicacion=()=>`<div class="scr">${tit('Compartir mi ubicación')}<div class="scroll"><p class="txt">Elige qué grupos pueden ver dónde estás. Si pides ayuda, se envía a todos aunque esté apagado.</p><div class="grp">${Object.values(G).map(g=>sw(g.share,'share" data-g="'+g.id,esc(g.name))).join('')}</div><p class="nota">Cuando alguien vea dónde estás, te llegará un aviso (si tiene internet).</p></div></div>`;
+V.avisos=()=>`<div class="scr">${tit('Avisos')}<div class="scroll"><div class="grp">${sw(st.av.grupos,'av" data-k="grupos','Mensajes de mis grupos')}${sw(st.av.privados,'av" data-k="privados','Mensajes privados')}${sw(st.av.cerca,'av" data-k="cerca','Gente cerca','Mensajes de la sala abierta')}${sw(st.av.senales,'av" data-k="senales','Alguien sin señales','Si alguien de tu grupo no da señales en 3 h')}<div class="fila"><div class="tx">Peticiones de ayuda<small>Siempre activadas, con sonido aunque tengas el móvil en silencio.</small></div></div></div></div></div>`;
+V.bateria=()=>`<div class="scr">${tit('Batería')}<div class="scroll"><p class="txt">Faro cambia de modo solo según la batería que te quede.</p>${[['auto','Automático (recomendado)','Normal con más del 50 %, ahorro con menos y mínimo por debajo del 20 %.'],['ahorro','Ahorro siempre','Envía tu ubicación cada 15 min y busca móviles con menos frecuencia.'],['max','Máximo ahorro','Solo recibe mensajes. Tu ubicación solo se envía si pides ayuda.']].map(([k,t,s])=>`<button class="radio ${st.batMode===k?'on':''}" data-a="bat" data-k="${k}"><span class="c"></span><div><b>${t}</b><span>${s}</span></div></button>`).join('')}</div></div>`;
+V.mapaoff=()=>`<div class="scr">${tit('Mapa sin conexión')}<div class="scroll">${st.mapSaved?`<div class="dato"><b>Málaga y alrededores</b><span>Ciudad 10 km · comarca 60 km · 6 MB<br>Guardado el 9 de noviembre</span></div>`:`<div class="dato"><b>Sin mapa guardado</b><span>Se guardará tu zona la próxima vez que tengas Wi‑Fi.</span></div>`}
+  <div class="grp">${sw(st.mapWifi,'tg" data-k="mapWifi','Actualizar solo con Wi‑Fi')}</div><div class="pad" style="display:flex;flex-direction:column;gap:6px"><button class="btn out" data-a="buscar" data-k="mapa">${st.mapSaved?'Actualizar ahora':'Guardar mi zona ahora'}</button>${st.mapSaved?'<button class="btn ghost" style="color:var(--danger)" data-a="borrarMapaQ">Borrar mapa guardado</button>':''}</div>
+  <p class="nota" style="margin-top:8px">Si te vas a otra ciudad, Faro guarda la nueva zona solo, con Wi‑Fi.</p></div></div>`;
+V.actualiza=()=>`<div class="scr">${tit('Actualizaciones')}<div class="scroll"><div class="dato"><b>Faro 0.1.21</b><span id="updst">Tienes la última versión · comprobado hoy</span></div><div class="grp">${sw(st.updWifi,'tg" data-k="updWifi','Buscar solo con Wi‑Fi')}</div><div class="pad"><button class="btn out" data-a="buscar" data-k="upd">Buscar ahora</button></div><p class="nota" style="margin-top:12px">Cuando haya una versión nueva, te avisaremos para instalarla con un toque.</p></div></div>`;
+V.privacidad=()=>`<div class="scr">${tit('Privacidad y seguridad')}<div class="scroll"><div class="grp">${fila('qr','Mi código de verificación','ir" data-s="codigo')}${fila('users','Personas bloqueadas','ir" data-s="bloqueados','<span class="v">'+st.blocked+'</span>')}</div>
+  <p class="txt">Faro no tiene servidores propios ni cuentas. Tus mensajes y ubicaciones van cifrados de extremo a extremo y solo los ven tus grupos.</p><div class="grp"><button class="fila" style="color:var(--danger)" data-a="borrarTodoQ">Borrar todos mis datos</button></div></div></div>`;
+V.codigo=()=>`<div class="scr">${tit('Mi código de verificación')}<div class="scroll"><p class="txt" style="text-align:center">Si alguien escanea este código, sabrá que de verdad eres tú y no otra persona con tu nombre.</p><div class="qr"><canvas id="qr" width="29" height="29"></canvas></div><p class="nota" style="text-align:center;margin:12px 0 20px;letter-spacing:.08em;font-variant-numeric:tabular-nums">4F2A 9C1E 07BD 33A1</p><div class="pad"><button class="btn out" data-a="escanear">Escanear el código de otra persona</button></div></div></div>`;
+V.bloqueados=()=>`<div class="scr">${tit('Personas bloqueadas')}<div class="scroll">${st.blocked?`<button class="pr" data-a="desbloquear">${av('rosa')}<div class="n"><b>Vecino 07BD</b><span>Toca para desbloquear</span></div></button>`:'<div class="vacio">No has bloqueado a nadie.<br>Puedes bloquear a alguien desde el menú ⋮ de un chat.</div>'}</div></div>`;
+V.idioma=()=>`<div class="scr">${tit('Idioma')}<div class="scroll">${[['movil','Igual que el móvil'],['es','Español'],['en','English'],['ca','Català'],['eu','Euskara'],['gl','Galego']].map(([k,n])=>`<button class="radio ${st.lang===k?'on':''}" style="padding:12px 14px" data-a="lang" data-k="${k}"><span class="c"></span><div><b>${n}</b></div></button>`).join('')}</div></div>`;
+V.compartir=()=>`<div class="scr">${tit('Compartir Faro')}<div class="scroll"><p class="txt">Cuantas más personas cerca tengan Faro, más lejos llegan los mensajes. Puedes pasarla <b style="color:var(--fg)">sin internet</b>.</p>
+  ${[['wave','Por Wi‑Fi con un QR','Tu móvil crea una red; la otra persona escanea y descarga Faro.','wifiQr'],['share','Con Quick Share u otra app','Envía el instalador por Quick Share, Bluetooth o mensajería.','apk'],['link','Enviar enlace de descarga','Si tiene internet: abre la página de Faro.','enlace']].map(([i,t,s,a])=>`<button class="radio" style="align-items:center" data-a="${a}">${ic(i,'#A7C7E7',28)}<div><b>${t}</b><span>${s}</span></div></button>`).join('')}</div></div>`;
+
+// ---------- Ficha de una persona ----------
+function ficha(pid){
+  const p=P[pid];
+  const pocab=p.bat<20;
+  const seguir=pocab?`<p style="text-align:center;font-size:12.5px;color:var(--muted);margin:12px 0 0;line-height:1.45">No se puede seguir en directo: le queda poca batería.<br>Verás su ubicación cuando la envíe.</p>`:`<button class="btn out" style="margin-top:10px;display:flex;gap:8px;justify-content:center;align-items:center" data-a="seguir" data-p="${pid}">${ic('eye','#A7C7E7',18,2)}Seguir en directo</button>`;
+  sheet(`<div style="display:flex;gap:12px;align-items:center"><div class="av ring ${p.warn?'warn':''}" style="background:${p.c};width:52px;height:52px;font-size:20px;box-shadow:0 0 0 2.5px var(--card),0 0 0 4.5px ${p.warn?'var(--warn)':G[p.g].color}">${p.i}</div><div style="flex:1;min-width:0"><b style="font-size:19px;display:block">${p.n}</b><span style="font-size:13.5px;color:#d6d6d6;display:flex;gap:5px;align-items:center;margin-top:2px">${ic('pin','#9a9a9a',15,2)}${p.calle}</span></div></div>
+  <div class="stats"><div class="stat"><b>${p.dist}</b><span>${p.dir?'al '+p.dir:'a tu lado'}</span></div><div class="stat"><b>${p.hace}</b><span>última posición</span></div><div class="stat ${pocab?'warn':''}"><b>${p.bat} %</b><span>batería</span></div></div>
+  <div class="two" style="margin-top:14px"><button class="btn out" data-a="chatp" data-p="${pid}">Abrir chat</button><button class="btn pri" data-a="guiar" data-p="${pid}">Guiarme</button></div>${seguir}`);
+  if(!st.seen.includes(pid)){st.seen.push(pid);setTimeout(()=>toast(st.online?`${p.n} recibirá un aviso: has visto dónde está.`:`Sin internet: el aviso a ${p.n} saldrá cuando vuelva la conexión.`),500)}
+}
+
+// ---------- Acciones ----------
+const A={
+  cerrar:closeOv, back, nada(){},
+  tab:d=>{st.tab=d.t;if(d.t==='chats')UNREAD.marta=UNREAD.marta;render()},
+  ctab:d=>{st.chatTab=d.t;render()},
+  ir:d=>go(d.s,{g:d.g}),
+  internet(){st.online=!st.online;toast(st.online?'Simulación: ha vuelto internet. Los mensajes también van por internet.':'Simulación: sin internet. Faro sigue por Bluetooth con los móviles cercanos.');render()},
+  bstep(){cur().step++;render()},
+  bnombre(){const v=$('#nombre').value.trim();if(!v){toast('Escribe tu nombre para que tu familia te reconozca.');$('#nombre').focus();return}st.name=v;try{localStorage.setItem('faro-demo-nombre',v)}catch(e){}cur().step++;render()},
+  bperm(d){if(d.ok)toast('Simulación: permiso concedido.');if(cur().step>=4){st.stack=[{s:'main'}];st.tab='inicio'}else cur().step++;render()},
+  verBienvenida(){st.stack=[{s:'bienvenida',step:0}];render()},
+  card(d){st.open[d.id]=!st.open[d.id];st.read[d.id]=true;render()},
+  abueloOk(){st.abuelo=false;toast('Quitado de Importantes.');render()},
+  pablo(d){if(d.v==='si'){st.pablo='si';G.fam.members.push('pablo');CH.fam.push({d:'sys',t:'Pablo ha entrado en el grupo'});toast('Pablo ya está en Mi familia.')}else{st.pablo='no';toast('Has rechazado a Pablo. No sabrá nada del grupo.')}render()},
+  ficha:d=>{if(d.p)ficha(d.p)},
+  chat:d=>{UNREAD[d.c]=false;closeOv();go('chat',{c:d.c})},
+  chatp:d=>{const k='p-'+d.p;if(!CH[k])CH[k]=[{d:'sys',t:'Chat privado cifrado con '+P[d.p].n}];closeOv();go('chat',{c:k})},
+  info:d=>go('info',{g:d.g}),
+  guiar:d=>{closeOv();go('guiar',{p:d.p})},
+  filtro:d=>{st.mapFilter=d.f;render()},
+  centrar(){toast('Centrado en tu posición.')},
+  seguir(d){closeOv();const p=P[d.p];st.follow={p:d.p,left:600,ago:0,trail:[[p.x,p.y]],o:{x:p.x,y:p.y,dist:p.dist}};st.stack=[{s:'main'}];st.tab='mapa';render();toast(`Pedido a ${p.n}: enviará su ubicación cada 30 s durante 10 min.`)},
+  pararSeguir(){finSeguir();toast('Has dejado de seguir. Vuelve a su ritmo normal.')},
+  sosPedir(){confirmar('¿Pedir ayuda?','Se enviará tu ubicación y el aviso «Necesito ayuda» a <b style="color:var(--fg)">todos tus grupos</b>, aunque tengas la ubicación desactivada.','Sí, pedir ayuda','sosSi')},
+  sosSi(){closeOv();st.sos={vistos:[]};CH.fam.push({d:'yo',t:'Necesito ayuda',h:hora(),sos:true});go('sosact');setTimeout(()=>{if(st.sos){st.sos.vistos.push('Mamá lo ha visto');if(cur().s==='sosact')render()}},2000);setTimeout(()=>{if(st.sos){st.sos.vistos.push('Lucía lo ha visto · viene hacia ti');if(cur().s==='sosact')render()}},4500)},
+  sosFin(){st.sos=null;CH.fam.push({d:'yo',t:'Ya estoy bien',h:hora()});home('inicio');toast('Has avisado de que ya estás bien.')},
+  sosChat(){go('chat',{c:'fam'})},
+  menuChat(d,el){const c=d.c;
+    if(G[c])menu(el,[['Ver en el mapa','verMapa" data-g="'+c],['Personas','info" data-g="'+c],...(G[c].admin?[['Invitar a alguien','ir" data-s="invitar" data-g="'+c]]:[]),[G[c].muted?'Activar avisos':'Silenciar avisos','mute" data-g="'+c],'-',['Salir del grupo','salirQ" data-g="'+c,'red']]);
+    else if(c==='cerca')menu(el,[['Silenciar la sala','silSala'],['Salir de la sala','back']]);
+    else{const p=c.slice(2);menu(el,[['Ver en el mapa','ficha" data-p="'+p],['Verificar identidad','ir" data-s="codigo'],['Silenciar avisos','silSala'],'-',['Bloquear','bloquearQ" data-p="'+p,'red']])}},
+  verMapa(d){st.mapFilter=d.g;home('mapa')},
+  mute(d){G[d.g].muted=!G[d.g].muted;closeOv();toast(G[d.g].muted?'Avisos silenciados. Las peticiones de ayuda seguirán sonando.':'Avisos activados.');render()},
+  silSala(){closeOv();toast('Avisos silenciados.')},
+  share(d){const g=G[d.g];g.share=!g.share;toast(g.share?`${g.name} vuelve a ver dónde estás.`:`${g.name} ya no ve dónde estás.`);render()},
+  salirQ(d){confirmar('¿Salir de '+esc(G[d.g].name)+'?','Dejarás de ver sus mensajes y su ubicación. Para volver tendrán que invitarte otra vez.','Salir del grupo','salir" data-g="'+d.g)},
+  salir(d){const n=G[d.g].name;delete G[d.g];delete CH[d.g];if(st.mapFilter===d.g)st.mapFilter='all';home('chats');toast('Has salido de '+n+'.')},
+  miembro(d,el){const p=P[d.p],g=G[d.g];menu(el,[['Escribir a '+p.n,'chatp" data-p="'+d.p],['Ver en el mapa','ficha" data-p="'+d.p],...(g.admin?['-',['Expulsar del grupo','expulsarQ" data-p="'+d.p+'" data-g="'+d.g,'red']]:[])])},
+  expulsarQ(d){confirmar('¿Expulsar a '+P[d.p].n+'?','Dejará de recibir los mensajes y la ubicación del grupo. Faro cambiará la clave del grupo para que no pueda leer nada nuevo.','Expulsar','expulsar" data-p="'+d.p+'" data-g="'+d.g)},
+  expulsar(d){const g=G[d.g];g.members=g.members.filter(m=>m!==d.p);CH[d.g].push({d:'sys',t:P[d.p].n+' ya no está en el grupo'});closeOv();toast(P[d.p].n+' ya no está en '+g.name+'.');render()},
+  crearG(){const v=$('#gname').value.trim();if(!v){toast('Ponle un nombre al grupo.');$('#gname').focus();return}const id='g'+Date.now();const cols=['#8FE3A8','#FFE08A','#FFB4A8','#8FE3E0'];G[id]={id,name:v,color:cols[Object.keys(G).length%4],admin:true,members:['yo'],share:true,muted:false};CH[id]=[{d:'sys',t:'Has creado el grupo. Invita a tu familia.'}];st.stack=[{s:'main'},{s:'chat',c:id},{s:'invitar',g:id}];render();toast('Grupo creado.')},
+  enlace(){modal(`<h3>Enviar enlace</h3><p>Aquí se abriría el menú de compartir del móvil (WhatsApp, SMS, correo…) con un enlace como este:</p><p style="margin-top:10px;font-size:12.5px;color:var(--accent);word-break:break-all">fcojalvarez.github.io/survivalcontact/unirse/#k7Qx…</p><p style="margin-top:10px;font-size:13px">El enlace no contiene la clave del grupo. Sirve una vez y caduca en 7 días.</p><button class="btn pri" style="margin-top:16px" data-a="cerrar">Entendido</button>`)},
+  wifiQr(){toast('Simulación: tu móvil crearía una red Wi‑Fi y mostraría un QR.')},
+  apk(){toast('Simulación: se abriría Quick Share con el instalador de Faro.')},
+  escanear(){toast('Simulación: se abriría la cámara para escanear.')},
+  bloquearQ(d){confirmar('¿Bloquear a '+P[d.p].n+'?','No recibirás sus mensajes. No se le avisa.','Bloquear','bloquear')},
+  bloquear(){st.blocked=1;closeOv();toast('Bloqueado.')},
+  desbloquear(){st.blocked=0;toast('Desbloqueado.');render()},
+  guardarNombre(){const v=$('#nombre2').value.trim();if(!v)return toast('Escribe un nombre.');st.name=v;try{localStorage.setItem('faro-demo-nombre',v)}catch(e){}back();toast('Nombre guardado.')},
+  av(d){st.av[d.k]=!st.av[d.k];render()},
+  tg(d){st[d.k]=!st[d.k];render()},
+  bat(d){st.batMode=d.k;render()},
+  lang(d){st.lang=d.k;render();if(!['es','movil'].includes(d.k))toast('En la demo solo está el español.')},
+  buscar(d,el){if(!st.online){toast(d.k==='upd'?'Sin internet. Lo intentaremos cuando vuelva la conexión.':'Sin internet. Se guardará cuando tengas Wi‑Fi.');return}el.textContent='Buscando…';el.disabled=true;setTimeout(()=>{if(d.k==='mapa'){st.mapSaved=true;toast('Mapa guardado: Málaga y alrededores.')}else toast('Tienes la última versión.');render()},1400)},
+  borrarMapaQ(){confirmar('¿Borrar el mapa guardado?','Sin internet no verás calles en el mapa hasta que se vuelva a guardar.','Borrar mapa','borrarMapa')},
+  borrarMapa(){st.mapSaved=false;closeOv();render()},
+  borrarTodoQ(){confirmar('¿Borrar todos tus datos?','Saldrás de todos tus grupos y se borrarán tus mensajes de este móvil. No se puede deshacer.','Borrar todo','borrarTodo')},
+  borrarTodo(){try{localStorage.removeItem('faro-demo-nombre')}catch(e){}location.reload()}
+};
+
+function finSeguir(){st.follow=null;render()}
+setInterval(()=>{
+  const f=st.follow;if(!f)return;
+  f.left-=10;f.ago+=10;
+  if(f.ago>=30){f.ago=0;const p=P[f.p];f.trail.push([p.x,p.y]);p.x+=(ME.x-p.x)*.06+ (Math.random()*6-3);p.y+=(ME.y-p.y)*.06+(Math.random()*6-3);const m=Math.round(Math.hypot(p.x-ME.x,p.y-ME.y)*0.9);p.dist=m+' m';p.hace='unos segundos'}
+  if(f.left<=0){const p=P[f.p];p.hace='1 min';finSeguir();toast('Han pasado 10 min: '+p.n+' vuelve a su ritmo normal.');return}
+  if(cur().s==='main'&&st.tab==='mapa'&&!ov.classList.contains('on'))render();
+},1000);
+
+// ---------- Render ----------
+function render(){
+  const t=cur();app.innerHTML=V[t.s](t);
+  const q=document.getElementById('qr');if(q)drawQr(q);
+  const m=document.getElementById('msgs');if(m)m.scrollTop=m.scrollHeight;
+  if(t.s==='guiar')guiar();
+}
+let gTimer;
+function guiar(){clearInterval(gTimer);let a=35,d=null;gTimer=setInterval(()=>{const f=document.getElementById('flecha'),g=document.getElementById('gdist');if(!f){clearInterval(gTimer);return}a+=(Math.random()*24-12);f.style.transform=`rotate(${a}deg)`;const txt=g.textContent;const n=parseFloat(txt.replace(',','.'));if(txt.endsWith(' m')&&n>8)g.textContent=Math.round(n-3)+' m'},1200)}
+function drawQr(c){const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,29,29);x.fillStyle='#000';let s=7;const r=()=>{s=(s*9301+49297)%233280;return s/233280};for(let i=0;i<29;i++)for(let j=0;j<29;j++)if(r()>.52)x.fillRect(i,j,1,1);[[0,0],[22,0],[0,22]].forEach(([a,b])=>{x.fillStyle='#fff';x.fillRect(a,b,7,7);x.fillStyle='#000';x.fillRect(a,b,7,7);x.fillStyle='#fff';x.fillRect(a+1,b+1,5,5);x.fillStyle='#000';x.fillRect(a+2,b+2,3,3)})}
+
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-a]');if(!el)return;
+  const a=el.dataset.a;if(!A[a])return;
+  e.preventDefault();A[a](el.dataset,el);
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault();const f=e.target,c=f.dataset.c,i=f.querySelector('input'),v=i.value.trim();if(!v)return;
+  CH[c].push({d:'yo',t:v,h:hora()});i.value='';render();document.getElementById('msg')?.focus();
+  const resp={fam:['mama','Recibido, gracias'],marta:['rosa','Vale, te leemos'],cerca:['v2','Gracias por avisar']}[c]||(c.startsWith('p-')?[c.slice(2),'Vale']:null);
+  if(resp)setTimeout(()=>{CH[c]?.push({d:resp[0],t:resp[1],h:hora()});if(cur().s==='chat'&&cur().c===c)render()},2200);
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(ov.classList.contains('on'))closeOv();else back()}});
+render();
+</script>
