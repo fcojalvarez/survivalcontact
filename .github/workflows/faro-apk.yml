@@ -1,17 +1,18 @@
 name: Compilar APK de Faro
 
-# Compila un APK de prueba (debug) en cada push y permite lanzarlo a mano
-# desde la pestaña Actions. El APK se descarga desde el resumen de la ejecución.
+# Compila un APK de prueba (debug) en cada push y lo publica en la Release
+# "prueba", que se sustituye en cada compilación. Enlace fijo de descarga:
+# https://github.com/<usuario>/<repo>/releases/download/prueba/faro-prueba.apk
 on:
   workflow_dispatch:
   push:
     branches: ["**"]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: faro-apk-${{ github.ref }}
+  group: faro-apk
   cancel-in-progress: true
 
 env:
@@ -36,14 +37,39 @@ jobs:
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
 
+      # Clave de firma de pruebas fija, para que cada APK nuevo se instale encima
+      # del anterior sin desinstalar. Solo vale para pruebas, nunca para tiendas.
+      - name: Usar la clave de pruebas
+        run: |
+          mkdir -p ~/.android
+          cp .github/debug.keystore ~/.android/debug.keystore
+
       - name: Compilar
         run: ./gradlew :app:assembleDebug
 
-      - name: Subir el APK
+      - name: Preparar el APK
+        run: |
+          apk=$(ls app/build/outputs/apk/debug/*universal*.apk | head -n1)
+          cp "$apk" faro-prueba.apk
+
+      - name: Subir el APK como artefacto
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: faro-apk-prueba
-          # El APK "universal" funciona en cualquier móvil; los demás son por arquitectura.
-          path: app/build/outputs/apk/debug/*universal*.apk
+          path: faro-prueba.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publicar en la Release "prueba"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notas="Versión de prueba compilada desde la rama ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}, el $(date -u '+%d/%m/%Y a las %H:%M') UTC.
+
+          Descarga **faro-prueba.apk** e instálalo en el móvil (acepta instalar apps de origen desconocido). Se instala encima de la versión anterior sin perder datos."
+          gh release delete prueba --cleanup-tag --yes || true
+          gh release create prueba faro-prueba.apk \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Faro — versión de prueba" \
+            --notes "$notas"
