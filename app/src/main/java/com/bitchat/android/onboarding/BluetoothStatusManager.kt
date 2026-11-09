@@ -61,7 +61,7 @@ class BluetoothStatusManager(
             if (isEnabled) {
                 onBluetoothEnabled()
             } else {
-                onBluetoothDisabled("Bluetooth is required for bitchat to discover and connect to nearby users. Please enable Bluetooth to continue.")
+                onBluetoothDisabled("Faro necesita el Bluetooth para encontrar y conectar con móviles cercanos. Actívalo para continuar.")
             }
         }
     }
@@ -106,7 +106,7 @@ class BluetoothStatusManager(
                 BluetoothStatus.DISABLED
             }
             else -> {
-                // Log.d(TAG, "Bluetooth is enabled and ready")
+                // Log.d(TAG, "El Bluetooth está activado")
                 BluetoothStatus.ENABLED
             }
         }
@@ -124,10 +124,10 @@ class BluetoothStatusManager(
         } catch (securityException: SecurityException) {
             // Permission not granted yet - this is expected during onboarding
             Log.w(TAG, "Cannot request Bluetooth enable due to missing BLUETOOTH_CONNECT permission")
-            onBluetoothDisabled("Bluetooth permissions are required before enabling Bluetooth. Please grant permissions first.")
+            onBluetoothDisabled("Antes de activar el Bluetooth tienes que dar los permisos.")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to request Bluetooth enable", e)
-            onBluetoothDisabled("Failed to request Bluetooth enable: ${e.message}")
+            onBluetoothDisabled("No se ha podido activar el Bluetooth: ${e.message}")
         }
     }
 
@@ -146,7 +146,7 @@ class BluetoothStatusManager(
             }
             BluetoothStatus.NOT_SUPPORTED -> {
                 Log.e(TAG, "Bluetooth not supported")
-                onBluetoothDisabled("This device doesn't support Bluetooth, which is required for bitchat to function.")
+                onBluetoothDisabled("Este móvil no tiene Bluetooth, y Faro lo necesita para funcionar.")
             }
         }
     }
@@ -156,9 +156,9 @@ class BluetoothStatusManager(
      */
     fun getStatusMessage(status: BluetoothStatus): String {
         return when (status) {
-            BluetoothStatus.ENABLED -> "Bluetooth is enabled and ready"
-            BluetoothStatus.DISABLED -> "Bluetooth is disabled. Please enable Bluetooth to use bitchat."
-            BluetoothStatus.NOT_SUPPORTED -> "This device doesn't support Bluetooth."
+            BluetoothStatus.ENABLED -> "El Bluetooth está activado"
+            BluetoothStatus.DISABLED -> "El Bluetooth está desactivado. Actívalo para usar Faro."
+            BluetoothStatus.NOT_SUPPORTED -> "Este móvil no tiene Bluetooth."
         }
     }
 

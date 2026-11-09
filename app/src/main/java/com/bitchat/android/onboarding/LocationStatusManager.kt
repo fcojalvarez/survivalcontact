@@ -63,7 +63,7 @@ class LocationStatusManager(
             if (isEnabled) {
                 onLocationEnabled()
             } else {
-                onLocationDisabled("Location services are required for Bluetooth scanning on Android. Please enable location services to continue.")
+                onLocationDisabled("Android necesita la ubicación activada para buscar móviles por Bluetooth. Actívala para continuar.")
             }
         }
     }
@@ -81,7 +81,7 @@ class LocationStatusManager(
                     if (isEnabled) {
                         onLocationEnabled()
                     } else {
-                        onLocationDisabled("Location services have been disabled.")
+                        onLocationDisabled("Se ha desactivado la ubicación.")
                     }
                 }
             }
@@ -134,7 +134,7 @@ class LocationStatusManager(
                 LocationStatus.DISABLED
             }
             else -> {
-                Log.d(TAG, "Location services are enabled and ready")
+                Log.d(TAG, "La ubicación está activada")
                 LocationStatus.ENABLED
             }
         }
@@ -152,7 +152,7 @@ class LocationStatusManager(
             locationSettingsLauncher?.launch(enableLocationIntent)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to request location enable", e)
-            onLocationDisabled("Failed to open location settings: ${e.message}")
+            onLocationDisabled("No se han podido abrir los ajustes de ubicación: ${e.message}")
         }
     }
 
@@ -171,7 +171,7 @@ class LocationStatusManager(
             }
             LocationStatus.NOT_AVAILABLE -> {
                 Log.e(TAG, "Location services not available")
-                onLocationDisabled("Location services are not available on this device.")
+                onLocationDisabled("Este móvil no tiene servicios de ubicación.")
             }
         }
     }
@@ -181,9 +181,9 @@ class LocationStatusManager(
      */
     fun getStatusMessage(status: LocationStatus): String {
         return when (status) {
-            LocationStatus.ENABLED -> "Location services are enabled and ready"
-            LocationStatus.DISABLED -> "Location services are disabled. Please enable location services for Bluetooth scanning."
-            LocationStatus.NOT_AVAILABLE -> "Location services are not available on this device."
+            LocationStatus.ENABLED -> "La ubicación está activada"
+            LocationStatus.DISABLED -> "La ubicación está desactivada. Actívala para poder buscar por Bluetooth."
+            LocationStatus.NOT_AVAILABLE -> "Este móvil no tiene servicios de ubicación."
         }
     }
 

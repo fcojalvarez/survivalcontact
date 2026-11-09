@@ -193,11 +193,11 @@ class OnboardingCoordinator(
     private fun showPartialPermissionWarning(permissions: Map<String, Boolean>) {
         val deniedPermissions = permissions.filter { !it.value }.keys
         val message = buildString {
-            append("Some permissions were denied:\n")
+            append("Has denegado algunos permisos:\n")
             deniedPermissions.forEach { permission ->
                 append("- ${getPermissionDisplayName(permission)}\n")
             }
-            append("\nbitchat may not work properly without all permissions.")
+            append("\nFaro puede no funcionar bien sin todos los permisos.")
         }
         
         Log.w(TAG, "Partial permissions granted: $message")
@@ -215,11 +215,11 @@ class OnboardingCoordinator(
         
         if (deniedCritical.isNotEmpty()) {
             val message = buildString {
-                append("Critical permissions were denied. bitchat requires these permissions to function:\n")
+                append("Faro necesita estos permisos para funcionar:\n")
                 deniedCritical.keys.forEach { permission ->
                     append("- ${getPermissionDisplayName(permission)}\n")
                 }
-                append("\nPlease grant these permissions in Settings to use bitchat.")
+                append("\nActívalos en los ajustes del móvil para usar Faro.")
             }
             
             Log.e(TAG, "Critical permissions denied: $deniedCritical")
@@ -270,11 +270,11 @@ class OnboardingCoordinator(
      */
     private fun getPermissionDisplayName(permission: String): String {
         return when {
-            permission.contains("BLUETOOTH") -> "Bluetooth/Nearby Devices"
-            permission.contains("BACKGROUND") -> "Background Location"
-            permission.contains("LOCATION") -> "Location (for Bluetooth scanning)"
-            permission.contains("NEARBY_WIFI") -> "Nearby Wi‑Fi Devices (for Wi‑Fi Aware)"
-            permission.contains("NOTIFICATION") -> "Notifications"
+            permission.contains("BLUETOOTH") -> "Bluetooth / móviles cercanos"
+            permission.contains("BACKGROUND") -> "Ubicación en segundo plano"
+            permission.contains("LOCATION") -> "Ubicación (para buscar por Bluetooth)"
+            permission.contains("NEARBY_WIFI") -> "Wi‑Fi cercano"
+            permission.contains("NOTIFICATION") -> "Notificaciones"
             else -> permission.substringAfterLast(".")
         }
     }

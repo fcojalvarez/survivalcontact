@@ -296,21 +296,21 @@
     <string name="cd_pause_voice">Pausar</string>
 
     <!-- Descripciones de permisos -->
-    <string name="perm_nearby_devices_desc">Requerido para descubrir usuarios de Faro a través de Bluetooth</string>
+    <string name="perm_nearby_devices_desc">Para encontrar a otras personas con Faro por Bluetooth.</string>
     <string name="perm_nearby_devices_system">Permitir que Faro se conecte con dispositivos cercanos</string>
-    <string name="perm_location_desc">Requerido por Android para descubrir usuarios de Faro cercanos a través de Bluetooth</string>
+    <string name="perm_location_desc">Android la exige para buscar móviles por Bluetooth. Faro no guarda ni envía tu ubicación.</string>
     <string name="perm_location_system">Faro necesita esto para escanear dispositivos cercanos</string>
-    <string name="perm_notifications_desc">Recibir notificaciones cuando recibas mensajes privados</string>
+    <string name="perm_notifications_desc">Para avisarte cuando alguien te escriba.</string>
     <string name="perm_notifications_system">Permitir que Faro te envíe notificaciones</string>
-    <string name="perm_battery_desc">Deshabilitar optimización de batería para asegurar que Faro funcione de manera fiable en segundo plano y mantenga conexiones de red</string>
+    <string name="perm_battery_desc">Para que Android no cierre Faro y sigas recibiendo mensajes.</string>
     <string name="perm_battery_system">Permitir que Faro funcione sin restricciones de batería</string>
 
     <!-- Tipos de permisos -->
-    <string name="perm_type_nearby_devices">Dispositivos cercanos</string>
-    <string name="perm_type_precise_location">Ubicación precisa</string>
+    <string name="perm_type_nearby_devices">Móviles cercanos</string>
+    <string name="perm_type_precise_location">Ubicación</string>
     <string name="perm_type_microphone">Micrófono</string>
     <string name="perm_type_notifications">Notificaciones</string>
-    <string name="perm_type_battery_optimization">Optimización de batería</string>
+    <string name="perm_type_battery_optimization">Funcionar con la pantalla apagada</string>
     <string name="perm_type_other">Otro</string>
 
     <!-- Diálogo de contraseña -->
@@ -626,7 +626,7 @@
     <string name="notification_file_xls">📊</string>
     <string name="notification_file_ppt">📈</string>
     <string name="notification_file_generic">📎</string>
-    <string name="perm_background_location_desc">Recomendado para buscar móviles cercanos con la app en segundo plano</string>
+    <string name="perm_background_location_desc">Para que la red siga funcionando con la app cerrada.</string>
     <string name="perm_background_location_system">Permitir el acceso a la ubicación en segundo plano</string>
     <string name="perm_type_background_location">Ubicación en segundo plano</string>
     <string name="tor_not_available_in_this_build">Tor no está disponible en esta versión</string>
@@ -637,4 +637,7 @@
     <string name="faro_update_channel_desc">Avisa cuando hay una versión nueva de Faro lista para instalar</string>
     <string name="faro_update_title">Nueva versión de Faro</string>
     <string name="faro_update_text">La versión %1$s está lista. Toca para instalarla.</string>
+    <string name="perm_type_wifi_aware">Wi‑Fi cercano</string>
+    <string name="perm_wifi_aware_desc">Para conectar por Wi‑Fi con móviles cercanos, sin router ni internet.</string>
+    <string name="perm_wifi_aware_system">Permitir que Faro encuentre móviles cercanos por Wi‑Fi</string>
 </resources>

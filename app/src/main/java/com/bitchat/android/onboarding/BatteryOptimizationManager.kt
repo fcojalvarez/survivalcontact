@@ -99,7 +99,7 @@ class BatteryOptimizationManager(
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error requesting battery optimization disable", e)
-                onBatteryOptimizationFailed("Unable to open battery optimization settings: ${e.message}")
+                onBatteryOptimizationFailed("No se han podido abrir los ajustes de batería: ${e.message}")
             }
         } else {
             Log.d(TAG, "Battery optimization not applicable for Android < 6.0")
@@ -124,7 +124,7 @@ class BatteryOptimizationManager(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error opening battery optimization settings", e)
-            onBatteryOptimizationFailed("Unable to open settings: ${e.message}")
+            onBatteryOptimizationFailed("No se han podido abrir los ajustes: ${e.message}")
         }
     }
 
@@ -140,7 +140,7 @@ class BatteryOptimizationManager(
             batteryOptimizationLauncher?.launch(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Error opening app settings", e)
-            onBatteryOptimizationFailed("Unable to open app settings: ${e.message}")
+            onBatteryOptimizationFailed("No se han podido abrir los ajustes de la app: ${e.message}")
         }
     }
 

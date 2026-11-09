@@ -693,7 +693,7 @@ class MainActivity : OrientationAwareActivity() {
                 if (!permissionManager.areAllPermissionsGranted()) {
                     val missing = permissionManager.getMissingPermissions()
                     Log.w("MainActivity", "Permissions revoked during initialization: $missing")
-                    handleOnboardingFailed("Some permissions were revoked. Please grant all permissions to continue.")
+                    handleOnboardingFailed("Se han retirado algunos permisos. Vuelve a darlos para continuar.")
                     return@launch
                 }
 
@@ -712,7 +712,7 @@ class MainActivity : OrientationAwareActivity() {
                 mainViewModel.updateOnboardingState(OnboardingState.COMPLETE)
             } catch (e: Exception) {
                 Log.e("MainActivity", "Failed to initialize app", e)
-                handleOnboardingFailed("Failed to initialize the app: ${e.message}")
+                handleOnboardingFailed("No se ha podido iniciar la app: ${e.message}")
             }
         }
     }

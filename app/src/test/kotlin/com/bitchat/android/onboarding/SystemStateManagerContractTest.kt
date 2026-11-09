@@ -77,10 +77,10 @@ class SystemStateManagerContractTest {
 
         assertEquals(1, enabled)
         assertEquals(
-            listOf("Location services are not available on this device."),
+            listOf("Este móvil no tiene servicios de ubicación."),
             disabled
         )
-        assertTrue(manager.getStatusMessage(LocationStatus.DISABLED).contains("Bluetooth scanning"))
+        assertTrue(manager.getStatusMessage(LocationStatus.DISABLED).contains("buscar por Bluetooth"))
         manager.cleanup()
         controller.destroy()
     }
