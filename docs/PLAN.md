@@ -10,7 +10,7 @@ Una app Android, gratuita y sin servidores, para mantener el contacto en un apag
 - **Lo más fácil, versátil, seguro y minimalista posible.** Fondo negro, pocas opciones, sin jerga técnica.
 - **Sin internet:** solo la malla (Bluetooth y Wi‑Fi local), siempre con el mínimo consumo. La app avisa de forma visible de que está en modo «sin internet».
 - **Con internet** se usa solo para tres cosas:
-  1. **Actualizaciones:** como mucho una vez al día y solo con Wi‑Fi, se busca una versión nueva en el repositorio público `fcojalvarez/faro-releases`; se descarga, se comprueba la huella y la firma, y se avisa para instalarla. También se pueden pasar de móvil a móvil sin internet.
+  1. **Actualizaciones:** como mucho una vez al día y solo con Wi‑Fi, se busca una versión nueva en las versiones publicadas del repositorio público `fcojalvarez/survivalcontact`; se descarga, se comprueba la huella y la firma, y se avisa para instalarla. También se pueden pasar de móvil a móvil sin internet.
   2. **Chatear en los mismos chats** cuando no hay malla, por **Nostr** (red de servidores públicos y gratuitos que nadie controla). Los mensajes van cifrados de extremo a extremo; los servidores no pueden leerlos.
   3. **Localizar a la familia**, solo en **grupos privados** y con consentimiento explícito de cada persona, que puede retirarlo en cualquier momento.
 - **Seguridad:** la clave de un grupo privado nunca viaja sin cifrar ni se puede deducir; solo la tiene quien ha sido invitado y ha aceptado.

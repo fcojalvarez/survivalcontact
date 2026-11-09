@@ -84,27 +84,28 @@ jobs:
             --title "Faro — versión de prueba" \
             --notes "$notas"
 
-      # Publica la versión en el repositorio público fcojalvarez/faro-releases, del que la
-      # app descarga las actualizaciones. Necesita el secreto FARO_RELEASES_TOKEN (un token
-      # con permiso de escritura solo en ese repositorio); sin él, este paso se salta.
-      - name: Publicar en faro-releases (actualizaciones OTA)
+      # Publica la versión numerada de la que la app descarga las actualizaciones OTA
+      # (releases/latest/download/version.json). Va en este mismo repositorio público,
+      # así que basta con el permiso de GitHub Actions; no hace falta ningún token.
+      # La Release "prueba" es preliminar, así que no cuenta como "latest".
+      - name: Publicar versión para las actualizaciones OTA
         env:
-          GH_TOKEN: ${{ secrets.FARO_RELEASES_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "::notice::Falta el secreto FARO_RELEASES_TOKEN; no se publica en faro-releases."
-            exit 0
-          fi
-          repo="fcojalvarez/faro-releases"
           tag="v${FARO_VERSION_NAME}"
           cp faro-prueba.apk faro.apk
           sha=$(sha256sum faro.apk | cut -d' ' -f1)
-          url="https://github.com/${repo}/releases/download/${tag}/faro.apk"
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/faro.apk"
           printf '{"versionCode":%s,"versionName":"%s","apkUrl":"%s","sha256":"%s"}\n' \
             "$FARO_VERSION_CODE" "$FARO_VERSION_NAME" "$url" "$sha" > version.json
           cat version.json
           gh release create "$tag" faro.apk version.json \
-            -R "$repo" \
+            --target "$GITHUB_SHA" \
             --latest \
             --title "Faro ${FARO_VERSION_NAME}" \
-            --notes "Compilada desde ${GITHUB_REPOSITORY}@${GITHUB_SHA::7}. Descarga faro.apk para instalar Faro."
+            --notes "Versión ${FARO_VERSION_NAME} (commit ${GITHUB_SHA::7}). Descarga **faro.apk** e instálalo; las siguientes versiones llegarán solas por la app."
+          # Conserva solo las 5 versiones numeradas más recientes para no acumular APKs.
+          gh release list --limit 100 --json tagName,isPrerelease \
+            --jq '.[] | select(.isPrerelease == false) | .tagName' \
+            | grep '^v0\.' | tail -n +6 \
+            | while read -r old; do gh release delete "$old" --cleanup-tag --yes; done

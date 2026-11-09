@@ -34,7 +34,8 @@ import java.util.concurrent.TimeUnit
  * Actualizaciones de Faro por internet (OTA).
  *
  * ÚNICA excepción a la regla de «sin internet» (ver docs/PLAN.md): solo se descarga
- * información de versión y el APK desde el repositorio público de versiones. Nunca se
+ * información de versión y el APK desde las versiones publicadas en el repositorio
+ * público del proyecto (fcojalvarez/survivalcontact). Nunca se
  * envían mensajes, ubicaciones ni datos del usuario.
  *
  * Para no gastar batería, la comprobación la hace WorkManager como mucho una vez al día,
@@ -50,7 +51,7 @@ object FaroUpdater {
 
     /** Fichero con la última versión, publicado en cada compilación (ver faro-apk.yml). */
     const val VERSION_URL =
-        "https://github.com/fcojalvarez/faro-releases/releases/latest/download/version.json"
+        "https://github.com/fcojalvarez/survivalcontact/releases/latest/download/version.json"
 
     private const val WORK_NAME = "faro_update_check"
     private const val CHANNEL_ID = "faro_updates"
