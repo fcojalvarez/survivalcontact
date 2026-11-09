@@ -784,21 +784,7 @@ private fun MainHeader(
                     }
                 }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(0.dp)
-                ) {
-                    LocationNotesButton(
-                        viewModel = viewModel,
-                        onClick = onLocationNotesClick
-                    )
-
-                    LocationChannelsButton(
-                        viewModel = viewModel,
-                        onClick = onLocationChannelsClick,
-                        showLabel = crowdingMode != HeaderCrowdingMode.IconOnlyLocationChannel
-                    )
-                }
+                // Faro: sin canales públicos por zona ni notas de ubicación (exponen la zona y la IP).
 
                 PeerCounter(
                     connectedPeers = connectedPeers.filter { it != viewModel.myPeerID },

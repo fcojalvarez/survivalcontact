@@ -140,7 +140,17 @@ fun FaroMainScreen(chatViewModel: ChatViewModel) {
                 }
                 BottomNav(nav)
             }
-            Route.Nearby -> ChatScreen(viewModel = chatViewModel)
+            Route.Nearby -> {
+                // Gente cerca es solo la sala de la malla: nunca un canal público por zona.
+                val ctx = androidx.compose.ui.platform.LocalContext.current
+                LaunchedEffect(Unit) {
+                    runCatching {
+                        com.bitchat.android.geohash.LocationChannelManager.getInstance(ctx.applicationContext)
+                            .select(com.bitchat.android.geohash.ChannelID.Mesh)
+                    }
+                }
+                ChatScreen(viewModel = chatViewModel)
+            }
             Route.Create -> Screen { CreateGroupScreen(nav) }
             Route.Scan -> Screen { ScanScreen(nav, onCode = { nav.back(); incoming = it }) }
             is Route.Group -> Screen { GroupChatScreen(nav, r.id) }

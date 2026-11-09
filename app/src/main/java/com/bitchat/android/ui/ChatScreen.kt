@@ -357,7 +357,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 }
             )
 
-            if (showNotesStrip) {
+            if (false && showNotesStrip) { // Faro: sin notas de ubicación.
                 NearbyNotesStrip(
                     noteCount = nearbyNotes.size,
                     onClick = { showLocationNotesSheet = true },
