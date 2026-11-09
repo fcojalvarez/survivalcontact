@@ -68,6 +68,15 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 - Abajo, lista deslizable (se sube con el dedo) con nombre, grupo, hace cuánto, distancia y dirección.
 - Tocar a alguien: ficha con distancia, dirección, «Abrir chat» y «Guiarme» (brújula a pantalla completa).
 
+## 5. Ajustes (aprobada)
+
+![Ajustes](07-ajustes.png)
+
+- Perfil arriba (inicial, nombre, «Así te ven los demás», «Cambiar»): aquí se cambia el nombre.
+- «Tu ubicación»: un interruptor por grupo, a la vista.
+- General, con el estado a la derecha: Avisos, Ahorro de batería, Mapa sin conexión (zona y tamaño), Compartir Faro, Actualizaciones, Privacidad y seguridad, Idioma.
+- Pie: versión y «código abierto».
+
 ## Pendientes de diseñar
 
-Ajustes, crear grupo, invitar (enlace/QR), aceptar invitación, bienvenida y permisos.
+Crear grupo, invitar (enlace/QR), aceptar invitación, bienvenida y permisos.
