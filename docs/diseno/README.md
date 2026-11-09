@@ -130,7 +130,7 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 
 ![Aviso de quién ha visto tu ubicación](13-aviso-visto.png)
 
-- Cuando alguien abre el mapa y te ve, abre tu ficha, te guía o te sigue en directo, su móvil envía un aviso pequeño («visto») **solo por internet** (Nostr), nunca por la malla. Si en ese momento no tiene internet, el aviso sale cuando lo recupere (como mucho 24 h después).
+- Cuando alguien abre el mapa y te ve, abre tu ficha, te guía o te sigue en directo, su móvil envía un aviso pequeño («visto») **solo si tiene internet en ese momento** (Nostr), nunca por la malla. Sin conexión no se envía ni se guarda: sin internet o si alguien ha pedido ayuda se entiende que es una emergencia y es normal mirar. El aviso es para cuando se mira «sin motivo».
 - A ti te llega como una notificación normal y queda también en Novedades.
 - En Inicio aparece en Novedades: «Mamá y Lucía han visto dónde estás». Varios avisos se juntan en uno. Al abrirlo se ve quién, cómo (en el mapa, en directo) y cuándo, con «Dejar de compartir» y «Abrir chat».
 - **Batería:** gasto despreciable: es un mensaje de unos pocos bytes por una conexión que ya está abierta, como mucho uno por persona cada 15 min, y no ocupa la radio Bluetooth.
