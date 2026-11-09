@@ -95,6 +95,9 @@ object FaroGroups {
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
                 )
                 load()
+                prefs?.let { FaroJoin.attach(it) }
+                // Reenvía las solicitudes de unión que aún esperan respuesta.
+                FaroJoin.pendingRequests().forEach { broadcastRaw(it, FaroJoin.tagOf(it)) }
             }.onFailure { Log.e(TAG, "No se pudieron cargar los grupos: ${it.message}") }
         }
     }
@@ -171,6 +174,29 @@ object FaroGroups {
         object Expired : JoinResult()
     }
 
+    /** Crea un enlace de invitación (sin la clave del grupo) para enviarlo por cualquier app. */
+    fun inviteLink(groupId: String): String? {
+        val g = group(groupId) ?: return null
+        val me = crypto()?.getSigningPublicKey() ?: return null
+        return FaroJoin.createLink(
+            groupId = g.id,
+            groupName = g.name,
+            inviterName = myName(),
+            members = listOf(myName()) + g.members.values,
+            inviterSigKey = me,
+            sign = ::sign,
+        )
+    }
+
+    fun previewLink(text: String): FaroJoin.Parse = FaroJoin.parse(text, ::verify)
+
+    /** Acepta un enlace: envía la solicitud cifrada a quien invita, por la malla y por internet. */
+    fun acceptLink(invite: FaroJoin.LinkInvite) {
+        val me = crypto()?.getSigningPublicKey() ?: return
+        val (payload, tag) = FaroJoin.buildRequest(invite, me, myName())
+        broadcastRaw(payload, tag)
+    }
+
     /** Lee una invitación sin unirse todavía (para mostrar la ventana de confirmación). */
     fun previewCode(code: String): FaroInvite.Result =
         FaroInvite.decode(code.trim(), System.currentTimeMillis() / 1000, ::verify)
@@ -224,19 +250,25 @@ object FaroGroups {
                 FaroProtocol.Inner(kind, ts, key, myName(), body),
                 ::sign
             ) ?: return@launch
-            val mesh = MeshServiceHolder.unifiedMeshService
-            if (mesh == null) {
-                Log.w(TAG, "Malla no disponible; no se envía")
-                return@launch
-            }
-            mesh.sendFaroBroadcast(payload)
+            broadcastRaw(payload, FaroProtocol.tagFor(g.key).toHex())
         }
+    }
+
+    /** Envía un paquete ya preparado por la malla (si está activa) y por internet (si hay). */
+    private fun broadcastRaw(payload: ByteArray, tagHex: String) {
+        MeshServiceHolder.unifiedMeshService?.sendFaroBroadcast(payload)
+            ?: Log.w(TAG, "Malla no disponible; solo se envía por internet")
+        FaroInternet.publish(payload, tagHex)
     }
 
     // ---------- Recepción ----------
 
     /** Llamado por la malla con la carga útil de un paquete de tipo [FaroProtocol.PACKET_TYPE]. */
     fun onMeshPayload(payload: ByteArray) {
+        if (FaroJoin.isJoinPacket(payload)) {
+            onJoinPacket(payload)
+            return
+        }
         val tag = FaroProtocol.peekTag(payload) ?: return
         val g = _groups.value.firstOrNull { FaroProtocol.tagFor(it.key).contentEquals(tag) } ?: return
         val inner = FaroProtocol.open(g.key, payload, ::verify) ?: return
@@ -267,6 +299,34 @@ object FaroGroups {
                 }
             }
             FaroProtocol.Kind.HELLO -> Unit
+        }
+    }
+
+    private fun onJoinPacket(payload: ByteArray) {
+        val incoming = FaroJoin.handle(payload) { id ->
+            group(id)?.let { g -> Triple(g.id.hexToBytes() ?: return@let null, g.key, g.name) }
+        } ?: return
+        when (incoming) {
+            is FaroJoin.Incoming.Request -> {
+                rememberMember(incoming.groupId, incoming.memberKey.toHex(), incoming.memberName)
+                broadcastRaw(incoming.reply, incoming.replyTagHex)
+            }
+            is FaroJoin.Incoming.Granted -> {
+                val id = incoming.groupId.toHex()
+                if (group(id) == null) {
+                    val g = FaroGroup(
+                        id = id,
+                        name = incoming.groupName,
+                        keyHex = incoming.groupKey.toHex(),
+                        createdAtMs = System.currentTimeMillis(),
+                        shareLocation = true, // Aceptado en la ventana que lo explica.
+                    )
+                    _groups.update { it + g }
+                    save()
+                    sendHello(g)
+                    FaroLocation.requestSoon()
+                }
+            }
         }
     }
 

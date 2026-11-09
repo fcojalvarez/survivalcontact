@@ -130,6 +130,22 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="bitchat" android:host="verify" />
             </intent-filter>
+            <!-- Faro: invitaciones a grupos por enlace -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="faro" android:host="unirse" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="fcojalvarez.github.io"
+                    android:pathPrefix="/survivalcontact/unirse" />
+            </intent-filter>
         </activity>
 
         <!-- Persistent foreground service to run the mesh in background -->

@@ -793,6 +793,21 @@ private fun MainHeader(
                 if (showFaroGroups) {
                     com.bitchat.android.faro.ui.FaroGroupsDialog(onDismiss = { showFaroGroups = false })
                 }
+                // Enlace de invitación abierto desde fuera: abre los grupos con la confirmación.
+                val incomingLink by com.bitchat.android.faro.FaroDeepLink.pending.collectAsState()
+                var linkToShow by remember { mutableStateOf<String?>(null) }
+                LaunchedEffect(incomingLink) {
+                    incomingLink?.let {
+                        linkToShow = it
+                        com.bitchat.android.faro.FaroDeepLink.consume()
+                    }
+                }
+                linkToShow?.let { link ->
+                    com.bitchat.android.faro.ui.FaroGroupsDialog(
+                        onDismiss = { linkToShow = null },
+                        pendingInvite = link
+                    )
+                }
 
                 if (hasUnreadPrivateMessages.isNotEmpty()) {
                     HeaderIconButton(

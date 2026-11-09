@@ -23,6 +23,7 @@ class BitchatApplication : Application() {
         try { com.bitchat.android.faro.FaroGroups.init(this) } catch (_: Exception) { }
         try { com.bitchat.android.faro.FaroLocation.init(this) } catch (_: Exception) { }
         try { com.bitchat.android.faro.FaroOfflineMap.init(this) } catch (_: Exception) { }
+        try { com.bitchat.android.faro.FaroInternet.init(this) } catch (_: Exception) { }
 
         // Start the single process-wide power policy before transport components are constructed.
         com.bitchat.android.mesh.PowerManager.getInstance(this).start()

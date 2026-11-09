@@ -11,6 +11,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +41,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -76,6 +79,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.bitchat.android.faro.FaroGroup
 import com.bitchat.android.faro.FaroGroups
 import com.bitchat.android.faro.FaroInvite
+import com.bitchat.android.faro.FaroJoin
 import com.bitchat.android.faro.FaroLocation
 import com.bitchat.android.faro.FaroMessage
 import com.bitchat.android.faro.FaroOfflineMap
@@ -113,9 +117,18 @@ internal fun colorFor(id: String): String = PASTELS[abs(id.hashCode()) % PASTELS
 fun FaroGroupsDialog(onDismiss: () -> Unit, pendingInvite: String? = null) {
     var screen by remember { mutableStateOf<Screen>(Screen.List) }
     var confirm by remember { mutableStateOf<FaroInvite.Invite?>(null) }
+    var linkConfirm by remember { mutableStateOf<FaroJoin.LinkInvite?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
 
     fun handleCode(code: String) {
+        if (FaroJoin.isLink(code)) {
+            when (val r = FaroGroups.previewLink(code)) {
+                is FaroJoin.Parse.Ok -> linkConfirm = r.invite
+                FaroJoin.Parse.Expired -> message = "Esta invitación ha caducado. Pide un enlace nuevo."
+                else -> message = "Este enlace de invitación no es válido."
+            }
+            return
+        }
         when (val r = FaroGroups.previewCode(code)) {
             is FaroInvite.Result.Ok -> confirm = r.invite
             FaroInvite.Result.Expired -> message = "Esta invitación ha caducado. Pide que te enseñen un QR nuevo."
@@ -160,9 +173,23 @@ fun FaroGroupsDialog(onDismiss: () -> Unit, pendingInvite: String? = null) {
         }
     }
 
+    linkConfirm?.let { inv ->
+        JoinConfirmDialog(
+            groupName = inv.groupName,
+            inviterName = inv.inviterName,
+            members = inv.members,
+            onAccept = {
+                FaroGroups.acceptLink(inv)
+                linkConfirm = null
+                message = "Listo. Entrarás en «${inv.groupName}» en cuanto el móvil de ${inv.inviterName} reciba tu solicitud, por internet o por la red cercana."
+            },
+            onDecline = { linkConfirm = null },
+        )
+    }
+
     confirm?.let { inv ->
         JoinConfirmDialog(
-            invite = inv,
+            groupName = inv.groupName,
             onAccept = {
                 when (val r = FaroGroups.joinInvite(inv, shareLocation = true)) {
                     is FaroGroups.JoinResult.Joined -> screen = Screen.Group(r.group.id)
@@ -189,7 +216,36 @@ fun FaroGroupsDialog(onDismiss: () -> Unit, pendingInvite: String? = null) {
 @Composable
 private fun GroupList(onClose: () -> Unit, onOpen: (String) -> Unit, onCreate: () -> Unit, onScan: () -> Unit) {
     val groups by FaroGroups.groups.collectAsState()
-    TopBar(title = "Grupos", onBack = onClose)
+    val waiting by FaroJoin.waiting.collectAsState()
+    var askShare by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    TopBar(title = "Grupos", onBack = onClose) {
+        TextButton(onClick = { askShare = true }) {
+            Icon(Icons.Filled.Share, null, Modifier.size(18.dp))
+            Spacer(Modifier.size(6.dp))
+            Text("Compartir Faro")
+        }
+    }
+    if (askShare) {
+        AlertDialog(
+            onDismissRequest = { askShare = false },
+            title = { Text("Compartir Faro") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Cuantas más personas cerca tengan Faro, más lejos llegan los mensajes. Puedes pasarla sin internet:")
+                    SecondaryButton("Por Quick Share u otra app", Icons.Filled.Share, Modifier.fillMaxWidth()) {
+                        askShare = false
+                        com.bitchat.android.faro.FaroShare.shareWithApps(context)
+                    }
+                    SecondaryButton("Por Wi‑Fi con un QR", Icons.Filled.QrCode, Modifier.fillMaxWidth()) {
+                        askShare = false
+                        com.bitchat.android.faro.FaroShare.shareByWifi(context)
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { askShare = false }) { Text("Cerrar") } },
+        )
+    }
     Column(Modifier.padding(horizontal = 20.dp)) {
         Text(
             "Grupos privados para estar en contacto con los tuyos en una emergencia, con o sin internet.",
@@ -199,10 +255,18 @@ private fun GroupList(onClose: () -> Unit, onOpen: (String) -> Unit, onCreate: (
         )
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            PrimaryButton("Crear grupo", Icons.Filled.Add, Modifier.weight(1f), onCreate)
+            PrimaryButton("Crear grupo", Icons.Filled.Add, Modifier.weight(1f), onClick = onCreate)
             SecondaryButton("Unirme con QR", Icons.Filled.QrCodeScanner, Modifier.weight(1f), onScan)
         }
         Spacer(Modifier.height(20.dp))
+        waiting.forEach { name ->
+            Text(
+                "Esperando a entrar en «$name»…",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 10.dp),
+            )
+        }
     }
     if (groups.isEmpty()) {
         Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
@@ -284,9 +348,10 @@ private fun CreateGroup(onBack: () -> Unit, onCreated: (String) -> Unit) {
 private fun InviteQr(groupId: String, onBack: () -> Unit) {
     val code = remember(groupId) { FaroGroups.inviteCode(groupId) }
     val g = FaroGroups.group(groupId)
+    val context = LocalContext.current
     TopBar(title = "Invitar a ${g?.name ?: "grupo"}", onBack = onBack)
     Column(
-        Modifier.fillMaxWidth().padding(24.dp),
+        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -306,6 +371,25 @@ private fun InviteQr(groupId: String, onBack: () -> Unit) {
             "Enséñalo solo a quien quieras invitar: da acceso al grupo. Caduca en 15 minutos.",
             textAlign = TextAlign.Center,
             fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text("¿No estáis juntos?", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        SecondaryButton("Enviar enlace de invitación", Icons.Filled.Share, Modifier.fillMaxWidth()) {
+            val link = FaroGroups.inviteLink(groupId) ?: return@SecondaryButton
+            val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(
+                    android.content.Intent.EXTRA_TEXT,
+                    "Te invito al grupo «${g?.name ?: ""}» de Faro, para estar en contacto en una emergencia: $link"
+                )
+            }
+            context.startActivity(android.content.Intent.createChooser(send, "Enviar invitación"))
+        }
+        Text(
+            "El enlace no contiene la clave del grupo: solo sirve para una persona, caduca en 7 días y tu móvil le dará acceso cuando lo acepte.",
+            textAlign = TextAlign.Center,
+            fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -341,7 +425,7 @@ private fun ScanInvite(onBack: () -> Unit, onCode: (String) -> Unit) {
 
 @Composable
 fun JoinConfirmDialog(
-    invite: FaroInvite.Invite,
+    groupName: String,
     members: List<String> = emptyList(),
     inviterName: String? = null,
     onAccept: () -> Unit,
@@ -349,7 +433,7 @@ fun JoinConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDecline,
-        title = { Text("Unirte a «${invite.groupName}»", fontWeight = FontWeight.SemiBold) },
+        title = { Text("Unirte a «$groupName»", fontWeight = FontWeight.SemiBold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 inviterName?.let { Text("Te invita: $it") }

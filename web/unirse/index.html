@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Invitación a Faro</title>
+<style>
+  :root { --bg:#000; --txt:#f2f2f2; --txt2:#9a9a9a; --azul:#a7c7e7; --linea:#2e2e33; }
+  * { box-sizing:border-box; margin:0; padding:0 }
+  body { background:var(--bg); color:var(--txt); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+         min-height:100vh; display:flex; justify-content:center; padding:48px 20px; }
+  main { width:100%; max-width:420px; display:flex; flex-direction:column; gap:18px }
+  img { width:72px; height:72px; border-radius:20px }
+  h1 { font-size:30px; letter-spacing:-.5px }
+  p { color:var(--txt2); font-size:16px; line-height:1.45 }
+  .tarjeta { border:1.5px solid var(--linea); border-radius:18px; padding:16px; display:flex; flex-direction:column; gap:6px }
+  .tarjeta b { color:var(--txt); font-size:18px }
+  a.boton { display:block; text-align:center; text-decoration:none; font-weight:600; font-size:17px;
+            padding:16px; border-radius:999px; }
+  .principal { background:var(--azul); color:#0b1b2b }
+  .secundario { border:1.5px solid var(--azul); color:var(--azul) }
+  .aviso { font-size:13px }
+  .oculto { display:none }
+</style>
+</head>
+<body>
+<main>
+  <img src="../icono.png" alt="Faro">
+  <h1>Te han invitado a Faro</h1>
+  <div class="tarjeta" id="datos">
+    <b id="grupo">Grupo privado</b>
+    <span id="quien"></span>
+    <span id="gente" class="aviso"></span>
+  </div>
+  <p>Faro es una app gratuita y de código abierto para estar en contacto con los tuyos en una emergencia, aunque no haya cobertura ni internet.</p>
+  <a class="boton principal" id="abrir" href="#">Abrir en Faro</a>
+  <a class="boton secundario" href="https://github.com/fcojalvarez/survivalcontact/releases/latest/download/faro.apk">Descargar Faro (Android)</a>
+  <p class="aviso">Después de instalarla, vuelve a esta página y pulsa «Abrir en Faro». Al unirte compartirás tu ubicación con el grupo, solo para emergencias; puedes desactivarlo cuando quieras.</p>
+  <p class="aviso" id="error" style="display:none">Este enlace no es válido o está incompleto.</p>
+</main>
+<script>
+(function () {
+  var code = location.hash.slice(1);
+  var abrir = document.getElementById('abrir');
+  if (!code) { document.getElementById('error').style.display = 'block'; abrir.classList.add('oculto'); return; }
+  abrir.href = 'intent://unirse?c=' + code + '#Intent;scheme=faro;package=com.bitchat.droid;end';
+  // Muestra el grupo, quién invita y quiénes están (datos del propio enlace; no hay servidor).
+  try {
+    var b64 = code.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    var bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var dec = new TextDecoder('utf-8'), pos = 1;
+    function str() { var n = bytes[pos++]; var s = dec.decode(bytes.slice(pos, pos + n)); pos += n; return s; }
+    var grupo = str(), quien = str(), n = bytes[pos++], gente = [];
+    for (var k = 0; k < n; k++) gente.push(str());
+    document.getElementById('grupo').textContent = '«' + grupo + '»';
+    document.getElementById('quien').textContent = 'Te invita: ' + quien;
+    if (gente.length) document.getElementById('gente').textContent = 'Están dentro: ' + gente.join(', ');
+  } catch (e) { /* Se queda el texto genérico. */ }
+})();
+</script>
+</body>
+</html>
