@@ -34,7 +34,7 @@ Cada paso debe terminar **compilando** (`./gradlew assembleDebug`) y con commit.
 
 Mover `LocationProvider.kt`, `FusedLocationProvider.kt` y `SystemLocationProvider.kt` de `geohash/` a `location/` y cambiar su `package`. Comprobar que nada más de `geohash/` los necesita.
 
-### Paso 2 — Quitar Tor
+### Paso 2 — Quitar Tor ✅ (hecho: motor y librerías borrados; `ArtiTorManager` queda como pieza vacía que siempre dice «Tor apagado»)
 
 1. Borrar `net/ArtiTorManager.kt`, `TorMode.kt`, `TorPreferenceManager.kt`.
 2. `net/OkHttpProvider.kt` solo lo usan Nostr y la descarga de actualizaciones: se borra en el paso 4 junto con ellos.

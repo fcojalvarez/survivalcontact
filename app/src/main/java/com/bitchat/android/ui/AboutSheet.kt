@@ -594,6 +594,8 @@ fun AboutSheet(
                                         onCheckedChange = { SpamFilterPreferences.setEnabled(it) }
                                     )
 
+                                    // Faro: Tor no está incluido; el ajuste solo se muestra si lo estuviera.
+                                    if (torAvailable) {
                                     HorizontalDivider(
                                         modifier = Modifier.padding(start = 54.dp),
                                         thickness = 1.dp,
@@ -628,6 +630,7 @@ fun AboutSheet(
                                             }
                                         } else null
                                     )
+                                    }
 
                                     HorizontalDivider(
                                         modifier = Modifier.padding(start = 56.dp),

@@ -585,7 +585,8 @@ fun LocationChannelsSheet(
                         }
                     }
 
-                    item(key = "tor_routing") {
+                    // Faro: Tor no está incluido; el ajuste solo se muestra si lo estuviera.
+                    if (ArtiTorManager.getInstance().isTorAvailable()) item(key = "tor_routing") {
                         val torProvider = remember { ArtiTorManager.getInstance() }
                         val torAvailable = remember { torProvider.isTorAvailable() }
                         var torMode by remember { mutableStateOf(TorPreferenceManager.get(context)) }

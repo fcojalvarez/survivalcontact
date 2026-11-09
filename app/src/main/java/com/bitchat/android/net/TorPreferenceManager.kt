@@ -4,18 +4,17 @@ import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+/** Faro: Tor no está incluido, así que el modo es siempre OFF. */
 object TorPreferenceManager {
     private const val PREFS_NAME = "bitchat_settings"
     private const val KEY_TOR_MODE = "tor_mode"
 
-    private val _modeFlow = MutableStateFlow(TorMode.ON)
+    private val _modeFlow = MutableStateFlow(TorMode.OFF)
     val modeFlow: StateFlow<TorMode> = _modeFlow
 
     fun init(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val saved = prefs.getString(KEY_TOR_MODE, TorMode.ON.name)
-        val mode = runCatching { TorMode.valueOf(saved ?: TorMode.ON.name) }.getOrDefault(TorMode.ON)
-        _modeFlow.value = mode
+        _modeFlow.value = TorMode.OFF
     }
 
     fun set(context: Context, mode: TorMode) {
@@ -25,9 +24,7 @@ object TorPreferenceManager {
     }
 
     fun get(context: Context): TorMode {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val saved = prefs.getString(KEY_TOR_MODE, TorMode.ON.name)
-        return runCatching { TorMode.valueOf(saved ?: TorMode.ON.name) }.getOrDefault(TorMode.ON)
+        return TorMode.OFF
     }
 }
 

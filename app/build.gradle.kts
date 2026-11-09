@@ -198,11 +198,7 @@ dependencies {
     // HTTP Server for hotspot APK sharing
     implementation(libs.nanohttpd)
 
-    // Arti (Tor in Rust) Android bridge - custom build from latest source
-    // Built with rustls, 16KB page size support, and onio//un service client
-    // Native libraries are in src/tor/jniLibs/ (extracted from arti-custom.aar)
-    // Only included in tor flavor to reduce APK size for standard builds
-    // Note: AAR is kept in libs/ for reference, but libraries loaded from jniLibs/
+    // Faro: Tor (Arti) se ha quitado; ver net/ArtiTorManager.kt.
 
     // Google Play Services Location
     implementation(libs.gms.location)
