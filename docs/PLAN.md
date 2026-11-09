@@ -188,3 +188,14 @@ Al no haber servidores, los datos (ubicaciones incluidas) nunca salen de los mó
 - Burbujas solo con borde, sin relleno. Las tuyas a la derecha, en **azul calma** (`#A7C7E7`); las de los demás a la izquierda, en blanco.
 - Letra Inter, textos claros y sin jerga.
 - La cabecera muestra «sin internet» en gris cuando no hay conexión.
+
+## Estado (9 de noviembre de 2026)
+
+Hecho y compilando en GitHub Actions:
+- Fase 1: nombre, icono, diseño, español, aviso sin internet, Tor quitado; además fuera Cashu, bromas, reloj y borrado de emergencia.
+- Fase 2: grupos privados (`faro/FaroProtocol.kt`, `faro/FaroGroups.kt`) por la malla y por internet (`faro/FaroInternet.kt`).
+- Fase 3: invitación por QR (`faro/FaroInvite.kt`) y por enlace con aceptación (`faro/FaroJoin.kt`, página `web/unirse/`).
+- Fase 4: ubicación con consentimiento, mapa MapLibre + OpenFreeMap, mapa de la zona sin conexión en cualquier país (`faro/FaroOfflineMap.kt`), distancia y flecha, botón «Pedir ayuda».
+- Actualizaciones OTA y compartir la app sin internet.
+
+Pendiente: subgrupos en la interfaz, sustituir los comandos con «/» por botones, notificaciones de mensajes de grupo, medir batería en móviles reales (fase 5) y clave de firma privada para publicar.

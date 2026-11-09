@@ -11,13 +11,15 @@ Faro es una app Android gratuita para mantener el contacto con tu familia y tus 
 ## Qué hace
 
 - **Mensajes sin internet.** Cada móvil con Faro hace de repetidor: tu mensaje puede dar hasta 7 saltos para llegar más lejos.
-- **Grupos privados y públicos.** «Familia», «Vecinos del bloque», y subgrupos como «Familia > Abuelos». Solo los miembros leen los mensajes; los demás móviles los reenvían sin poder abrirlos.
-- **Invitaciones seguras.** En persona, escaneando un QR. A distancia, con un enlace que solo da acceso cuando el invitado lo acepta.
-- **Dónde están los tuyos.** Una brújula que apunta a cada miembro del grupo, con la distancia, y un mapa que funciona sin conexión.
-- **Botón SOS.** Envía tu posición y «necesito ayuda» a todos tus grupos con un toque.
-- **Pensada para durar.** La batería es la prioridad: la app reduce su consumo sola según la carga que te quede.
-- **Con internet, cuando lo hay.** Si no hay nadie cerca por Bluetooth, los mismos chats siguen funcionando por internet a través de Nostr, una red de servidores públicos que nadie controla. La app avisa cuando estás sin internet.
-- **Privada por diseño.** Sin cuentas ni servidores propios. Todo va cifrado de extremo a extremo: ni los servidores de Nostr pueden leer tus mensajes ni tu ubicación, que solo se comparte en grupos privados y con tu permiso.
+- **Grupos privados.** «Familia», «Vecinos del bloque»… Solo los miembros leen los mensajes; los demás móviles los reenvían sin poder abrirlos.
+- **Invitaciones seguras.** En persona, escaneando un QR. A distancia, con un enlace que no contiene la clave del grupo: quien lo abre ve el grupo, quién le invita y quiénes están, y decide si entra.
+- **Dónde están los tuyos.** Un mapa con la familia y, para cada persona, la distancia y una flecha que apunta hacia ella. Solo en grupos privados y con el permiso de cada uno.
+- **Mapa sin conexión en cualquier país.** Cuando hay internet, Faro guarda el mapa de tu zona (unos pocos MB) para usarlo sin conexión.
+- **Botón «Pedir ayuda».** Envía tu posición y «necesito ayuda» a todos tus grupos.
+- **Con internet, cuando lo hay.** Los mismos chats y ubicaciones viajan también por internet (Nostr), cifrados de extremo a extremo. La app avisa cuando estás sin internet.
+- **Pensada para durar.** La batería es la prioridad: sin GPS continuo y con menos envíos cuando queda poca carga.
+- **Se comparte sin internet.** Por Quick Share o por Wi‑Fi con un QR, directamente desde la app.
+- **Se actualiza sola.** Con Wi‑Fi, avisa cuando hay versión nueva.
 - **Código abierto.** Cualquiera puede revisar cómo funciona.
 
 ## Cómo funciona
@@ -43,5 +45,7 @@ El APK queda en `app/build/outputs/apk/debug/`.
 ## Créditos y licencia
 
 Faro es un fork de [**bitchat-android**](https://github.com/permissionlesstech/bitchat-android), creado por [permissionlesstech](https://github.com/permissionlesstech) y sus colaboradores. La malla Bluetooth, el cifrado Noise y el formato de paquetes son obra suya. Faro no está afiliado al proyecto bitchat ni avalado por él.
+
+El mapa usa datos de © colaboradores de OpenStreetMap (ODbL), servidos por [OpenFreeMap](https://openfreemap.org), y se dibuja con [MapLibre](https://maplibre.org). La letra es Inter (OFL).
 
 Se distribuye bajo la **GNU General Public License v3**, igual que el proyecto original: puedes usarlo, estudiarlo, modificarlo y compartirlo, siempre que las versiones que distribuyas sigan siendo GPL v3 y con su código fuente disponible. Consulta [`LICENSE.md`](LICENSE.md).
