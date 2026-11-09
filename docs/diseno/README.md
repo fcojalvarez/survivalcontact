@@ -125,3 +125,12 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 - **Seguir en directo:** pide al móvil de esa persona que envíe su ubicación cada 30 s durante 10 min; después vuelve solo a su ritmo normal (5 o 15 min según batería). El mapa se centra en ella y dibuja su recorrido.
 - **Batería:** no se ofrece si a esa persona le queda menos del 20 %. Gasta algo más solo durante esos 10 min y se apaga sola.
 - **La persona seguida** ve un aviso discreto, sin sonido («Lucía te está siguiendo en el mapa · 8 min») con «Parar».
+
+### Aviso «han visto dónde estás»
+
+![Aviso de quién ha visto tu ubicación](13-aviso-visto.png)
+
+- Cuando alguien abre el mapa y te ve, abre tu ficha, te guía o te sigue en directo, su móvil envía un aviso pequeño («visto») a tu grupo.
+- En Inicio aparece en Novedades: «Mamá y Lucía han visto dónde estás». Varios avisos se juntan en uno. Al abrirlo se ve quién, cómo (en el mapa, en directo) y cuándo, con «Dejar de compartir» y «Abrir chat».
+- **Batería:** como mucho un aviso por persona cada 15 min (unos pocos bytes), así que el gasto es mínimo.
+- Es un aviso de buena fe: el móvil de tu familia ya tiene tu ubicación al recibirla, así que avisa de lo que se ve dentro de Faro.
