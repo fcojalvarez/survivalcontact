@@ -1,12 +1,12 @@
-<img width="160" height="160" alt="Icono de Faro: un faro blanco con dos haces de luz ámbar sobre fondo negro" src="fastlane/metadata/android/en-US/images/icon.png" />
+<img width="160" height="160" alt="Icono de Faro: un faro blanco con dos haces de luz azul calma sobre fondo negro" src="fastlane/metadata/android/en-US/images/icon.png" />
 
 # Faro
 
 **Te guía hasta los tuyos en la oscuridad.**
 
-Faro es una app Android gratuita para mantener el contacto con tu familia y tus vecinos cuando no hay cobertura ni internet: un apagón, una DANA, un terremoto. Los mensajes saltan de móvil en móvil por Bluetooth hasta llegar a su destino, sin servidores, sin cuentas y sin número de teléfono.
+Faro es una app Android gratuita para mantener el contacto con tu familia y tus vecinos cuando no hay cobertura ni internet: un apagón, una DANA, un terremoto. Los mensajes saltan de móvil en móvil por Bluetooth hasta llegar a su destino, sin cuentas y sin número de teléfono. Si hay internet, también puede usarlo, siempre cifrado de extremo a extremo.
 
-> **Estado: en desarrollo.** Todavía no hay versión para instalar. El plan y las fases están en [`docs/PLAN.md`](docs/PLAN.md).
+> **Estado: en desarrollo.** Hay una [versión de prueba](https://github.com/fcojalvarez/survivalcontact/releases/tag/prueba) para Android. El plan y las fases están en [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Qué hace
 
@@ -16,7 +16,9 @@ Faro es una app Android gratuita para mantener el contacto con tu familia y tus 
 - **Dónde están los tuyos.** Una brújula que apunta a cada miembro del grupo, con la distancia, y un mapa que funciona sin conexión.
 - **Botón SOS.** Envía tu posición y «necesito ayuda» a todos tus grupos con un toque.
 - **Pensada para durar.** La batería es la prioridad: la app reduce su consumo sola según la carga que te quede.
-- **Privada por diseño.** No hay servidores: tus mensajes y tu ubicación nunca salen de los móviles.
+- **Con internet, cuando lo hay.** Si no hay nadie cerca por Bluetooth, los mismos chats siguen funcionando por internet a través de Nostr, una red de servidores públicos que nadie controla. La app avisa cuando estás sin internet.
+- **Privada por diseño.** Sin cuentas ni servidores propios. Todo va cifrado de extremo a extremo: ni los servidores de Nostr pueden leer tus mensajes ni tu ubicación, que solo se comparte en grupos privados y con tu permiso.
+- **Código abierto.** Cualquiera puede revisar cómo funciona.
 
 ## Cómo funciona
 
