@@ -92,9 +92,37 @@ object FaroOfflineMap {
 
     private fun manager(): OfflineManager? = appContext?.let { runCatching { OfflineManager.getInstance(it) }.getOrNull() }
 
+    private var force = false
+
+    /** Vuelve a guardar la zona donde estoy ahora (desde Ajustes). */
+    fun updateNow() {
+        main.launch {
+            force = true
+            FaroLocation.myLocation.value?.let { ensureFor(it) } ?: FaroLocation.refreshForDisplay()
+        }
+    }
+
+    /** Borra el mapa guardado. Se volverá a guardar solo la próxima vez que haya conexión. */
+    fun deleteAll() {
+        val mgr = manager() ?: return
+        mgr.listOfflineRegions(object : OfflineManager.ListOfflineRegionsCallback {
+            override fun onList(offlineRegions: Array<OfflineRegion>?) {
+                offlineRegions.orEmpty().filter { meta(it)?.optString("faro").isNullOrEmpty().not() }.forEach {
+                    it.delete(object : OfflineRegion.OfflineRegionDeleteCallback {
+                        override fun onDelete() = Unit
+                        override fun onError(error: String) = Unit
+                    })
+                }
+                _state.value = State.None
+            }
+            override fun onError(error: String) = Unit
+        })
+    }
+
     private fun ensureFor(location: Location) {
         if (busy) return
-        val (isOnline, unmetered) = online()
+        val (isOnline, unmeteredNet) = online()
+        val unmetered = unmeteredNet || !FaroSettings.mapWifiOnly || force
         if (!isOnline) return
         val mgr = manager() ?: return
         busy = true
@@ -105,9 +133,10 @@ object FaroOfflineMap {
                 val nearEnough = center != null && center.distanceTo(location) < REFRESH_DISTANCE_M
                 val complete = ours.size == PIECES.size
                 when {
-                    nearEnough && complete -> { busy = false; resumeIncomplete(ours) }
+                    nearEnough && complete && !force -> { busy = false; resumeIncomplete(ours) }
                     ours.isNotEmpty() && !unmetered -> { busy = false } // Cambiar de zona: solo con Wi‑Fi.
                     else -> {
+                        force = false
                         ours.forEach { it.delete(object : OfflineRegion.OfflineRegionDeleteCallback {
                             override fun onDelete() = Unit
                             override fun onError(error: String) = Unit

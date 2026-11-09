@@ -67,7 +67,6 @@ import com.bitchat.android.faro.FaroJoin
 import com.bitchat.android.faro.FaroLocation
 import com.bitchat.android.faro.FaroMessage
 import com.bitchat.android.faro.JoinRequest
-import com.bitchat.android.ui.AboutSheet
 import com.bitchat.android.ui.ChatScreen
 import com.bitchat.android.ui.ChatViewModel
 import com.bitchat.android.ui.rememberIsOnline
@@ -82,6 +81,7 @@ internal sealed class Route {
     data class Info(val id: String) : Route()
     data class Invite(val id: String) : Route()
     data class Guide(val personId: String) : Route()
+    data class Settings(val page: SettingsPage) : Route()
 }
 
 /** Seguimiento en directo de una persona hasta [untilMs]. */
@@ -111,7 +111,7 @@ internal class FaroNav {
 @Composable
 fun FaroMainScreen(chatViewModel: ChatViewModel) {
     val nav = remember { FaroNav() }
-    var showSettings by remember { mutableStateOf(false) }
+    var welcome by remember { mutableStateOf(!com.bitchat.android.faro.FaroSettings.welcomeDone) }
     var incoming by remember { mutableStateOf<String?>(null) }
     val sos by FaroLocation.sosActive.collectAsState()
     var sosHidden by remember { mutableStateOf(false) }
@@ -133,8 +133,8 @@ fun FaroMainScreen(chatViewModel: ChatViewModel) {
             Route.Tabs -> Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                 Box(Modifier.weight(1f)) {
                     when (nav.tab) {
-                        Tab.INICIO -> HomeTab(nav, onSettings = { showSettings = true }, onShowSos = { sosHidden = false })
-                        Tab.CHATS -> ChatsTab(nav, chatViewModel, onSettings = { showSettings = true })
+                        Tab.INICIO -> HomeTab(nav, onSettings = { nav.go(Route.Settings(SettingsPage.MAIN)) }, onShowSos = { sosHidden = false })
+                        Tab.CHATS -> ChatsTab(nav, chatViewModel, onSettings = { nav.go(Route.Settings(SettingsPage.MAIN)) })
                         Tab.MAPA -> MapTab(nav)
                     }
                 }
@@ -147,11 +147,12 @@ fun FaroMainScreen(chatViewModel: ChatViewModel) {
             is Route.Info -> Screen { GroupInfoScreen(nav, r.id) }
             is Route.Invite -> Screen { InviteScreen(nav, r.id) }
             is Route.Guide -> Screen { GuideScreen(nav, r.personId) }
+            is Route.Settings -> Screen { SettingsScreen(nav, r.page, chatViewModel, onWelcome = { welcome = true }) }
         }
         if (sos && !sosHidden) SosActiveScreen(onOpenChat = { id -> sosHidden = true; nav.home(Tab.INICIO); nav.go(Route.Group(id)) })
     }
 
-    AboutSheet(isPresented = showSettings, onDismiss = { showSettings = false })
+    if (welcome) WelcomeScreen(chatViewModel, onDone = { com.bitchat.android.faro.FaroSettings.welcomeDone = true; welcome = false })
     incoming?.let { code -> JoinFlow(code, onDone = { incoming = null }) }
 }
 

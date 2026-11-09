@@ -43,7 +43,7 @@ object FaroNotifications {
         )
 
     fun message(ctx: Context, groupId: String, groupName: String, author: String, text: String) {
-        if (!canNotify(ctx)) return
+        if (!canNotify(ctx) || !FaroSettings.notifyMessages) return
         val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
         ensureChannels(nm)
         val id = ("msg" + groupId).hashCode()
@@ -61,7 +61,7 @@ object FaroNotifications {
     }
 
     fun joinRequest(ctx: Context, groupId: String, groupName: String, name: String) {
-        if (!canNotify(ctx)) return
+        if (!canNotify(ctx) || !FaroSettings.notifyRequests) return
         val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
         ensureChannels(nm)
         val id = ("join" + groupId + name).hashCode()
@@ -78,7 +78,7 @@ object FaroNotifications {
     }
 
     fun seen(ctx: Context, name: String) {
-        if (!canNotify(ctx)) return
+        if (!canNotify(ctx) || !FaroSettings.notifySeen) return
         val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
         ensureChannels(nm)
         val id = ("seen" + name).hashCode()

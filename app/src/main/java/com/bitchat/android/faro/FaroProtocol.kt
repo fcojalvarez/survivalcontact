@@ -177,13 +177,6 @@ object FaroProtocol {
         if (!verify(signature, unsigned, author)) return null
         Inner(kind, ts, author, name, body)
     }.getOrNull()
-}
-
-internal fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
-
-internal fun String.hexToBytes(): ByteArray? {
-    if (length % 2 != 0) return null
-    return runCatching { ByteArray(length / 2) { i -> substring(i * 2, i * 2 + 2).toInt(16).toByte() } }.getOrNull()
 
     // ---------- Cuerpos de FOLLOW y SEEN ----------
 
@@ -215,4 +208,11 @@ internal fun String.hexToBytes(): ByteArray? {
         val keys = (0 until (body.size - 1) / PUB_SIZE).map { i -> body.copyOfRange(1 + i * PUB_SIZE, 1 + (i + 1) * PUB_SIZE) }
         return SeenHow.from(body[0]) to keys
     }
+}
+
+internal fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
+
+internal fun String.hexToBytes(): ByteArray? {
+    if (length % 2 != 0) return null
+    return runCatching { ByteArray(length / 2) { i -> substring(i * 2, i * 2 + 2).toInt(16).toByte() } }.getOrNull()
 }

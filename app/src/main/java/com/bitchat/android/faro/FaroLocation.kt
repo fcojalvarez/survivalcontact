@@ -137,6 +137,9 @@ object FaroLocation {
         val interval = when {
             following -> 30_000L
             sos -> 2 * 60_000L
+            // Máximo ahorro: solo se envía la ubicación si pido ayuda.
+            FaroSettings.battery == FaroSettings.Battery.MAX -> return 30 * 60_000L
+            FaroSettings.battery == FaroSettings.Battery.SAVER && battery >= 20 -> 15 * 60_000L
             battery > 50 -> 5 * 60_000L
             battery >= 20 -> 15 * 60_000L
             else -> return 30 * 60_000L // Batería crítica: solo SOS.

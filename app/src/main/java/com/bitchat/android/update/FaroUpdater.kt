@@ -66,6 +66,15 @@ object FaroUpdater {
         val sha256: String,
     )
 
+    /** Busca una versión nueva ahora mismo (desde Ajustes), con cualquier conexión. */
+    fun checkNow(context: Context) {
+        val request = androidx.work.OneTimeWorkRequestBuilder<FaroUpdateWorker>()
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+        WorkManager.getInstance(context.applicationContext)
+            .enqueueUniqueWork(WORK_NAME + "_ahora", androidx.work.ExistingWorkPolicy.REPLACE, request)
+    }
+
     /** Programa la comprobación diaria. Llamar al arrancar la app; no duplica el trabajo. */
     fun schedule(context: Context) {
         val constraints = Constraints.Builder()
