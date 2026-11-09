@@ -7,8 +7,13 @@
 Una app Android, gratuita y sin servidores, para mantener el contacto en un apagón o catástrofe: mensajes por Bluetooth en malla, grupos y subgrupos con invitación aceptada, y ubicación de los miembros con brújula y mapa offline.
 
 - **Primera versión: solo Android.** iOS limita el Bluetooth en segundo plano y eso rompe el envío automático de ubicación.
-- **Sin internet en ningún momento** salvo para instalar la app y descargar el mapa antes de la emergencia.
-- **Única excepción: actualizaciones.** Si hay Wi‑Fi, la app comprueba como mucho una vez al día si hay versión nueva en el repositorio público `fcojalvarez/faro-releases`, la descarga, comprueba la huella y la firma, y avisa para instalarla. Nunca se usa internet para mensajes, ubicaciones ni otros datos. Las actualizaciones también se pueden pasar de móvil a móvil sin internet.
+- **Lo más fácil, versátil, seguro y minimalista posible.** Fondo negro, pocas opciones, sin jerga técnica.
+- **Sin internet:** solo la malla (Bluetooth y Wi‑Fi local), siempre con el mínimo consumo. La app avisa de forma visible de que está en modo «sin internet».
+- **Con internet** se usa solo para tres cosas:
+  1. **Actualizaciones:** como mucho una vez al día y solo con Wi‑Fi, se busca una versión nueva en el repositorio público `fcojalvarez/faro-releases`; se descarga, se comprueba la huella y la firma, y se avisa para instalarla. También se pueden pasar de móvil a móvil sin internet.
+  2. **Chatear en los mismos chats** cuando no hay malla, por **Nostr** (red de servidores públicos y gratuitos que nadie controla). Los mensajes van cifrados de extremo a extremo; los servidores no pueden leerlos.
+  3. **Localizar a la familia**, solo en **grupos privados** y con consentimiento explícito de cada persona, que puede retirarlo en cualquier momento.
+- **Seguridad:** la clave de un grupo privado nunca viaja sin cifrar ni se puede deducir; solo la tiene quien ha sido invitado y ha aceptado.
 - **Prioridad absoluta: batería.** Cada decisión técnica se mide por cuánto consume.
 - Fuera de alcance de la v1: llamadas de voz, fotos, iOS y publicación en tiendas.
 
@@ -30,7 +35,9 @@ Ya resuelve lo más difícil, que no hay que reinventar:
 - **Ahorro de batería**: escaneo por ciclos y límite de conexiones; servicio en primer plano para que Android no mate la malla.
 - **Borrado de emergencia** de todos los datos.
 
-Lo que **quitamos o desactivamos**: el transporte por internet (Nostr), los canales por geohash y Tor. Menos código, menos consumo y ninguna dependencia de red.
+Lo que **quitamos**: Tor (gasta batería y pesa 21 MB; el contenido ya va cifrado de extremo a extremo) y las comprobaciones de actualizaciones de bitchat (las sustituye el actualizador propio de Faro).
+
+Lo que **mantenemos**: Nostr como transporte por internet y los canales públicos por zona (geohash), para coordinarse con vecinos.
 
 La app necesita **nombre e icono propios**: la licencia cubre el código, no la marca Bitchat. Fuente técnica: el [whitepaper del protocolo](https://github.com/permissionlesstech/bitchat/blob/main/WHITEPAPER.md).
 
@@ -73,7 +80,7 @@ Escanear un QR en persona ya es el consentimiento, así que la entrada es inmedi
 
 El enlace se puede compartir antes de la emergencia por WhatsApp o en la propia app; la aceptación y la entrega de la clave funcionan sin internet. Si el invitado nunca acepta, el token caduca y no pasa nada.
 
-## Ubicación, brújula y mapa offline
+## Ubicación, brújula y mapa
 
 El GPS funciona sin red; la app solo tiene que enviar la posición en un paquete diminuto y dibujar distancia y dirección hacia cada miembro.
 
@@ -95,7 +102,12 @@ El GPS funciona sin red; la app solo tiene que enviar la posición en un paquete
 
 La distancia, con la fórmula de haversine; a escala de ciudad sobra precisión.
 
-**Mapa offline:** MapLibre Native con un extracto de OpenStreetMap de la provincia de Málaga en un único fichero PMTiles, descargado antes de la emergencia. Tema oscuro para ahorrar pantalla OLED.
+**Mapa (gratuito y de código abierto):** MapLibre Native con datos de OpenStreetMap.
+- **Con internet:** teselas de [OpenFreeMap](https://openfreemap.org), gratis, sin registro ni clave.
+- **Sin internet:** un extracto de la zona (por ejemplo, la provincia de Málaga) en un único fichero PMTiles, descargado antes de la emergencia.
+- Tema oscuro para ahorrar pantalla OLED.
+
+**Ubicación por internet:** solo en grupos privados y con consentimiento de cada persona. La posición viaja cifrada con la clave del grupo por Nostr, igual que por la malla; los servidores no pueden leerla.
 
 **Botón SOS:** envía al instante posición y estado "necesito ayuda" a todos tus grupos privados, aunque tengas la ubicación pausada.
 
@@ -124,7 +136,7 @@ Las cifras son de partida y hay que ajustarlas midiendo en móviles reales.
 
 Cinco fases, cada una termina con una prueba en móviles reales antes de pasar a la siguiente.
 
-1. **Fork y limpieza.** Compilar el proyecto, quitar Nostr, Tor y geohash, poner nombre (Faro) e icono propios.
+1. **Fork y limpieza.** Compilar el proyecto, quitar Tor, poner nombre (Faro), icono y diseño propios, y avisar del modo sin internet.
    - Listo cuando: dos móviles en modo avión se envían mensajes.
 2. **Grupos y subgrupos.** Modelo de datos, claves de grupo, etiqueta de grupo en los paquetes, roles y rotación de clave.
    - Listo cuando: un tercer móvil sin la clave reenvía los mensajes pero no puede leerlos.
@@ -169,3 +181,10 @@ El mayor límite es físico: sin suficientes móviles con la app entre dos perso
 **Pregunta abierta:** si los clientes oficiales de Bitchat reenvían tipos de paquete que no conocen. Si lo hacen, los nuevos paquetes de grupo y posición viajarían también por sus móviles; hay que verificarlo en el código del relay antes de la fase 2.
 
 Al no haber servidores, los datos (ubicaciones incluidas) nunca salen de los móviles, lo que simplifica mucho la privacidad y el RGPD si se publica.
+
+## Diseño
+
+- Fondo negro puro siempre por defecto (ahorra batería en OLED).
+- Burbujas solo con borde, sin relleno. Las tuyas a la derecha, en **azul calma** (`#A7C7E7`); las de los demás a la izquierda, en blanco.
+- Letra Inter, textos claros y sin jerga.
+- La cabecera muestra «sin internet» en gris cuando no hay conexión.

@@ -678,4 +678,5 @@
     <string name="perm_type_wifi_aware">Wi‑Fi Aware</string>
     <string name="perm_wifi_aware_desc">Enable Wi‑Fi Aware to discover and connect to nearby Faro users over Wi‑Fi.</string>
     <string name="perm_wifi_aware_system">Allow Faro to discover nearby Wi‑Fi devices</string>
+    <string name="faro_offline_label">offline</string>
 </resources>

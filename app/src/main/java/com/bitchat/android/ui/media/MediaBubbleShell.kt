@@ -81,9 +81,14 @@ fun MediaBubbleShell(
     ) {
         Box(
             modifier = Modifier
-                // Faro: fondo gris sólido y sin borde, igual que las burbujas de texto.
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
+                // Faro: solo borde, igual que las burbujas de texto.
+                .border(
+                    width = 1.5.dp,
+                    color = if (isSelf) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                    },
                     shape = bubbleShape
                 )
                 .combinedClickable(

@@ -25,13 +25,13 @@ object ThemePreferenceManager {
     private const val PREFS_NAME = "bitchat_settings"
     private const val KEY_THEME = "theme_preference"
 
-    private val _themeFlow = MutableStateFlow(ThemePreference.System)
+    private val _themeFlow = MutableStateFlow(ThemePreference.Dark) // Faro: fondo negro por defecto
     val themeFlow: StateFlow<ThemePreference> = _themeFlow
 
     fun init(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val saved = prefs.getString(KEY_THEME, ThemePreference.System.name)
-        _themeFlow.value = runCatching { ThemePreference.valueOf(saved!!) }.getOrDefault(ThemePreference.System)
+        val saved = prefs.getString(KEY_THEME, ThemePreference.Dark.name)
+        _themeFlow.value = runCatching { ThemePreference.valueOf(saved!!) }.getOrDefault(ThemePreference.Dark)
     }
 
     fun set(context: Context, preference: ThemePreference) {

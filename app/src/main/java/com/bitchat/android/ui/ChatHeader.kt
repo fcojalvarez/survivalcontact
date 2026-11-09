@@ -841,14 +841,20 @@ private fun LocationChannelsButton(
     val selectedChannel by viewModel.selectedLocationChannel.collectAsStateWithLifecycle()
 
     val isLocation = selectedChannel is com.bitchat.android.geohash.ChannelID.Location
+    // Faro: sin internet, la etiqueta de la red lo dice y se apaga a gris.
+    val isOnline = rememberIsOnline()
     val badgeText = when (val channel = selectedChannel) {
         // Geohashes keep the '#' because that is how they are written and typed everywhere else.
         is com.bitchat.android.geohash.ChannelID.Location -> "#${channel.channel.geohash}"
         // The local mesh is not a hashtag channel, and the mesh glyph already says what it is,
         // so it is plain "mesh".
-        else -> stringResource(R.string.mesh_label)
+        else -> if (isOnline) stringResource(R.string.mesh_label) else stringResource(R.string.faro_offline_label)
     }
-    val channelColor = if (isLocation) colorScheme.primary else colorScheme.secondary
+    val channelColor = when {
+        isLocation -> colorScheme.primary
+        isOnline -> colorScheme.secondary
+        else -> colorScheme.onSurfaceVariant
+    }
     // Tor status only tints the globe (location channels). The local mesh stays blue.
     val torVisual = if (isLocation) {
         rememberTorConnectionVisual(normal = channelColor)

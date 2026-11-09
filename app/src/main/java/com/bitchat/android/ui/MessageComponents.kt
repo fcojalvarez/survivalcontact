@@ -831,20 +831,20 @@ internal fun TextMessageLayout(
         palette,
         colorScheme.onSurface,
         colorScheme.secondary,
-        colorScheme.onPrimary,
+        colorScheme.primary,
         mentionPeerIdentities,
         timeFormatter,
         bubbles,
         isSelf
     ) {
-        // Faro: en tus burbujas (ámbar sólido) el texto y los enlaces van en oscuro.
+        // Faro: tus burbujas llevan el texto en el color de la app (azul calma).
         val ownBubble = bubbles && isSelf
         formatTextMessageBody(
             message = displayMessage,
             currentUserNickname = currentUserNickname,
             palette = palette,
-            contentColor = if (ownBubble) colorScheme.onPrimary else colorScheme.onSurface,
-            linkColor = if (ownBubble) colorScheme.onPrimary else colorScheme.secondary,
+            contentColor = if (ownBubble) colorScheme.primary else colorScheme.onSurface,
+            linkColor = if (ownBubble) colorScheme.primary else colorScheme.secondary,
             mentionPeerIdentities = mentionPeerIdentities,
             timeFormatter = timeFormatter,
             includeTimestamp = !bubbles || !isSelf,
@@ -1003,13 +1003,15 @@ private fun BubbleTextMessageLayout(
                 modifier = Modifier
                     .align(if (isSelf) Alignment.CenterEnd else Alignment.CenterStart)
                     .widthIn(max = maxBubbleWidth)
-                    // Faro: burbujas sólidas y sin borde. Las tuyas en ámbar; las de los
-                    // demás en gris, con su nombre en su color.
-                    .background(
+                    // Faro: burbujas solo con borde, sin relleno (minimalista y ahorra
+                    // píxeles encendidos en OLED). Las tuyas en azul calma; las de los
+                    // demás en blanco.
+                    .border(
+                        width = 1.5.dp,
                         color = if (isSelf) {
                             MaterialTheme.colorScheme.primary
                         } else {
-                            MaterialTheme.colorScheme.surfaceVariant
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                         },
                         shape = bubbleShape
                     )
@@ -1083,7 +1085,7 @@ private fun BubbleTextMessageLayout(
                             overflow = TextOverflow.Visible,
                             style = MessageBodyTextStyle.copy(
                                 color = if (isSelf) {
-                                    MaterialTheme.colorScheme.onPrimary
+                                    MaterialTheme.colorScheme.primary
                                 } else {
                                     MaterialTheme.colorScheme.onSurface
                                 }
@@ -1102,7 +1104,7 @@ private fun BubbleTextMessageLayout(
                                 Text(
                                     text = formatTextMessageMetadata(message, timeFormatter),
                                     fontFamily = BitchatFontFamily,
-                                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.65f),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                                 )
                                 if (message.isPrivate) {
                                     message.deliveryStatus?.let { status ->

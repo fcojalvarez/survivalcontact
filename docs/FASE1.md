@@ -4,6 +4,8 @@ Análisis del código importado (bitchat-android, commit `14ab73c`) para quitar 
 
 **Objetivo de la fase:** dos móviles en modo avión se envían mensajes, con nombre e icono propios y sin ningún código que use internet.
 
+> **Actualización (decisiones del 9 de noviembre de 2026):** se **mantienen** Nostr (para chatear y localizar por internet) y los canales por zona (geohash). En esta fase solo se quita **Tor** (pasos 2 y 5 en lo que afecta a Tor) y se sustituye la búsqueda de actualizaciones de bitchat por la de Faro. Los pasos 1, 3 y 4 sobre borrar Nostr y geohash **quedan descartados**; se conservan abajo como referencia del análisis.
+
 ## Resumen
 
 | Bloque | Dónde está | Tamaño | Qué hacemos |

@@ -19,25 +19,25 @@ import androidx.compose.ui.platform.LocalView
 
 // Standard UI semantics live in Material so stock components and custom Bitchat composables
 // share one source of truth. LocalBitchatPalette below only supplies app-specific extra colors.
-// Faro: negro puro (ahorra batería en pantallas OLED) con el ámbar del icono como acento.
-// Neutros ligeramente cálidos en lugar de los verdes de terminal de bitchat.
+// Faro: negro puro (ahorra batería en pantallas OLED) con azul pastel como acento, que
+// transmite calma. Neutros suaves en lugar de los verdes de terminal de bitchat.
 internal val DarkBitchatColorScheme = darkColorScheme(
-    primary = Color(0xFFFFB300),
-    onPrimary = Color(0xFF1A1205),
-    primaryContainer = Color(0xFF3A2A00),
-    onPrimaryContainer = Color(0xFFFFE08A),
-    secondary = Color(0xFF7CC4FF),
-    onSecondary = Color(0xFF00203A),
+    primary = Color(0xFFA7C7E7),
+    onPrimary = Color(0xFF0B1B2B),
+    primaryContainer = Color(0xFF1E3346),
+    onPrimaryContainer = Color(0xFFD6E6F5),
+    secondary = Color(0xFFA7C7E7),
+    onSecondary = Color(0xFF0B1B2B),
     secondaryContainer = Color(0xFF0E2F4A),
     onSecondaryContainer = Color(0xFFCFE6FF),
     tertiary = DarkBitchatPalette.accentOrange,
-    onTertiary = Color(0xFF1A1205),
+    onTertiary = Color(0xFF0B1B2B),
     background = Color(0xFF000000),
-    onBackground = Color(0xFFF5F2EA),
+    onBackground = Color(0xFFF2F2F2),
     surface = Color(0xFF121214),
-    onSurface = Color(0xFFF5F2EA),
+    onSurface = Color(0xFFF2F2F2),
     surfaceVariant = Color(0xFF1C1C1F),
-    onSurfaceVariant = Color(0xFFA19D94),
+    onSurfaceVariant = Color(0xFF9A9A9A),
     outline = Color(0xFF2E2E33),
     outlineVariant = Color(0xFF232327),
     error = Color(0xFFFF6B5E),
@@ -45,10 +45,10 @@ internal val DarkBitchatColorScheme = darkColorScheme(
 )
 
 internal val LightBitchatColorScheme = lightColorScheme(
-    primary = Color(0xFFB86E00),
+    primary = Color(0xFF3B6B99),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFFFE3A8),
-    onPrimaryContainer = Color(0xFF2E1D00),
+    primaryContainer = Color(0xFFD6E6F5),
+    onPrimaryContainer = Color(0xFF0B1B2B),
     secondary = Color(0xFF0063B1),
     onSecondary = Color.White,
     secondaryContainer = Color(0xFFD6E9FF),

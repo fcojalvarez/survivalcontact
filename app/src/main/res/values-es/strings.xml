@@ -640,4 +640,5 @@
     <string name="perm_type_wifi_aware">Wi‑Fi cercano</string>
     <string name="perm_wifi_aware_desc">Para conectar por Wi‑Fi con móviles cercanos, sin router ni internet.</string>
     <string name="perm_wifi_aware_system">Permitir que Faro encuentre móviles cercanos por Wi‑Fi</string>
+    <string name="faro_offline_label">sin internet</string>
 </resources>
