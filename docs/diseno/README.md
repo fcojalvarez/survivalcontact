@@ -95,6 +95,24 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 2. **Tu nombre:** «¿Cómo te llamas?». Lo único que se pide; se cambia luego en Ajustes.
 3. **Permisos de uno en uno:** una pantalla por permiso con icono grande, «Paso N de 4», explicación sencilla, «Permitir» y «Ahora no»: móviles cercanos (Bluetooth), ubicación, avisos y funcionar en segundo plano.
 
-## Pantallas menores (se harán con el mismo estilo)
+## 8. Pantallas menores
 
-Brújula «Guiarme» a pantalla completa, confirmación de «Pedir ayuda», ficha de una persona en el mapa, «Compartir Faro», subpantallas de Ajustes y lista completa de miembros.
+### Primera tanda
+
+![Pantallas menores 1](10-pantallas-menores-1.png)
+
+- «Guiarme»: brújula a pantalla completa con la distancia hasta la persona.
+- «Pedir ayuda»: primero se confirma y después queda una pantalla activa con la opción de cancelar.
+- Ficha de una persona en el mapa y pantalla «Compartir Faro».
+
+### Segunda tanda
+
+![Pantallas menores 2](11-pantallas-menores-2.png)
+
+- **Avisos:** un interruptor por tipo de aviso. Las peticiones de ayuda no se pueden silenciar y suenan aunque el móvil esté en silencio.
+- **Batería:** tres modos (Automático, Ahorro siempre y Máximo ahorro), cada uno explicado con palabras sencillas.
+- **Mapa sin conexión:** la zona guardada y cuánto ocupa, «Actualizar solo con Wi‑Fi», «Actualizar ahora» y «Borrar mapa guardado».
+- **Privacidad y seguridad:** mi código de verificación, personas bloqueadas y «Borrar todos mis datos», que pide confirmación.
+- **Actualizaciones:** versión instalada, «Buscar solo con Wi‑Fi» y «Buscar ahora».
+- **Idioma:** «Igual que el móvil» arriba y debajo los idiomas.
+- **Miembros:** buscador, etiqueta de administrador y menú al mantener pulsado (Escribir, Ver en el mapa y, solo para el administrador, Expulsar del grupo).
