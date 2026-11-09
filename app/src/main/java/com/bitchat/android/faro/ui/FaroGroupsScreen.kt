@@ -96,7 +96,7 @@ import kotlin.math.roundToInt
 
 private sealed class Screen {
     object List : Screen()
-    object Create : Screen()
+    data class Create(val parentId: String? = null) : Screen()
     object Scan : Screen()
     data class Group(val id: String) : Screen()
     data class Invite(val id: String) : Screen()
@@ -151,11 +151,12 @@ fun FaroGroupsDialog(onDismiss: () -> Unit, pendingInvite: String? = null) {
                     Screen.List -> GroupList(
                         onClose = onDismiss,
                         onOpen = { screen = Screen.Group(it) },
-                        onCreate = { screen = Screen.Create },
+                        onCreate = { screen = Screen.Create() },
                         onScan = { screen = Screen.Scan },
                     )
-                    Screen.Create -> CreateGroup(
-                        onBack = { screen = Screen.List },
+                    is Screen.Create -> CreateGroup(
+                        parentId = s.parentId,
+                        onBack = { screen = s.parentId?.let { Screen.Group(it) } ?: Screen.List },
                         onCreated = { screen = Screen.Group(it) },
                     )
                     Screen.Scan -> ScanInvite(
@@ -166,6 +167,7 @@ fun FaroGroupsDialog(onDismiss: () -> Unit, pendingInvite: String? = null) {
                         groupId = s.id,
                         onBack = { screen = Screen.List },
                         onInvite = { screen = Screen.Invite(s.id) },
+                        onCreateSub = { screen = Screen.Create(parentId = s.id) },
                     )
                     is Screen.Invite -> InviteQr(groupId = s.id, onBack = { screen = Screen.Group(s.id) })
                 }
@@ -316,26 +318,31 @@ private fun GroupCard(g: FaroGroup, indent: Boolean = false, onClick: () -> Unit
 // ---------------------------------------------------------------- Crear
 
 @Composable
-private fun CreateGroup(onBack: () -> Unit, onCreated: (String) -> Unit) {
+private fun CreateGroup(parentId: String?, onBack: () -> Unit, onCreated: (String) -> Unit) {
     var name by remember { mutableStateOf("") }
-    TopBar(title = "Crear grupo", onBack = onBack)
+    val parent = parentId?.let { FaroGroups.group(it) }
+    TopBar(title = if (parent != null) "Subgrupo de ${parent.name}" else "Crear grupo", onBack = onBack)
     Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("¿Cómo se llama el grupo?", fontSize = 17.sp)
         OutlinedTextField(
             value = name,
             onValueChange = { name = it.take(40) },
-            placeholder = { Text("Por ejemplo: Familia") },
+            placeholder = { Text(if (parent != null) "Por ejemplo: Abuelos" else "Por ejemplo: Familia") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
         )
         Text(
-            "Solo podrá entrar quien tú invites. Los mensajes y ubicaciones van cifrados: nadie fuera del grupo puede leerlos.",
+            if (parent != null) {
+                "Un subgrupo tiene su propia clave: aunque alguien esté en «${parent.name}», solo entrará si le invitas a este."
+            } else {
+                "Solo podrá entrar quien tú invites. Los mensajes y ubicaciones van cifrados: nadie fuera del grupo puede leerlos."
+            },
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
         )
         PrimaryButton("Crear", Icons.Filled.Add, Modifier.fillMaxWidth(), enabled = name.isNotBlank()) {
-            val g = FaroGroups.createGroup(name)
+            val g = FaroGroups.createGroup(name, parentId)
             FaroGroups.setShareLocation(g.id, true)
             onCreated(g.id)
         }
@@ -458,7 +465,7 @@ fun JoinConfirmDialog(
 // ---------------------------------------------------------------- Grupo
 
 @Composable
-private fun GroupDetail(groupId: String, onBack: () -> Unit, onInvite: () -> Unit) {
+private fun GroupDetail(groupId: String, onBack: () -> Unit, onInvite: () -> Unit, onCreateSub: () -> Unit) {
     val groups by FaroGroups.groups.collectAsState()
     val g = groups.firstOrNull { it.id == groupId }
     var tab by remember { mutableStateOf(0) }
@@ -475,7 +482,7 @@ private fun GroupDetail(groupId: String, onBack: () -> Unit, onInvite: () -> Uni
         Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Chat", fontSize = 16.sp) })
     }
     when (tab) {
-        0 -> FamilyMap(g, onLeave = { askLeave = true })
+        0 -> FamilyMap(g, onLeave = { askLeave = true }, onCreateSub = if (g.parentId == null) onCreateSub else null)
         else -> GroupChat(g)
     }
     if (askLeave) {
@@ -495,7 +502,7 @@ private fun GroupDetail(groupId: String, onBack: () -> Unit, onInvite: () -> Uni
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-private fun FamilyMap(g: FaroGroup, onLeave: () -> Unit) {
+private fun FamilyMap(g: FaroGroup, onLeave: () -> Unit, onCreateSub: (() -> Unit)?) {
     val positions by FaroGroups.positions.collectAsState()
     val me by FaroLocation.myLocation.collectAsState()
     val sos by FaroLocation.sosActive.collectAsState()
@@ -592,6 +599,11 @@ private fun FamilyMap(g: FaroGroup, onLeave: () -> Unit) {
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
+                }
+                if (onCreateSub != null) {
+                    TextButton(onClick = onCreateSub, modifier = Modifier.fillMaxWidth()) {
+                        Text("Crear un subgrupo dentro de «${g.name}»")
+                    }
                 }
                 TextButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
                     Text("Salir del grupo", color = MaterialTheme.colorScheme.onSurfaceVariant)
