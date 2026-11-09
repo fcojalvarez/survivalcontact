@@ -1,0 +1,80 @@
+name: Mapa sin conexión
+
+# Recorta el mapa de OpenStreetMap (compilación diaria de Protomaps, formato PMTiles)
+# a la provincia de Málaga y lo publica en la Release "mapa-malaga". La app lo descarga
+# una sola vez, con Wi‑Fi, para usarlo sin internet.
+#
+# Para que ocupe lo mínimo se corta en el nivel de zoom 13 (calles principales y
+# secundarias, nombres de barrios y pueblos). Al acercar más, el mapa se amplía a
+# partir de ese nivel.
+on:
+  workflow_dispatch:
+    inputs:
+      maxzoom:
+        description: Nivel máximo de zoom (13 = más ligero, 14 = más detalle)
+        default: "13"
+  push:
+    paths:
+      - .github/workflows/mapa-offline.yml
+
+permissions:
+  contents: write
+
+env:
+  # Provincia de Málaga: oeste, sur, este, norte
+  BBOX: "-5.62,36.28,-3.75,37.31"
+  NOMBRE: malaga
+
+jobs:
+  mapa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Descargar la herramienta pmtiles
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download -R protomaps/go-pmtiles --pattern '*Linux_x86_64.tar.gz' -O pmtiles.tar.gz
+          tar xzf pmtiles.tar.gz pmtiles
+          ./pmtiles version || true
+
+      - name: Buscar la compilación más reciente de Protomaps
+        id: fuente
+        run: |
+          for d in 0 1 2 3 4 5 6 7 8 9 10; do
+            dia=$(date -u -d "-$d day" +%Y%m%d)
+            url="https://build.protomaps.com/${dia}.pmtiles"
+            if curl -sfI "$url" >/dev/null; then
+              echo "url=$url" >> "$GITHUB_OUTPUT"
+              echo "fecha=$dia" >> "$GITHUB_OUTPUT"
+              echo "Fuente: $url"
+              exit 0
+            fi
+          done
+          echo "No se encontró ninguna compilación reciente de Protomaps" >&2
+          exit 1
+
+      - name: Recortar la provincia
+        run: |
+          zoom="${{ github.event.inputs.maxzoom || '13' }}"
+          ./pmtiles extract "${{ steps.fuente.outputs.url }}" "${NOMBRE}.pmtiles" \
+            --bbox="$BBOX" --maxzoom="$zoom" --download-threads=4
+          ./pmtiles show "${NOMBRE}.pmtiles" | head -30
+          ls -la "${NOMBRE}.pmtiles"
+          sha256sum "${NOMBRE}.pmtiles" | cut -d' ' -f1 > "${NOMBRE}.sha256"
+          bytes=$(stat -c %s "${NOMBRE}.pmtiles")
+          printf '{"nombre":"%s","bbox":[%s],"maxzoom":%s,"bytes":%s,"sha256":"%s","fecha":"%s"}\n' \
+            "$NOMBRE" "$BBOX" "$zoom" "$bytes" "$(cat ${NOMBRE}.sha256)" "${{ steps.fuente.outputs.fecha }}" > "${NOMBRE}.json"
+          cat "${NOMBRE}.json"
+
+      - name: Publicar en la Release "mapa-malaga"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release delete mapa-malaga --cleanup-tag --yes || true
+          gh release create mapa-malaga "${NOMBRE}.pmtiles" "${NOMBRE}.json" \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Mapa sin conexión — provincia de Málaga" \
+            --notes "Mapa de OpenStreetMap (© colaboradores de OpenStreetMap, ODbL) recortado de Protomaps (${{ steps.fuente.outputs.fecha }}). La app Faro lo descarga sola para usarlo sin internet."
