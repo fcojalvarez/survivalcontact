@@ -22,8 +22,34 @@ env:
   FARO_VERSION_NAME: 0.1.${{ github.run_number }}
 
 jobs:
+  # Si el push cambia dependencias, el bloqueo aún no está al día y la compilación fallaría.
+  # En ese caso se salta: «Actualizar bloqueo de dependencias» la lanza cuando termina.
+  comprobar:
+    name: ¿Cambian las dependencias?
+    runs-on: ubuntu-24.04
+    outputs:
+      saltar: ${{ steps.c.outputs.saltar }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - id: c
+        env:
+          ANTES: ${{ github.event.before }}
+        run: |
+          saltar=false
+          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ -n "$ANTES" ] && git cat-file -e "$ANTES" 2>/dev/null; then
+            if git diff --name-only "$ANTES" "$GITHUB_SHA" | grep -qE '^(gradle/libs\.versions\.toml|app/build\.gradle\.kts|settings\.gradle\.kts)$'; then
+              saltar=true
+              echo "Cambian las dependencias: se compilará al actualizar el bloqueo."
+            fi
+          fi
+          echo "saltar=$saltar" >> "$GITHUB_OUTPUT"
+
   apk:
     name: APK de prueba
+    needs: comprobar
+    if: needs.comprobar.outputs.saltar != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
 
