@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/faro_widget_bg"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:padding="12dp">
+    <TextView
+        android:id="@+id/faro_widget_ok"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/faro_widget_ok"
+        android:gravity="center"
+        android:text="Estoy bien"
+        android:textColor="#A7C7E7"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+    <View android:layout_width="10dp" android:layout_height="match_parent" />
+    <TextView
+        android:id="@+id/faro_widget_sos"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/faro_widget_sos"
+        android:gravity="center"
+        android:text="Pedir ayuda"
+        android:textColor="#FF6B5E"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+</LinearLayout>
