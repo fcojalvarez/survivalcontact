@@ -513,7 +513,7 @@ object FaroGroups {
                 val place = _places.value[g.id]?.firstOrNull { it.id == placeId } ?: return
                 val text = if (enter) "${inner.authorName} ha llegado a ${place.name}" else "${inner.authorName} ha salido de ${place.name}"
                 addEvent(FamilyEvent(g.id, inner.authorId, inner.authorName, text, inner.timestampMs))
-                appContext?.let { FaroNotifications.family(it, g.id, text, g.name) }
+                if (FaroSettings.placeNotify(placeId, enter)) appContext?.let { FaroNotifications.family(it, g.id, text, g.name) }
             }
             FaroProtocol.Kind.TRIP -> {
                 val trip = FaroProtocol.decodeTrip(inner.body) ?: return

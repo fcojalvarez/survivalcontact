@@ -170,6 +170,14 @@ internal fun FollowView(nav: FaroNav, f: Following, p: Person?, points: List<Map
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var street by remember(f.personId) { mutableStateOf<String?>(null) }
     val pos = p?.pos
+    // Recorrido mientras se le sigue: cada posición nueva se añade a la línea.
+    val trail = remember(f.personId) { androidx.compose.runtime.mutableStateListOf<Pair<Double, Double>>() }
+    LaunchedEffect(pos?.timestampMs) {
+        if (pos != null) {
+            val pt = pos.position.lat to pos.position.lon
+            if (trail.lastOrNull() != pt) trail.add(pt)
+        }
+    }
 
     fun stop() {
         FaroGroups.sendFollow(f.personId, 0)
@@ -190,7 +198,7 @@ internal fun FollowView(nav: FaroNav, f: Following, p: Person?, points: List<Map
     }
 
     Box(Modifier.fillMaxSize()) {
-        FaroMapView(points = points, modifier = Modifier.fillMaxSize(), handle = handle)
+        FaroMapView(points = points, modifier = Modifier.fillMaxSize(), handle = handle, trail = trail.toList())
         val left = ((f.untilMs - now) / 60_000 + 1).coerceIn(1, FOLLOW_MINUTES.toLong())
         Row(
             Modifier.padding(12.dp).clip(RoundedCornerShape(50)).background(FaroColors.Card)

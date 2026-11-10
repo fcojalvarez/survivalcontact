@@ -67,7 +67,6 @@ import com.bitchat.android.faro.FaroJoin
 import com.bitchat.android.faro.FaroLocation
 import com.bitchat.android.faro.FaroMessage
 import com.bitchat.android.faro.JoinRequest
-import com.bitchat.android.ui.ChatScreen
 import com.bitchat.android.ui.ChatViewModel
 import com.bitchat.android.ui.rememberIsOnline
 
@@ -127,7 +126,6 @@ fun FaroMainScreen(chatViewModel: ChatViewModel) {
 
     // Atrás: primero lo que tenga abierto la sala cercana, luego la pila, luego a Inicio.
     BackHandler(enabled = nav.stack.size > 1 || nav.tab != Tab.INICIO) {
-        if (nav.top == Route.Nearby && chatViewModel.handleBackPressed()) return@BackHandler
         if (!nav.back()) nav.tab = Tab.INICIO
     }
 
@@ -152,7 +150,7 @@ fun FaroMainScreen(chatViewModel: ChatViewModel) {
                             .select(com.bitchat.android.geohash.ChannelID.Mesh)
                     }
                 }
-                ChatScreen(viewModel = chatViewModel)
+                Screen { NearbyRoomScreen(nav, chatViewModel) }
             }
             Route.Create -> Screen { CreateGroupScreen(nav) }
             Route.Scan -> Screen { ScanScreen(nav, onCode = { nav.back(); incoming = it }) }
@@ -166,6 +164,31 @@ fun FaroMainScreen(chatViewModel: ChatViewModel) {
             is Route.Settings -> Screen { SettingsScreen(nav, r.page, chatViewModel, onWelcome = { welcome = true }) }
         }
         if (sos && !sosHidden) SosActiveScreen(onOpenChat = { id -> sosHidden = true; nav.home(Tab.INICIO); nav.go(Route.Group(id)) })
+    }
+
+    // Versión nueva ya descargada: se ofrece con una ventana dentro de la app.
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    var update by remember { mutableStateOf<com.bitchat.android.update.FaroUpdater.ReadyUpdate?>(null) }
+    var updateDismissed by remember { mutableStateOf(0L) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            update = com.bitchat.android.update.FaroUpdater.readyUpdate(ctx)
+            kotlinx.coroutines.delay(60_000)
+        }
+    }
+    update?.takeIf { it.versionCode != updateDismissed && !welcome && !sos }?.let { u ->
+        AlertDialog(
+            onDismissRequest = { updateDismissed = u.versionCode },
+            containerColor = FaroColors.Card,
+            title = { Text("Hay una versión nueva de Faro") },
+            text = { Text("La versión ${u.versionName} ya está descargada. Se instala en unos segundos y no perderás tus grupos ni tus mensajes.") },
+            confirmButton = {
+                TextButton(onClick = { updateDismissed = u.versionCode; com.bitchat.android.update.FaroUpdater.install(ctx, u.apk) }) {
+                    Text("Actualizar ahora", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = { TextButton(onClick = { updateDismissed = u.versionCode }) { Text("Más tarde") } },
+        )
     }
 
     if (welcome) WelcomeScreen(chatViewModel, onDone = { com.bitchat.android.faro.FaroSettings.welcomeDone = true; welcome = false })

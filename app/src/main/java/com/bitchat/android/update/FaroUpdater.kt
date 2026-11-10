@@ -209,7 +209,39 @@ object FaroUpdater {
         return sigs.map { sig -> md.digest(sig.toByteArray()).joinToString("") { "%02x".format(it) } }.toSet()
     }
 
+    /** Versión nueva ya descargada y comprobada, para ofrecerla dentro de la app. */
+    data class ReadyUpdate(val versionName: String, val versionCode: Long, val apk: File)
+
+    /** Busca una actualización lista para instalar (la deja el trabajo diario o «Buscar ahora»). */
+    fun readyUpdate(context: Context): ReadyUpdate? {
+        val p = context.getSharedPreferences(PREFS_READY, Context.MODE_PRIVATE)
+        val path = p.getString("apk", null) ?: return null
+        val code = p.getLong("code", 0L)
+        val apk = File(path)
+        if (!apk.exists() || code <= installedVersionCode(context)) {
+            p.edit().clear().apply()
+            return null
+        }
+        return ReadyUpdate(p.getString("name", "") ?: "", code, apk)
+    }
+
+    /** Abre el instalador del sistema con la versión descargada. */
+    fun install(context: Context, apk: File) {
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apk)
+        context.startActivity(
+            Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        )
+    }
+
+    private const val PREFS_READY = "faro_update_ready"
+
     internal fun notifyUpdateReady(context: Context, apk: File, info: VersionInfo) {
+        // Se guarda para que la app lo ofrezca con una ventana al abrirse.
+        context.getSharedPreferences(PREFS_READY, Context.MODE_PRIVATE).edit()
+            .putString("apk", apk.absolutePath).putLong("code", info.versionCode).putString("name", info.versionName).apply()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED

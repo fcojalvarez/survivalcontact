@@ -52,6 +52,11 @@ object FaroSettings {
         get() = runCatching { MeshMode.valueOf(prefs?.getString("red_cercana", null) ?: "AUTO") }.getOrDefault(MeshMode.AUTO)
         set(v) { prefs?.edit()?.putString("red_cercana", v.name)?.apply(); FaroMeshPolicy.evaluate() }
 
+    /** Si quiero aviso cuando alguien llega a un lugar ([enter]) o sale de él. Por defecto, sí. */
+    fun placeNotify(placeId: String, enter: Boolean): Boolean = bool("lugar_${placeId}_" + (if (enter) "llega" else "sale"), true)
+
+    fun setPlaceNotify(placeId: String, enter: Boolean, on: Boolean) = setBool("lugar_${placeId}_" + (if (enter) "llega" else "sale"), on)
+
     var welcomeDone: Boolean
         get() = bool("bienvenida_hecha", false)
         set(v) = setBool("bienvenida_hecha", v)

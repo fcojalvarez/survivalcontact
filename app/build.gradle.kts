@@ -126,9 +126,18 @@ android {
         compose = true
         buildConfig = true
     }
+    // Faro: la app está en español (y los textos de base en inglés). Las demás traducciones eran
+    // de la app original y dejaban pantallas a medio traducir; quitarlas aligera el APK.
+    androidResources {
+        localeFilters += setOf("es", "en")
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Faro: datos de algoritmos poscuánticos y textos de certificados de BouncyCastle
+            // que no usamos (solo Ed25519 y X25519): 1,2 MB menos.
+            excludes += "org/bouncycastle/pqc/**"
+            excludes += "org/bouncycastle/x509/*.properties"
         }
     }
     lint {
@@ -174,7 +183,6 @@ dependencies {
 
     // QR
     implementation(libs.zxing.core)
-    implementation(libs.mlkit.barcode.scanning)
 
     // CameraX
     implementation(libs.androidx.camera.camera2)

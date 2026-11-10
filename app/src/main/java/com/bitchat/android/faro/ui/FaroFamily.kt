@@ -105,12 +105,19 @@ internal fun PlacesScreen(nav: FaroNav) {
         OutlinePill("Añadir un lugar", Modifier.padding(16.dp).fillMaxWidth(), height = 50.dp) { nav.go(Route.AddPlace) }
     }
     toDelete?.let { (gid, pl) ->
+        var enter by remember(pl.id) { mutableStateOf(com.bitchat.android.faro.FaroSettings.placeNotify(pl.id, true)) }
+        var leave by remember(pl.id) { mutableStateOf(com.bitchat.android.faro.FaroSettings.placeNotify(pl.id, false)) }
         AlertDialog(
             onDismissRequest = { toDelete = null }, containerColor = FaroColors.Card,
             title = { Text(pl.name) },
-            text = { Text("¿Quieres borrar este lugar? Dejaréis de recibir avisos de llegada y salida.") },
-            confirmButton = { TextButton(onClick = { FaroGroups.deletePlace(gid, pl); toDelete = null }) { Text("Borrar", color = FaroColors.Danger) } },
-            dismissButton = { TextButton(onClick = { toDelete = null }) { Text("Cancelar") } },
+            text = {
+                Column {
+                    SwitchRow("Avisarme cuando alguien llegue", enter) { enter = it; com.bitchat.android.faro.FaroSettings.setPlaceNotify(pl.id, true, it) }
+                    SwitchRow("Avisarme cuando alguien salga", leave) { leave = it; com.bitchat.android.faro.FaroSettings.setPlaceNotify(pl.id, false, it) }
+                }
+            },
+            confirmButton = { TextButton(onClick = { toDelete = null }) { Text("Listo") } },
+            dismissButton = { TextButton(onClick = { FaroGroups.deletePlace(gid, pl); toDelete = null }) { Text("Borrar lugar", color = FaroColors.Danger) } },
         )
     }
 }
@@ -123,6 +130,8 @@ internal fun AddPlaceScreen(nav: FaroNav) {
     var name by remember { mutableStateOf("") }
     var radius by remember { mutableIntStateOf(200) }
     var groupId by remember { mutableStateOf(groups.minByOrNull { it.createdAtMs }?.id) }
+    var onEnter by remember { mutableStateOf(true) }
+    var onLeave by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) { FaroLocation.refreshForDisplay() }
     BackBar("Añadir un lugar", onBack = { nav.back() })
     Column(Modifier.fillMaxSize()) {
@@ -159,11 +168,17 @@ internal fun AddPlaceScreen(nav: FaroNav) {
                     groups.sortedBy { it.createdAtMs }.forEach { g -> Chip(g.name, primary = groupId == g.id) { groupId = g.id } }
                 }
             }
-            Hint("Avisaremos al llegar y al salir.", Modifier.padding(top = 4.dp))
+            Column(Modifier.fillMaxWidth().card()) {
+                SwitchRow("Avisarme cuando alguien llegue", onEnter) { onEnter = it }
+                SwitchRow("Avisarme cuando alguien salga", onLeave) { onLeave = it }
+            }
         }
         FilledPill("Guardar lugar", Modifier.padding(16.dp).fillMaxWidth(), enabled = name.isNotBlank() && groupId != null) {
             val c = handle.center() ?: me?.let { it.latitude to it.longitude } ?: return@FilledPill
-            FaroGroups.savePlace(groupId!!, FaroProtocol.Place(FaroProtocol.newPlaceId(), name.trim(), c.first, c.second, radius))
+            val place = FaroProtocol.Place(FaroProtocol.newPlaceId(), name.trim(), c.first, c.second, radius)
+            com.bitchat.android.faro.FaroSettings.setPlaceNotify(place.id, true, onEnter)
+            com.bitchat.android.faro.FaroSettings.setPlaceNotify(place.id, false, onLeave)
+            FaroGroups.savePlace(groupId!!, place)
             nav.back()
         }
     }
@@ -225,5 +240,16 @@ internal fun TripScreen(nav: FaroNav) {
             FaroLocation.startTrip(d.name.removePrefix("Donde está "), d.lat, d.lon, mode)
             nav.back()
         }
+    }
+}
+
+@Composable
+private fun SwitchRow(title: String, on: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable { onChange(!on) }.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, fontSize = 14.5.sp, modifier = Modifier.weight(1f))
+        androidx.compose.material3.Switch(
+            checked = on, onCheckedChange = onChange,
+            colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = FaroColors.Accent, checkedThumbColor = FaroColors.AccentInk),
+        )
     }
 }

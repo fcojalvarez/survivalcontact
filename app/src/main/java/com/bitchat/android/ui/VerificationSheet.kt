@@ -77,10 +77,6 @@ import com.bitchat.android.services.VerificationService
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.common.InputImage
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.common.BitMatrix
 import com.google.zxing.qrcode.QRCodeWriter
@@ -515,24 +511,26 @@ private fun bitmapFromMatrix(matrix: BitMatrix): Bitmap {
 internal class QRCodeAnalyzer(
     private val onCode: (String) -> Unit
 ) : ImageAnalysis.Analyzer {
-    private val scanner = BarcodeScanning.getClient(
-        BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .build()
-    )
+    // Faro: ZXing (ya incluido para generar los QR) en lugar de ML Kit, que añadía ~6 MB al APK.
+    private val reader = com.google.zxing.qrcode.QRCodeReader()
+    private val hints = mapOf(com.google.zxing.DecodeHintType.TRY_HARDER to true)
 
-    @ExperimentalGetImage
     override fun analyze(imageProxy: ImageProxy) {
-        val mediaImage = imageProxy.image ?: run {
+        try {
+            val plane = imageProxy.planes[0]
+            val buffer = plane.buffer
+            val data = ByteArray(buffer.remaining()).also { buffer.get(it) }
+            val source = com.google.zxing.PlanarYUVLuminanceSource(
+                data, plane.rowStride, imageProxy.height, 0, 0, imageProxy.width, imageProxy.height, false
+            )
+            val result = reader.decode(com.google.zxing.BinaryBitmap(com.google.zxing.common.HybridBinarizer(source)), hints)
+            val text = result?.text
+            if (!text.isNullOrBlank()) onCode(text)
+        } catch (_: Exception) {
+            // Sin QR en este fotograma.
+        } finally {
+            reader.reset()
             imageProxy.close()
-            return
         }
-        val input = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-        scanner.process(input)
-            .addOnSuccessListener { barcodes ->
-                val text = barcodes.firstOrNull()?.rawValue
-                if (!text.isNullOrBlank()) onCode(text)
-            }
-            .addOnCompleteListener { imageProxy.close() }
     }
 }

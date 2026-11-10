@@ -45,6 +45,8 @@ fun FaroMapView(
     modifier: Modifier = Modifier,
     handle: MapHandle? = null,
     onPointClick: ((String) -> Unit)? = null,
+    /** Recorrido a dibujar (por ejemplo, al seguir a alguien en directo): lista de (lat, lon). */
+    trail: List<Pair<Double, Double>> = emptyList(),
 ) {
     val clickState = androidx.compose.runtime.rememberUpdatedState(onPointClick)
     val context = LocalContext.current
@@ -62,6 +64,15 @@ fun FaroMapView(
                 m.uiSettings.isRotateGesturesEnabled = false
                 m.uiSettings.isTiltGesturesEnabled = false
                 m.setStyle(Style.Builder().fromUri(FaroOfflineMap.STYLE_URL)) { style ->
+                    style.addSource(GeoJsonSource(TRAIL_ID, EMPTY))
+                    style.addLayer(
+                        org.maplibre.android.style.layers.LineLayer("faro-rastro", TRAIL_ID).withProperties(
+                            PropertyFactory.lineColor("#A7C7E7"),
+                            PropertyFactory.lineWidth(3f),
+                            PropertyFactory.lineOpacity(0.85f),
+                            PropertyFactory.lineDasharray(arrayOf(0.5f, 2f)),
+                        )
+                    )
                     style.addSource(GeoJsonSource(SOURCE_ID, EMPTY))
                     style.addLayer(
                         CircleLayer("faro-puntos", SOURCE_ID).withProperties(
@@ -119,10 +130,11 @@ fun FaroMapView(
         }
     }
 
-    LaunchedEffect(points, styleReady, map) {
+    LaunchedEffect(points, trail, styleReady, map) {
         val m = map ?: return@LaunchedEffect
         if (!styleReady) return@LaunchedEffect
         m.style?.getSourceAs<GeoJsonSource>(SOURCE_ID)?.setGeoJson(toGeoJson(points))
+        m.style?.getSourceAs<GeoJsonSource>(TRAIL_ID)?.setGeoJson(trailGeoJson(trail))
         if (!cameraSet && points.isNotEmpty()) {
             cameraSet = true
             if (points.size == 1) {
@@ -145,6 +157,16 @@ fun FaroMapView(
 }
 
 private const val SOURCE_ID = "faro-familia"
+private const val TRAIL_ID = "faro-rastro-src"
+
+private fun trailGeoJson(trail: List<Pair<Double, Double>>): String {
+    if (trail.size < 2) return EMPTY
+    val coords = JSONArray()
+    trail.forEach { (lat, lon) -> coords.put(JSONArray().put(lon).put(lat)) }
+    val f = JSONObject().put("type", "Feature").put("properties", JSONObject())
+        .put("geometry", JSONObject().put("type", "LineString").put("coordinates", coords))
+    return JSONObject().put("type", "FeatureCollection").put("features", JSONArray().put(f)).toString()
+}
 private const val EMPTY = """{"type":"FeatureCollection","features":[]}"""
 
 private fun toGeoJson(points: List<MapPoint>): String {
