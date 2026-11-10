@@ -122,6 +122,8 @@ internal fun Person.location(): Location? = pos?.let {
     Location("faro").apply { latitude = it.position.lat; longitude = it.position.lon }
 }
 
+internal fun personas(n: Int) = if (n == 1) "1 persona" else "$n personas"
+
 internal fun formatDistance(m: Float): String =
     if (m < 1000) "${((m / 10).roundToInt() * 10).coerceAtLeast(10)} m" else "%.1f km".format(m / 1000).replace('.', ',')
 

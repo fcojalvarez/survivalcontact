@@ -210,14 +210,16 @@ private fun NamePage(nav: FaroNav, chatViewModel: ChatViewModel) {
     val current by chatViewModel.nickname.collectAsStateWithLifecycle()
     var name by remember { mutableStateOf(current) }
     BackBar("Tu nombre", onBack = { nav.back() })
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.weight(1f).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
             value = name, onValueChange = { name = it.take(24) }, singleLine = true,
             placeholder = { Text("Tu nombre") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = FaroColors.Line2, focusedBorderColor = FaroColors.Accent),
         )
         Text("Es lo que verán tus grupos y la gente cerca.", fontSize = 13.5.sp, color = FaroColors.Muted)
-        FilledPill("Guardar", Modifier.fillMaxWidth(), enabled = name.isNotBlank()) {
+    }
+        FilledPill("Guardar", Modifier.padding(16.dp).fillMaxWidth(), enabled = name.isNotBlank()) {
             chatViewModel.setNickname(name.trim())
             nav.back()
         }
@@ -271,6 +273,8 @@ private fun MapPage(nav: FaroNav) {
     val state by FaroOfflineMap.state.collectAsStateWithLifecycle()
     var askDelete by remember { mutableStateOf(false) }
     BackBar("Mapa sin conexión", onBack = { nav.back() })
+    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.weight(1f)) {
     Column(Modifier.padding(horizontal = 16.dp).fillMaxWidth().card().padding(14.dp)) {
         when (val s = state) {
             is FaroOfflineMap.State.Ready -> {
@@ -293,13 +297,16 @@ private fun MapPage(nav: FaroNav) {
     }
     Gap(12.dp)
     Group { Toggle("Cambiar de zona solo con Wi‑Fi", sub = "Para no gastar datos del móvil", initial = FaroSettings.mapWifiOnly) { FaroSettings.mapWifiOnly = it } }
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Gap(10.dp)
+    Hint("Si te vas a otra ciudad, Faro guarda la nueva zona solo.")
+    }
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         OutlinePill("Guardar mi zona ahora", Modifier.fillMaxWidth()) { FaroOfflineMap.updateNow() }
         if (state is FaroOfflineMap.State.Ready) TextButton(onClick = { askDelete = true }, modifier = Modifier.fillMaxWidth()) {
             Text("Borrar mapa guardado", color = FaroColors.Danger)
         }
     }
-    Hint("Si te vas a otra ciudad, Faro guarda la nueva zona solo.")
+    }
     if (askDelete) AlertDialog(
         onDismissRequest = { askDelete = false }, containerColor = FaroColors.Card,
         title = { Text("¿Borrar el mapa guardado?") },
@@ -317,7 +324,9 @@ private fun UpdatesPage(nav: FaroNav) {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: ""
     }
     BackBar("Actualizaciones", onBack = { nav.back() })
-    Column(Modifier.padding(horizontal = 16.dp).fillMaxWidth().card().padding(14.dp)) {
+    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.weight(1f).padding(horizontal = 16.dp).fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth().card().padding(14.dp)) {
         Text("Faro $version", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         Text(
             if (asked) "Buscando… Si hay una versión nueva te avisaremos para instalarla con un toque."
@@ -325,8 +334,10 @@ private fun UpdatesPage(nav: FaroNav) {
             fontSize = 13.sp, color = FaroColors.Muted, lineHeight = 18.sp,
         )
     }
+    }
     Column(Modifier.padding(16.dp)) {
         OutlinePill("Buscar ahora", Modifier.fillMaxWidth()) { FaroUpdater.checkNow(context); asked = true }
+    }
     }
 }
 

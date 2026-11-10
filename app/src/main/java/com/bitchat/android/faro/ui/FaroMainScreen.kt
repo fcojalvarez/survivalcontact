@@ -242,18 +242,27 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
 
     val ppl = people(groups, positions, myId)
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    var hints by remember { mutableStateOf(0) } // para refrescar al ocultar un aviso
+    Column(Modifier.fillMaxSize()) {
         MainHeader(onSettings)
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
 
         if (groups.isEmpty()) {
-            Column(Modifier.padding(16.dp).card().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Crea un grupo para tu familia", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                Text(
-                    "Podréis escribiros y saber dónde estáis aunque no haya cobertura. Solo entra quien tú aceptes.",
-                    fontSize = 14.sp, color = FaroColors.Muted, lineHeight = 20.sp,
-                )
-                FilledPill("Crear un grupo", Modifier.fillMaxWidth()) { nav.go(Route.Create) }
-                OutlinePill("Unirme con un código", Modifier.fillMaxWidth()) { nav.go(Route.Scan) }
+            if (hints >= 0 && !com.bitchat.android.faro.FaroSettings.isHidden("crear_grupo")) {
+                Column(Modifier.padding(16.dp).card().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Crea un grupo para tu familia", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Podréis escribiros y saber dónde estáis aunque no haya cobertura. Solo entra quien tú aceptes.",
+                        fontSize = 14.sp, color = FaroColors.Muted, lineHeight = 20.sp,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Chip("Crear un grupo", primary = true) { nav.go(Route.Create) }
+                        Chip("Unirme con un código") { nav.go(Route.Scan) }
+                        Chip("Más tarde") { com.bitchat.android.faro.FaroSettings.hide("crear_grupo"); hints++ }
+                    }
+                }
+            } else {
+                Hint("Cuando quieras, crea un grupo o únete a uno desde Chats.", Modifier.padding(vertical = 16.dp))
             }
         } else {
             // Fila de personas
@@ -318,6 +327,19 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                     Text("${f.name} te está siguiendo en el mapa · $mins min", fontSize = 13.5.sp, modifier = Modifier.weight(1f), color = Color(0xFFD6D6D6))
                     Text("Parar", color = FaroColors.Accent, fontWeight = FontWeight.SemiBold, fontSize = 14.sp,
                         modifier = Modifier.padding(start = 10.dp).clickable { FaroLocation.stopFollowers() })
+                }
+            }
+
+            // Grupos míos en los que aún no hay nadie: invitar, sin obligar.
+            groups.filter { it.admin && it.members.isEmpty() && !com.bitchat.android.faro.FaroSettings.isHidden("invitar_" + it.id) && hints >= 0 }.forEach { g ->
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth().card().padding(14.dp)) {
+                    Text("Invita a tu familia a ${g.name}", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Ahora solo estás tú. Puedes hacerlo cuando quieras.", fontSize = 13.sp, color = FaroColors.Muted)
+                    Gap(10.dp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Chip("Invitar", primary = true) { nav.go(Route.Invite(g.id)) }
+                        Chip("Más tarde") { com.bitchat.android.faro.FaroSettings.hide("invitar_" + g.id); hints++ }
+                    }
                 }
             }
 
@@ -389,6 +411,7 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                     }
                 }
             }
+        }
         }
 
         Text(
@@ -579,7 +602,8 @@ private fun MyChats(nav: FaroNav) {
     val messages by FaroGroups.messages.collectAsStateWithLifecycle()
     val lastRead by FaroGroups.lastRead.collectAsStateWithLifecycle()
     val waiting by FaroJoin.waiting.collectAsStateWithLifecycle()
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
         groups.sortedByDescending { g -> messages[g.id]?.lastOrNull()?.timestampMs ?: g.createdAtMs }.forEach { g ->
             val last = messages[g.id]?.lastOrNull()
             val unread = last != null && !last.mine && last.timestampMs > (lastRead[g.id] ?: 0L)
@@ -592,7 +616,7 @@ private fun MyChats(nav: FaroNav) {
                 Column(Modifier.weight(1f)) {
                     Text(g.name, fontSize = 15.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
-                        last?.let { (if (it.mine) "Tú: " else it.authorName + ": ") + it.text } ?: "${g.members.size + 1} personas",
+                        last?.let { (if (it.mine) "Tú: " else it.authorName + ": ") + it.text } ?: personas(g.members.size + 1),
                         fontSize = 13.sp, color = if (unread) MaterialTheme.colorScheme.onBackground else FaroColors.Muted,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
@@ -608,12 +632,14 @@ private fun MyChats(nav: FaroNav) {
         waiting.forEach { name ->
             Hint("Esperando a que te dejen entrar en «$name»…", Modifier.padding(vertical = 8.dp))
         }
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinePill("Crear un grupo", Modifier.fillMaxWidth()) { nav.go(Route.Create) }
-            OutlinePill("Unirme con un código", Modifier.fillMaxWidth(), color = Color(0xFFBDBDBD)) { nav.go(Route.Scan) }
-        }
+        Gap(8.dp)
         Hint("Tus grupos son privados: solo entra quien el administrador acepte. Los mensajes van cifrados.")
         Gap(16.dp)
+    }
+        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinePill("Crear un grupo", Modifier.weight(1f)) { nav.go(Route.Create) }
+            OutlinePill("Unirme", Modifier.weight(1f), color = Color(0xFFBDBDBD)) { nav.go(Route.Scan) }
+        }
     }
 }
 
@@ -642,9 +668,8 @@ private fun NearbyPanel(nav: FaroNav, chatViewModel: ChatViewModel) {
                 },
                 fontSize = 14.5.sp, lineHeight = 21.sp, color = Color(0xFFBDBDBD), textAlign = TextAlign.Center,
             )
-            Gap(16.dp)
-            FilledPill("Entrar en la sala", Modifier.fillMaxWidth()) { nav.go(Route.Nearby) }
         }
+        FilledPill("Entrar en la sala", Modifier.padding(horizontal = 16.dp).fillMaxWidth()) { nav.go(Route.Nearby) }
         Row(
             Modifier.padding(16.dp).fillMaxWidth().card(FaroColors.Line2).padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,

@@ -110,7 +110,7 @@ internal fun GroupChatScreen(nav: FaroNav, groupId: String) {
             Column {
                 Text(g.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    "${g.members.size + 1} personas · ${if (online) "por internet y Bluetooth" else "por Bluetooth"}",
+                    "${personas(g.members.size + 1)} · ${if (online) "por internet y Bluetooth" else "por Bluetooth"}",
                     fontSize = 12.sp, color = FaroColors.Muted, maxLines = 1,
                 )
             }
@@ -134,6 +134,16 @@ internal fun GroupChatScreen(nav: FaroNav, groupId: String) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item { Gap(6.dp) }
+        if (msgs.isEmpty() && g.admin && g.members.isEmpty()) {
+            item {
+                Column(Modifier.fillMaxWidth().padding(top = 12.dp).card().padding(14.dp)) {
+                    Text("Ahora solo estás tú", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Invita a tu familia cuando quieras.", fontSize = 13.sp, color = FaroColors.Muted)
+                    Gap(10.dp)
+                    Chip("Invitar a alguien", primary = true) { nav.go(Route.Invite(g.id)) }
+                }
+            }
+        }
         if (msgs.isEmpty()) {
             item {
                 Text(
@@ -219,11 +229,12 @@ internal fun GroupInfoScreen(nav: FaroNav, groupId: String) {
     val ppl = people(listOf(g), positions, FaroGroups.myId())
 
     BackBar(g.name, onBack = { nav.back() })
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
         Column(Modifier.fillMaxWidth().padding(bottom = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             GroupIcon(groupColorHex(groups, g.id), 72.dp)
             Gap(8.dp)
-            Text("${g.members.size + 1} personas · grupo privado", fontSize = 13.5.sp, color = FaroColors.Muted)
+            Text("${personas(g.members.size + 1)} · grupo privado", fontSize = 13.5.sp, color = FaroColors.Muted)
         }
         Row(
             Modifier.padding(horizontal = 16.dp).fillMaxWidth().card().padding(horizontal = 14.dp, vertical = 10.dp),
@@ -267,13 +278,14 @@ internal fun GroupInfoScreen(nav: FaroNav, groupId: String) {
                 }
             }
         }
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (g.admin) Hint("Eres el administrador: nadie entra sin que tú lo aceptes.", Modifier.padding(vertical = 16.dp))
+    }
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (g.admin) OutlinePill("Invitar a alguien", Modifier.fillMaxWidth()) { nav.go(Route.Invite(g.id)) }
             TextButton(onClick = { askLeave = true }, modifier = Modifier.fillMaxWidth()) {
                 Text("Salir del grupo", color = FaroColors.Danger, fontSize = 15.sp)
             }
         }
-        if (g.admin) Hint("Eres el administrador: nadie entra sin que tú lo aceptes.", Modifier.padding(bottom = 16.dp))
     }
     if (askLeave) LeaveDialog(g.name, onLeave = { askLeave = false; FaroGroups.leaveGroup(g.id); nav.home(Tab.CHATS) }, onCancel = { askLeave = false })
 }
@@ -292,7 +304,8 @@ private fun AdminBadge() {
 internal fun CreateGroupScreen(nav: FaroNav) {
     var name by remember { mutableStateOf("") }
     BackBar("Crear un grupo", onBack = { nav.back() })
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.weight(1f).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("Nombre del grupo", fontSize = 14.sp, color = FaroColors.Muted)
         OutlinedTextField(
             value = name,
@@ -303,13 +316,13 @@ internal fun CreateGroupScreen(nav: FaroNav) {
             shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = FaroColors.Line2, focusedBorderColor = FaroColors.Accent),
         )
-        Text("Serás el administrador: nadie entra sin que tú lo aceptes.", fontSize = 13.5.sp, color = FaroColors.Muted, lineHeight = 19.sp)
-        FilledPill("Crear grupo", Modifier.fillMaxWidth(), enabled = name.isNotBlank()) {
+        Text("Serás el administrador: nadie entra sin que tú lo aceptes. Puedes invitar a tu familia ahora o más tarde.", fontSize = 13.5.sp, color = FaroColors.Muted, lineHeight = 19.sp)
+    }
+        FilledPill("Crear grupo", Modifier.padding(16.dp).fillMaxWidth(), enabled = name.isNotBlank()) {
             val g = FaroGroups.createGroup(name)
             FaroGroups.setShareLocation(g.id, true)
             nav.back()
             nav.go(Route.Group(g.id))
-            nav.go(Route.Invite(g.id))
         }
     }
 }
@@ -323,8 +336,9 @@ internal fun InviteScreen(nav: FaroNav, groupId: String) {
     // El QR es un enlace de un solo uso: quien lo escanee pide entrar y tú decides.
     val qr = remember(groupId) { FaroGroups.inviteLink(groupId) }
     BackBar("Invitar a ${g?.name ?: "grupo"}", onBack = { nav.back() })
+    Column(Modifier.fillMaxSize()) {
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+        Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text("Si estáis juntos, que escanee este código con Faro.", fontSize = 14.sp, color = FaroColors.Muted, textAlign = TextAlign.Center)
@@ -338,16 +352,7 @@ internal fun InviteScreen(nav: FaroNav, groupId: String) {
         }
         Gap(10.dp)
         Text("Sirve para una persona · caduca en 7 días", fontSize = 12.5.sp, color = FaroColors.Dim)
-        Gap(22.dp)
-        OutlinePill("Enviar enlace…", Modifier.fillMaxWidth()) {
-            val link = FaroGroups.inviteLink(groupId) ?: return@OutlinePill
-            val send = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, "Te invito al grupo «${g?.name ?: ""}» de Faro, para estar en contacto en una emergencia: $link")
-            }
-            context.startActivity(Intent.createChooser(send, "Enviar invitación"))
-        }
-        Gap(14.dp)
+        Gap(18.dp)
         Row(Modifier.fillMaxWidth().card(FaroColors.Line2).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Outlined.Lock, null, tint = FaroColors.Accent, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(10.dp))
@@ -355,6 +360,21 @@ internal fun InviteScreen(nav: FaroNav, groupId: String) {
                 "Con el código o con el enlace, te llegará un aviso y tú decides si entra. El enlace no contiene la clave del grupo.",
                 fontSize = 13.5.sp, lineHeight = 19.sp, color = Color(0xFFD6D6D6),
             )
+        }
+        Gap(12.dp)
+    }
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            OutlinePill("Enviar enlace…", Modifier.fillMaxWidth()) {
+                val link = FaroGroups.inviteLink(groupId) ?: return@OutlinePill
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, "Te invito al grupo «${g?.name ?: ""}» de Faro, para estar en contacto en una emergencia: $link")
+                }
+                context.startActivity(Intent.createChooser(send, "Enviar invitación"))
+            }
+            TextButton(onClick = { nav.back() }, modifier = Modifier.fillMaxWidth()) {
+                Text("Más tarde", color = Color(0xFFBDBDBD), fontSize = 15.sp)
+            }
         }
     }
 }

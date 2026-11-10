@@ -37,6 +37,14 @@ object FaroSettings {
         get() = bool("mapa_wifi", true)
         set(v) = setBool("mapa_wifi", v)
 
+    /** Avisos de Inicio que el usuario ha dejado para más tarde («crea un grupo», «invita a tu familia»). */
+    fun isHidden(key: String): Boolean = prefs?.getStringSet("ocultos", emptySet())?.contains(key) == true
+
+    fun hide(key: String) {
+        val set = prefs?.getStringSet("ocultos", emptySet()).orEmpty() + key
+        prefs?.edit()?.putStringSet("ocultos", set)?.apply()
+    }
+
     var welcomeDone: Boolean
         get() = bool("bienvenida_hecha", false)
         set(v) = setBool("bienvenida_hecha", v)
