@@ -108,6 +108,13 @@ internal fun PersonSheet(nav: FaroNav, p: Person, handle: MapHandle, onClose: ()
                 OutlinePill("Abrir chat", Modifier.weight(1f)) { onClose(); nav.go(Route.Group(p.groupIds.first())) }
                 if (pos != null) FilledPill("Guiarme", Modifier.weight(1f)) { onClose(); nav.go(Route.Guide(p.id)) }
             }
+            if (pos != null) {
+                Text(
+                    "Ver su recorrido de hoy", color = FaroColors.Accent, fontSize = 14.sp, fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(top = 10.dp).align(Alignment.CenterHorizontally)
+                        .clickable { onClose(); nav.go(Route.History(p.id)) }.padding(6.dp),
+                )
+            }
             val asks by FaroGroups.asks.collectAsStateWithLifecycle()
             Gap(10.dp)
             OutlinePill(

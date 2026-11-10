@@ -126,6 +126,30 @@ object FaroLocation {
         (before - now).forEach { k -> FaroGroups.sendArrival(k.substringBefore(":"), k.substringAfter(":"), enter = false) }
     }
 
+    // ---------- Movimiento ----------
+
+    @Volatile private var moving = false
+    private var lastFix: Location? = null
+    @Volatile private var motionArmed = false
+
+    /**
+     * Sensor de «movimiento significativo»: lo gestiona el propio chip del móvil y casi no gasta.
+     * Avisa una vez cuando empiezas a moverte, y entonces se pide una posición al momento.
+     */
+    private fun armMotionSensor() {
+        if (motionArmed) return
+        val ctx = appContext ?: return
+        val sm = ctx.getSystemService(Context.SENSOR_SERVICE) as? android.hardware.SensorManager ?: return
+        val sensor = sm.getDefaultSensor(android.hardware.Sensor.TYPE_SIGNIFICANT_MOTION) ?: return
+        motionArmed = sm.requestTriggerSensor(object : android.hardware.TriggerEventListener() {
+            override fun onTrigger(event: android.hardware.TriggerEvent?) {
+                motionArmed = false
+                moving = true
+                requestSoon()
+            }
+        }, sensor)
+    }
+
     // ---------- Sin batería ----------
 
     @Volatile private var dyingSent = false
@@ -240,14 +264,21 @@ object FaroLocation {
             // Máximo ahorro: solo se envía la ubicación si pido ayuda.
             FaroSettings.battery == FaroSettings.Battery.MAX -> return 30 * 60_000L
             FaroSettings.battery == FaroSettings.Battery.SAVER && battery >= 20 -> 15 * 60_000L
-            battery > 50 -> 5 * 60_000L
-            battery >= 20 -> 15 * 60_000L
+            // Según el movimiento: más a menudo si te mueves, casi nunca si estás quieto. Si
+            // estando quieto echas a andar, el sensor de movimiento despierta el ciclo antes.
+            battery > 50 && moving -> 2 * 60_000L
+            battery > 50 -> 15 * 60_000L
+            battery >= 20 && moving -> 5 * 60_000L
+            battery >= 20 -> 30 * 60_000L
             else -> return 30 * 60_000L // Batería crítica: solo SOS.
         }
 
         val loc = currentLocation(allowFresh = true, freshMs = if (following) 20_000L else FRESH_ENOUGH_MS) ?: return interval
         _myLocation.value = loc
         checkPlaces(loc)
+        moving = (lastFix?.distanceTo(loc) ?: 0f) >= MOVE_THRESHOLD_M
+        lastFix = loc
+        if (!moving) armMotionSensor()
         _trip.value?.let { t ->
             val to = Location("faro").apply { latitude = t.lat; longitude = t.lon }
             if (loc.distanceTo(to) <= ARRIVED_M) stopTrip()

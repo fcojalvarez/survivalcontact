@@ -285,7 +285,7 @@ private fun BatteryPage(nav: FaroNav) {
     fun set(m: FaroSettings.Battery) { mode = m; FaroSettings.battery = m }
     BackBar("Batería", onBack = { nav.back() })
     Explain("Faro cambia de modo solo según la batería que te quede.")
-    Radio("Automático (recomendado)", "Envía tu ubicación cada 5 min con más del 50 %, cada 15 min con menos y solo si pides ayuda por debajo del 20 %.", mode == FaroSettings.Battery.AUTO) { set(FaroSettings.Battery.AUTO) }
+    Radio("Automático (recomendado)", "Si te mueves, tu ubicación sale cada 2 min (5 con menos del 50 %); si estás quieto, cada 15 (30). Por debajo del 20 %, solo si pides ayuda.", mode == FaroSettings.Battery.AUTO) { set(FaroSettings.Battery.AUTO) }
     Radio("Ahorro siempre", "Envía tu ubicación cada 15 min.", mode == FaroSettings.Battery.SAVER) { set(FaroSettings.Battery.SAVER) }
     Radio("Máximo ahorro", "Solo recibe mensajes. Tu ubicación solo se envía si pides ayuda.", mode == FaroSettings.Battery.MAX) { set(FaroSettings.Battery.MAX) }
 }

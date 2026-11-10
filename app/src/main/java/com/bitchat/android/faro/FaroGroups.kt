@@ -93,6 +93,7 @@ object FaroGroups {
     private const val KEY_REQUESTS = "join_requests"
     private const val KEY_READ = "last_read"
     private const val KEY_PLACES = "places"
+    private const val KEY_HISTORY = "history"
     /** Una solicitud sin respuesta caduca a los 7 días, como el enlace. */
     private const val REQUEST_TTL_MS = 7L * 24 * 3_600_000
     private const val MAX_MESSAGES = 300
@@ -136,6 +137,30 @@ object FaroGroups {
     /** A quién he preguntado si está bien y cuándo (se borra al contestar). */
     private val _asks = MutableStateFlow<Map<String, Long>>(emptyMap())
     val asks: StateFlow<Map<String, Long>> = _asks.asStateFlow()
+
+    /** Recorrido de las últimas 24 h de cada persona: id → [(hora, lat, lon)]. Solo en este móvil. */
+    private val _history = MutableStateFlow<Map<String, List<Triple<Long, Double, Double>>>>(emptyMap())
+    val history: StateFlow<Map<String, List<Triple<Long, Double, Double>>>> = _history.asStateFlow()
+    private var historySave: kotlinx.coroutines.Job? = null
+
+    private fun addHistory(id: String, ts: Long, lat: Double, lon: Double) {
+        val since = System.currentTimeMillis() - 24 * 3_600_000L
+        _history.update { all ->
+            val list = all[id].orEmpty()
+            if (list.any { it.first == ts }) return@update all
+            all.mapValues { (_, l) -> l.filter { it.first > since } }.filterValues { it.isNotEmpty() } +
+                (id to (list.filter { it.first > since } + Triple(ts, lat, lon)).sortedBy { it.first }.takeLast(500))
+        }
+        historySave?.cancel()
+        historySave = scope.launch {
+            kotlinx.coroutines.delay(30_000)
+            val o = JSONObject()
+            _history.value.forEach { (k, l) ->
+                o.put(k, JSONArray().apply { l.forEach { put(JSONArray().put(it.first).put(it.second).put(it.third)) } })
+            }
+            prefs?.edit()?.putString(KEY_HISTORY, o.toString())?.apply()
+        }
+    }
 
     /** Llegadas, salidas, «estoy bien» y respuestas de las últimas 24 h (solo en memoria). */
     private val _events = MutableStateFlow<List<FamilyEvent>>(emptyList())
@@ -491,6 +516,7 @@ object FaroGroups {
                     all + (g.id to (current + (inner.authorId to MemberPosition(inner.authorId, inner.authorName, pos, inner.timestampMs))))
                 }
                 FaroLocation.refreshEmergency()
+                addHistory(inner.authorId, inner.timestampMs, pos.lat, pos.lon)
             }
             FaroProtocol.Kind.HELLO -> Unit
             FaroProtocol.Kind.FOLLOW -> {
@@ -713,6 +739,15 @@ object FaroGroups {
                     FaroProtocol.Place(x.getString("id"), x.getString("n"), x.getDouble("la"), x.getDouble("lo"), x.getInt("r"))
                 }
             }
+        }
+        runCatching {
+            val since = System.currentTimeMillis() - 24 * 3_600_000L
+            val ho = JSONObject(p.getString(KEY_HISTORY, "{}") ?: "{}")
+            _history.value = ho.keys().asSequence().associateWith { k ->
+                val a = ho.getJSONArray(k)
+                (0 until a.length()).map { i -> a.getJSONArray(i).let { Triple(it.getLong(0), it.getDouble(1), it.getDouble(2)) } }
+                    .filter { it.first > since }
+            }.filterValues { it.isNotEmpty() }
         }
         val readObj = runCatching { JSONObject(p.getString(KEY_READ, "{}") ?: "{}") }.getOrDefault(JSONObject())
         _lastRead.value = readObj.keys().asSequence().associateWith { readObj.optLong(it) }

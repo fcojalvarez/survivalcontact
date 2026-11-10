@@ -78,6 +78,7 @@ internal sealed class Route {
     object Places : Route()
     object AddPlace : Route()
     object Trip : Route()
+    data class History(val personId: String) : Route()
     object Scan : Route()
     data class Group(val id: String) : Route()
     data class Info(val id: String) : Route()
@@ -161,6 +162,7 @@ fun FaroMainScreen(chatViewModel: ChatViewModel) {
             Route.Places -> Screen { PlacesScreen(nav) }
             Route.AddPlace -> Screen { AddPlaceScreen(nav) }
             Route.Trip -> Screen { TripScreen(nav) }
+            is Route.History -> Screen { HistoryScreen(nav, r.personId) }
             is Route.Settings -> Screen { SettingsScreen(nav, r.page, chatViewModel, onWelcome = { welcome = true }) }
         }
         if (sos && !sosHidden) SosActiveScreen(onOpenChat = { id -> sosHidden = true; nav.home(Tab.INICIO); nav.go(Route.Group(id)) })

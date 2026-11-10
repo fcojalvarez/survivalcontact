@@ -253,3 +253,43 @@ private fun SwitchRow(title: String, on: Boolean, onChange: (Boolean) -> Unit) {
         )
     }
 }
+
+// ---------------------------------------------------------------- Recorrido de hoy
+
+@Composable
+internal fun HistoryScreen(nav: FaroNav, personId: String) {
+    val groups by FaroGroups.groups.collectAsStateWithLifecycle()
+    val positions by FaroGroups.positions.collectAsStateWithLifecycle()
+    val history by FaroGroups.history.collectAsStateWithLifecycle()
+    val p = people(groups, positions, FaroGroups.myId()).firstOrNull { it.id == personId }
+    val since = System.currentTimeMillis() - 24 * HOUR
+    val pts = history[personId].orEmpty().filter { it.first > since }
+    val trail = pts.map { it.second to it.third }
+    var km = 0f
+    pts.zipWithNext().forEach { (a, b) ->
+        val r = FloatArray(1)
+        Location.distanceBetween(a.second, a.third, b.second, b.third, r)
+        km += r[0] / 1000f
+    }
+    BackBar("Recorrido de ${p?.name ?: ""}", onBack = { nav.back() })
+    Column(Modifier.fillMaxSize()) {
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            FaroMapView(
+                points = listOfNotNull(pts.lastOrNull()?.let { MapPoint(personId, p?.name ?: "", it.second, it.third, colorFor(personId), false) }),
+                modifier = Modifier.fillMaxSize(), trail = trail,
+            )
+        }
+        Column(Modifier.padding(16.dp)) {
+            if (pts.size < 2) {
+                Text("Aún no hay recorrido de hoy.", fontSize = 15.sp)
+                Text("Se va guardando con cada ubicación que llega y se borra a las 24 h.", fontSize = 13.sp, color = FaroColors.Muted)
+            } else {
+                Text("Desde las ${hhmm(pts.first().first)} hasta las ${hhmm(pts.last().first)}", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "Unos ${"%.1f".format(km).replace('.', ',')} km · ${pts.size} ubicaciones. Solo se guarda en tu móvil y se borra a las 24 h.",
+                    fontSize = 13.sp, color = FaroColors.Muted, lineHeight = 18.sp,
+                )
+            }
+        }
+    }
+}
