@@ -679,4 +679,8 @@
     <string name="perm_wifi_aware_desc">Enable Wi‑Fi Aware to discover and connect to nearby Faro users over Wi‑Fi.</string>
     <string name="perm_wifi_aware_system">Allow Faro to discover nearby Wi‑Fi devices</string>
     <string name="faro_offline_label">offline</string>
+    <string name="faro_widget_familia_desc">Your family at a glance</string>
+    <string name="faro_widget_botones_desc">I\'m OK and Ask for help</string>
+    <string name="faro_widget_familia_name">Faro · Family</string>
+    <string name="faro_widget_botones_name">Faro · Buttons</string>
 </resources>

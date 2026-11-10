@@ -168,6 +168,23 @@ fun FaroMainScreen(chatViewModel: ChatViewModel) {
         if (sos && !sosHidden) SosActiveScreen(onOpenChat = { id -> sosHidden = true; nav.home(Tab.INICIO); nav.go(Route.Group(id)) })
     }
 
+    // «Pedir ayuda» desde el widget: siempre con confirmación.
+    val askHelp by FaroDeepLink.askHelp.collectAsState()
+    if (askHelp && !sos) {
+        AlertDialog(
+            onDismissRequest = { FaroDeepLink.consumeAskHelp() },
+            containerColor = FaroColors.Card,
+            title = { Text("¿Pedir ayuda?") },
+            text = { Text("Se enviará tu ubicación y el aviso «Necesito ayuda» a todos tus grupos, aunque tengas la ubicación desactivada.") },
+            confirmButton = {
+                TextButton(onClick = { FaroDeepLink.consumeAskHelp(); FaroLocation.sendSos(true) }) {
+                    Text("Sí, pedir ayuda", color = FaroColors.Danger, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = { TextButton(onClick = { FaroDeepLink.consumeAskHelp() }) { Text("Cancelar") } },
+        )
+    }
+
     // Versión nueva ya descargada: se ofrece con una ventana dentro de la app.
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var update by remember { mutableStateOf<com.bitchat.android.update.FaroUpdater.ReadyUpdate?>(null) }

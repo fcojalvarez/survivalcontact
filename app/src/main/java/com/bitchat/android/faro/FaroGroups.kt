@@ -188,6 +188,7 @@ object FaroGroups {
         if (appContext != null) return
         appContext = context.applicationContext
         FaroRelay.start()
+        FaroWidgets.start(context)
         scope.launch {
             runCatching {
                 val masterKey = MasterKey.Builder(context.applicationContext)

@@ -161,6 +161,31 @@
             android:enabled="true"
             android:exported="false" />
 
+        <!-- Faro: widgets de la pantalla de inicio -->
+        <receiver
+            android:name=".faro.FaroFamilyWidget"
+            android:exported="false"
+            android:label="@string/faro_widget_familia_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/faro_widget_familia_info" />
+        </receiver>
+        <receiver
+            android:name=".faro.FaroButtonsWidget"
+            android:exported="false"
+            android:label="@string/faro_widget_botones_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.bitchat.android.faro.WIDGET_IM_OK" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/faro_widget_botones_info" />
+        </receiver>
+
         <!-- Faro: respuesta a «¿Estás bien?» desde la notificación -->
         <receiver
             android:name=".faro.FaroCheckReceiver"
