@@ -126,4 +126,15 @@ class FaroProtocolTest {
         assertArrayEquals(b, keys[1])
         assertNull(FaroProtocol.decodeSeen(ByteArray(10)))
     }
+
+    @Test
+    fun `la etiqueta del grupo cambia cada dia y se acepta la de ayer y la de manana`() {
+        val k = FaroProtocol.newGroupKey()
+        val hoy = FaroProtocol.currentDay()
+        assertTrue(!FaroProtocol.tagFor(k, hoy).contentEquals(FaroProtocol.tagFor(k, hoy + 1)))
+        assertTrue(FaroProtocol.matchesGroup(k, FaroProtocol.tagFor(k, hoy - 1)))
+        assertTrue(FaroProtocol.matchesGroup(k, FaroProtocol.tagFor(k, hoy + 1)))
+        assertTrue(!FaroProtocol.matchesGroup(k, FaroProtocol.tagFor(k, hoy - 2)))
+        assertTrue(!FaroProtocol.matchesGroup(FaroProtocol.newGroupKey(), FaroProtocol.tagFor(k, hoy)))
+    }
 }

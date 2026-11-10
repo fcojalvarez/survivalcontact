@@ -86,6 +86,7 @@ object FaroGroups {
     /** Una solicitud sin respuesta caduca a los 7 días, como el enlace. */
     private const val REQUEST_TTL_MS = 7L * 24 * 3_600_000
     private const val MAX_MESSAGES = 300
+    private const val MAX_PENDING_REQUESTS = 5
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -187,6 +188,7 @@ object FaroGroups {
         _groups.update { list -> list.filterNot { it.id == groupId } }
         _joinRequests.update { list -> list.filterNot { it.groupId == groupId } }
         saveRequests()
+        synchronized(pendingSaves) { pendingSaves.remove(groupId)?.cancel() }
         _messages.update { it - groupId }
         _positions.update { it - groupId }
         prefs?.edit()?.remove(msgKey(groupId))?.apply()
@@ -324,7 +326,7 @@ object FaroGroups {
             return
         }
         val tag = FaroProtocol.peekTag(payload) ?: return
-        val g = _groups.value.firstOrNull { FaroProtocol.tagFor(it.key).contentEquals(tag) } ?: return
+        val g = _groups.value.firstOrNull { FaroProtocol.matchesGroup(it.key, tag) } ?: return
         val inner = FaroProtocol.open(g.key, payload, ::verify) ?: return
         val me = myId()
         if (inner.authorId == me) return
@@ -397,6 +399,8 @@ object FaroGroups {
                     replyTagHex = incoming.replyTagHex,
                     timestampMs = System.currentTimeMillis(),
                 )
+                // Como mucho 5 solicitudes pendientes por grupo, para que nadie pueda llenarte Inicio.
+                if (_joinRequests.value.count { it.groupId == req.groupId && it.id != req.id } >= MAX_PENDING_REQUESTS) return
                 _joinRequests.update { list -> list.filterNot { it.id == req.id } + req }
                 saveRequests()
                 val g = group(incoming.groupId)
@@ -483,7 +487,24 @@ object FaroGroups {
         p.edit().putString(KEY_REQUESTS, arr.toString()).apply()
     }
 
+    private val pendingSaves = HashMap<String, kotlinx.coroutines.Job>()
+
+    /**
+     * Guarda los mensajes de un grupo agrupando las escrituras: si llegan varios seguidos, se
+     * cifra y escribe una sola vez a los 2 s en lugar de una vez por mensaje.
+     */
     private fun saveMessages(groupId: String) {
+        synchronized(pendingSaves) {
+            pendingSaves[groupId]?.cancel()
+            pendingSaves[groupId] = scope.launch {
+                kotlinx.coroutines.delay(2_000)
+                writeMessages(groupId)
+                synchronized(pendingSaves) { pendingSaves.remove(groupId) }
+            }
+        }
+    }
+
+    private fun writeMessages(groupId: String) {
         val p = prefs ?: return
         val arr = JSONArray()
         _messages.value[groupId].orEmpty().forEach { m ->

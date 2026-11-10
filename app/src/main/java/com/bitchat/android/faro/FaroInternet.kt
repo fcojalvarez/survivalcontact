@@ -39,8 +39,15 @@ object FaroInternet {
         if (appContext != null) return
         appContext = context.applicationContext
         scope.launch {
-            combine(FaroGroups.groups, FaroJoin.listenTags) { groups, joinTags ->
-                groups.map { FaroProtocol.tagFor(it.key).toHex() } + joinTags
+            // La etiqueta de cada grupo cambia cada día: se vuelve a suscribir al cambiar de día.
+            val day = kotlinx.coroutines.flow.flow {
+                while (true) {
+                    emit(FaroProtocol.currentDay())
+                    kotlinx.coroutines.delay(30 * 60_000L)
+                }
+            }.distinctUntilChanged()
+            combine(FaroGroups.groups, FaroJoin.listenTags, day) { groups, joinTags, d ->
+                groups.flatMap { g -> FaroProtocol.tagsAround(g.key, d).map { it.toHex() } } + joinTags
             }.distinctUntilChanged().collect { tags -> resubscribe(tags) }
         }
     }

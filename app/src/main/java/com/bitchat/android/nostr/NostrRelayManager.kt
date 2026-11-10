@@ -41,9 +41,7 @@ class NostrRelayManager private constructor() {
         // Default relay list (same as iOS)
         private val DEFAULT_RELAYS = listOf(
             "wss://relay.damus.io",
-            "wss://relay.primal.net",
-            "wss://offchain.pub",
-            "wss://nostr21.com"
+            "wss://relay.primal.net"
         )
         
         // Reconnect backoff lives in RelayReconnectPolicy.
@@ -415,10 +413,9 @@ class NostrRelayManager private constructor() {
         // Initialize with default relays - avoid static initialization order issues
         try {
             val defaultRelayUrls = listOf(
+                // Faro: dos servidores bastan para que llegue y gastan la mitad que cuatro.
                 "wss://relay.damus.io",
-                "wss://relay.primal.net",
-                "wss://offchain.pub",
-                "wss://nostr21.com"
+                "wss://relay.primal.net"
             )
             relaysList.addAll(defaultRelayUrls.map { Relay(it) })
             nonLiveRelayUrls.addAll(defaultRelayUrls)

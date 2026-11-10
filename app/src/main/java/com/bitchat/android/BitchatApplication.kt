@@ -84,7 +84,9 @@ class BitchatApplication : Application() {
 
         // Own relay connectivity, selected-channel subscriptions, and presence scheduling at the
         // process level so closing the Activity does not disconnect Nostr.
-        try { com.bitchat.android.nostr.NostrBackgroundRuntime.initialize(this) } catch (_: Exception) { }
+        // Faro: no se arranca el Nostr de la app original (mensajes directos y canales por zona),
+        // que dejaba conexiones abiertas con varios servidores todo el rato. Faro solo conecta
+        // por internet para sus grupos, y solo si tienes alguno (ver FaroInternet).
 
         // Initialize mesh service preferences
         try { com.bitchat.android.service.MeshServicePreferences.init(this) } catch (_: Exception) { }

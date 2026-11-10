@@ -54,7 +54,6 @@ internal fun MapTab(nav: FaroNav) {
     val me by FaroLocation.myLocation.collectAsStateWithLifecycle()
     val offline by FaroOfflineMap.state.collectAsStateWithLifecycle()
     val online = rememberIsOnline()
-    val heading = rememberHeading()
     val perms = rememberMultiplePermissionsState(
         listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
     )
@@ -141,14 +140,8 @@ internal fun MapTab(nav: FaroNav) {
                     if (dist != null && bearing != null) {
                         Column(horizontalAlignment = Alignment.End) {
                             Text(formatDistance(dist), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Filled.Navigation, contentDescription = null, tint = FaroColors.Accent,
-                                    modifier = Modifier.size(14.dp).rotate(bearing - (heading ?: 0f)),
-                                )
-                                Spacer(Modifier.width(3.dp))
-                                Text(bearingWord(bearing), fontSize = 12.sp, color = FaroColors.Muted)
-                            }
+                            // Sin brújula aquí (ahorra batería): solo la dirección en palabras.
+                            Text("al " + bearingWord(bearing), fontSize = 12.sp, color = FaroColors.Muted)
                         }
                     }
                 }

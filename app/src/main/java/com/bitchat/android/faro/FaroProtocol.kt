@@ -113,10 +113,20 @@ object FaroProtocol {
      * Etiqueta del grupo en la malla. Deriva de la clave (no solo del id), así que quien no
      * tiene la clave no puede ni reconocer los paquetes del grupo.
      */
-    fun tagFor(groupKey: ByteArray): ByteArray =
+    fun tagFor(groupKey: ByteArray, day: Long = currentDay()): ByteArray =
         MessageDigest.getInstance("SHA-256")
-            .digest("faro-group-tag-v1".toByteArray() + groupKey)
+            .digest("faro-group-tag-v2".toByteArray() + groupKey + ByteBuffer.allocate(8).putLong(day).array())
             .copyOf(TAG_SIZE)
+
+    /** Día actual (UTC). La etiqueta cambia cada día para que nadie pueda seguir a un grupo. */
+    fun currentDay(nowMs: Long = System.currentTimeMillis()): Long = Math.floorDiv(nowMs, 86_400_000L)
+
+    /** Etiquetas válidas hoy: ayer, hoy y mañana, por si los relojes no coinciden. */
+    fun tagsAround(groupKey: ByteArray, day: Long = currentDay()): List<ByteArray> =
+        listOf(day - 1, day, day + 1).map { tagFor(groupKey, it) }
+
+    fun matchesGroup(groupKey: ByteArray, tag: ByteArray): Boolean =
+        tagsAround(groupKey).any { it.contentEquals(tag) }
 
     fun seal(
         groupKey: ByteArray,
@@ -160,7 +170,7 @@ object FaroProtocol {
         verify: (signature: ByteArray, data: ByteArray, publicKey: ByteArray) -> Boolean,
     ): Inner? = runCatching {
         val tag = peekTag(payload) ?: return null
-        if (!tag.contentEquals(tagFor(groupKey))) return null
+        if (!matchesGroup(groupKey, tag)) return null
         val header = payload.copyOfRange(0, HEADER_SIZE)
         val plain = XChaCha20Poly1305(groupKey).decrypt(payload.copyOfRange(HEADER_SIZE, payload.size), header)
         if (plain.size < 1 + 8 + PUB_SIZE + 1 + SIG_SIZE) return null
