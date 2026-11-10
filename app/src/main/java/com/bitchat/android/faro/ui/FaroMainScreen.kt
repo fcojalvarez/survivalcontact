@@ -385,12 +385,13 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
 
             // Importantes
             val help = ppl.filter { it.needsHelp }
-            val silent = ppl.filter { !it.needsHelp && it.silent && (it.silentFor ?: 0L) < 48 * HOUR && it.id !in dismissed }
+            val dying = ppl.filter { !it.needsHelp && it.batteryDying && "dying" + it.id !in dismissed }
+            val silent = ppl.filter { !it.needsHelp && !it.batteryDying && it.silent && (it.silentFor ?: 0L) < 48 * HOUR && it.id !in dismissed }
             val myRequests = requests.filter { r -> groups.any { it.id == r.groupId && it.admin } }
-            val lowBattery = ppl.filter { p -> p.pos != null && p.pos.position.batteryPct in 1..14 && !p.silent && "bat" + p.id !in dismissed }
+            val lowBattery = ppl.filter { p -> p.pos != null && !p.batteryDying && p.pos.position.batteryPct in 1..14 && !p.silent && "bat" + p.id !in dismissed }
             val otherTrips = trips.filterKeys { k -> ppl.any { it.id == k } }
             val unanswered = asks.filter { (_, ts) -> System.currentTimeMillis() - ts > 30 * 60_000L }.keys.mapNotNull { k -> ppl.firstOrNull { it.id == k } }
-            if (help.isNotEmpty() || silent.isNotEmpty() || myRequests.isNotEmpty() || lowBattery.isNotEmpty() ||
+            if (help.isNotEmpty() || dying.isNotEmpty() || silent.isNotEmpty() || myRequests.isNotEmpty() || lowBattery.isNotEmpty() ||
                 otherTrips.isNotEmpty() || unanswered.isNotEmpty() || myTrip != null) {
                 SectionTitle("Importantes")
                 Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -452,6 +453,19 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                             Chip("Ver en el mapa", primary = true) { nav.showPerson(p.id) }
                             Chip("Guiarme") { nav.go(Route.Guide(p.id)) }
                             Chip("Escribir al grupo") { nav.go(Route.Group(gid)) }
+                        }
+                    }
+                    dying.forEach { p ->
+                        InfoCardRow(
+                            key = "dying" + p.id, open = open, border = FaroColors.Warn,
+                            leading = { Avatar(p.name, colorFor(p.id), 34.dp) },
+                            title = bold("A ${p.name}", " se le ha acabado la batería"),
+                            sub = (p.pos?.let { "última ubicación " + ago(it.timestampMs) } ?: "") + distanceSuffix(me, p),
+                            subColor = FaroColors.Warn,
+                        ) {
+                            Chip("Ver en el mapa", primary = true) { nav.showPerson(p.id) }
+                            Chip("Guiarme") { nav.go(Route.Guide(p.id)) }
+                            Chip("Entendido") { dismissed.add("dying" + p.id) }
                         }
                     }
                     myRequests.forEach { r -> RequestCard(r, groups.firstOrNull { it.id == r.groupId }?.name ?: "tu grupo") }

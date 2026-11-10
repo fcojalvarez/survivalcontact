@@ -95,6 +95,13 @@ internal data class Person(
             return p.position.status == FaroProtocol.Position.Status.NEED_HELP &&
                 System.currentTimeMillis() - p.timestampMs < 12 * HOUR
         }
+    /** Avisó de que se quedaba sin batería (y no ha vuelto a dar señales con batería). */
+    val batteryDying: Boolean
+        get() {
+            val p = pos ?: return false
+            return p.position.status == FaroProtocol.Position.Status.BATTERY_DYING &&
+                System.currentTimeMillis() - p.timestampMs < 24 * HOUR
+        }
     val silentFor: Long? get() = pos?.let { System.currentTimeMillis() - it.timestampMs }
     val silent: Boolean get() = (silentFor ?: 0L) > 3 * HOUR
 }

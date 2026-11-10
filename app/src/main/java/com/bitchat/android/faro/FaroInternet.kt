@@ -70,7 +70,7 @@ object FaroInternet {
     private fun onEvent(event: NostrEvent) {
         if (event.kind != KIND) return
         val payload = runCatching { Base64.decode(event.content, Base64.NO_WRAP) }.getOrNull() ?: return
-        FaroGroups.onMeshPayload(payload)
+        FaroGroups.onMeshPayload(payload, fromInternet = true)
     }
 
     /** Publica un paquete ya cifrado con su etiqueta (hex). Si no hay internet, no hace nada. */

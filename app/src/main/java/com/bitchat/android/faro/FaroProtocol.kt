@@ -79,7 +79,9 @@ object FaroProtocol {
         val status: Status,
     ) {
         enum class Status(val code: Byte) {
-            OK(0), NEED_HELP(1), ON_THE_WAY(2);
+            OK(0), NEED_HELP(1), ON_THE_WAY(2),
+            /** Última ubicación antes de quedarse sin batería (al bajar del 5 %). */
+            BATTERY_DYING(3);
 
             companion object {
                 fun from(code: Byte) = entries.firstOrNull { it.code == code } ?: OK

@@ -162,6 +162,7 @@ object FaroGroups {
     fun init(context: Context) {
         if (appContext != null) return
         appContext = context.applicationContext
+        FaroRelay.start()
         scope.launch {
             runCatching {
                 val masterKey = MasterKey.Builder(context.applicationContext)
@@ -426,6 +427,7 @@ object FaroGroups {
 
     /** Envía un paquete ya preparado por la malla (si está activa) y por internet (si hay). */
     private fun broadcastRaw(payload: ByteArray, tagHex: String) {
+        FaroRelay.remember(payload)
         MeshServiceHolder.unifiedMeshService?.sendFaroBroadcast(payload)
             ?: Log.w(TAG, "Malla no disponible; solo se envía por internet")
         FaroInternet.publish(payload, tagHex)
@@ -434,7 +436,10 @@ object FaroGroups {
     // ---------- Recepción ----------
 
     /** Llamado por la malla con la carga útil de un paquete de tipo [FaroProtocol.PACKET_TYPE]. */
-    fun onMeshPayload(payload: ByteArray) {
+    fun onMeshPayload(payload: ByteArray, fromInternet: Boolean = false) {
+        // Lo que llega por Bluetooth se guarda para reenviarlo; lo de internet, solo si es de mis
+        // grupos y no es un aviso de «visto» (ese nunca va por la malla).
+        if (!fromInternet) FaroRelay.remember(payload)
         if (FaroJoin.isJoinPacket(payload)) {
             onJoinPacket(payload)
             return
@@ -442,6 +447,7 @@ object FaroGroups {
         val tag = FaroProtocol.peekTag(payload) ?: return
         val g = _groups.value.firstOrNull { FaroProtocol.matchesGroup(it.key, tag) } ?: return
         val inner = FaroProtocol.open(g.key, payload, ::verify) ?: return
+        if (fromInternet && inner.kind != FaroProtocol.Kind.SEEN) FaroRelay.remember(payload)
         val me = myId()
         if (inner.authorId == me) return
         val dedupKey = "${g.id}:${inner.authorId}:${inner.timestampMs}:${inner.kind}"
@@ -463,6 +469,12 @@ object FaroGroups {
             FaroProtocol.Kind.LOCATION -> {
                 val pos = FaroProtocol.Position.decode(inner.body) ?: return
                 val wasHelp = _positions.value[g.id]?.get(inner.authorId)?.position?.status == FaroProtocol.Position.Status.NEED_HELP
+                val wasDying = _positions.value[g.id]?.get(inner.authorId)?.position?.status == FaroProtocol.Position.Status.BATTERY_DYING
+                if (pos.status == FaroProtocol.Position.Status.BATTERY_DYING && !wasDying) {
+                    val text = "A ${inner.authorName} se le está acabando la batería"
+                    addEvent(FamilyEvent(g.id, inner.authorId, inner.authorName, text, inner.timestampMs))
+                    appContext?.let { FaroNotifications.family(it, g.id, text, "Hemos guardado su última ubicación en el mapa.") }
+                }
                 if (pos.status == FaroProtocol.Position.Status.NEED_HELP && !wasHelp) {
                     val me = FaroLocation.myLocation.value
                     val distance = me?.let {

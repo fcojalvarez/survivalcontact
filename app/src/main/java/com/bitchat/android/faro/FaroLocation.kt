@@ -126,6 +126,34 @@ object FaroLocation {
         (before - now).forEach { k -> FaroGroups.sendArrival(k.substringBefore(":"), k.substringAfter(":"), enter = false) }
     }
 
+    // ---------- Sin batería ----------
+
+    @Volatile private var dyingSent = false
+
+    private fun onBattery(i: Intent) {
+        val level = i.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = i.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        if (level < 0 || scale <= 0) return
+        val pct = level * 100 / scale
+        val status = i.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        val charging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
+        if (charging || pct > 10) { dyingSent = false; return }
+        if (pct > 5 || dyingSent) return
+        dyingSent = true
+        scope.launch {
+            val ctx = appContext ?: return@launch
+            if (!hasPermission(ctx)) return@launch
+            // Vale una posición de hace un rato: no merece la pena gastar GPS con un 5 %.
+            val loc = currentLocation(allowFresh = true, freshMs = 10 * 60_000L) ?: return@launch
+            val pos = FaroProtocol.Position(
+                loc.latitude, loc.longitude, if (loc.hasAccuracy()) loc.accuracy.toInt() else 0, pct,
+                if (_sos.value) FaroProtocol.Position.Status.NEED_HELP else FaroProtocol.Position.Status.BATTERY_DYING,
+            )
+            val targets = if (_sos.value) FaroGroups.groups.value else FaroGroups.groups.value.filter { it.shareLocation }
+            targets.forEach { FaroGroups.sendPosition(it.id, pos) }
+        }
+    }
+
     /** La persona seguida corta el seguimiento desde su aviso. */
     fun stopFollowers() {
         _followers.value = emptyList()
@@ -144,6 +172,12 @@ object FaroLocation {
             if (ok) FusedLocationProvider(context.applicationContext) else SystemLocationProvider(context.applicationContext)
         }.getOrNull()
         job = scope.launch { loop() }
+        // Al bajar del 5 % se envía la última ubicación con el aviso «sin batería».
+        runCatching {
+            context.applicationContext.registerReceiver(object : android.content.BroadcastReceiver() {
+                override fun onReceive(c: Context?, i: Intent?) { onBattery(i ?: return) }
+            }, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        }
     }
 
     /** Despierta el ciclo (por ejemplo, al dar permiso en un grupo). */
