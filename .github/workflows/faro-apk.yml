@@ -53,7 +53,7 @@ jobs:
         run: ./gradlew :app:assembleRelease
 
       - name: Tests de Faro
-        run: ./gradlew :app:testDebugUnitTest --tests 'com.bitchat.android.update.*' --tests 'com.bitchat.android.faro.*'
+        run: ./gradlew :app:testDebugUnitTest --tests 'com.bitchat.android.update.*' --tests 'com.bitchat.android.faro.*' --tests 'com.bitchat.android.mesh.PowerProfileResolverTest'
 
       - name: Preparar el APK
         run: |

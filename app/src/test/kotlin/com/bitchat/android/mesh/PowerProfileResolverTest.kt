@@ -8,6 +8,20 @@ import org.junit.Test
 class PowerProfileResolverTest {
 
     @Test
+    fun `modo emergencia busca mas a menudo y baja el ritmo con la bateria`() {
+        fun emerg(b: Int) = PowerProfileResolver.resolve(b, isCharging = false, isBackground = true, hasDirectPeers = false, emergency = true)
+        // Con batería: un aviso tarda como mucho unos 15 s en encontrarse.
+        assertEquals(3_000L, emerg(80).ble.scanOnMs)
+        assertEquals(12_000L, emerg(80).ble.scanOffMs)
+        // Según baja la batería, cada vez menos tiempo buscando.
+        assertTrue(emerg(40).ble.scanOnMs.toDouble() / (emerg(40).ble.scanOnMs + emerg(40).ble.scanOffMs) <
+            emerg(80).ble.scanOnMs.toDouble() / (emerg(80).ble.scanOnMs + emerg(80).ble.scanOffMs))
+        assertEquals(28_000L, emerg(15).ble.scanOffMs)
+        // Sin emergencia, como siempre: 1 s por minuto.
+        assertEquals(59_000L, resolve(battery = 80, background = true, peers = false).ble.scanOffMs)
+    }
+
+    @Test
     fun `background normal without peers scans one second per minute`() {
         val profile = resolve(battery = 80, background = true, peers = false)
 

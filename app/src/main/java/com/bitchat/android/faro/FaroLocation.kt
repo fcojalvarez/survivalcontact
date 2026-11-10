@@ -107,7 +107,16 @@ object FaroLocation {
     fun sendSos(active: Boolean) {
         _sos.value = active
         lastSentAt = 0L
+        refreshEmergency()
         requestSoon()
+    }
+
+    /**
+     * Modo emergencia de la malla: mientras pido ayuda, o alguien de mis grupos la ha pedido en
+     * las últimas 3 h y no ha dicho que está bien. Se apaga solo.
+     */
+    fun refreshEmergency() {
+        com.bitchat.android.mesh.EmergencyMode.set(_sos.value || FaroGroups.someoneNeedsHelp(3 * 3_600_000L))
     }
 
     /** Pide una posición para mostrarla (por ejemplo, al abrir el mapa). No la envía. */
@@ -131,12 +140,18 @@ object FaroLocation {
         if (targets.isEmpty() || !hasPermission(ctx)) return 60 * 60_000L
 
         val battery = batteryPercent(ctx)
+        refreshEmergency()
         val now0 = System.currentTimeMillis()
         _followers.update { list -> list.filter { it.untilMs > now0 } }
         val following = _followers.value.isNotEmpty() && battery >= 20
         val interval = when {
             following -> 30_000L
-            sos -> 2 * 60_000L
+            // Pidiendo ayuda: la ubicación sale más espaciada según baja la batería, para que el
+            // móvil aguante muchas horas (con el 50 % sobra para más de 7 h).
+            sos && battery > 50 -> 2 * 60_000L
+            sos && battery > 20 -> 5 * 60_000L
+            sos && battery > 10 -> 10 * 60_000L
+            sos -> 15 * 60_000L
             // Máximo ahorro: solo se envía la ubicación si pido ayuda.
             FaroSettings.battery == FaroSettings.Battery.MAX -> return 30 * 60_000L
             FaroSettings.battery == FaroSettings.Battery.SAVER && battery >= 20 -> 15 * 60_000L

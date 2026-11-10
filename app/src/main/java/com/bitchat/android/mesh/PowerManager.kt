@@ -95,6 +95,7 @@ class PowerManager private constructor(context: Context) : LifecycleEventObserve
     @Volatile private var isCharging = false
     @Volatile private var isAppInBackground = true
     @Volatile private var hasDirectPeers = false
+    @Volatile private var emergency = false
     @Volatile private var shutdown = false
 
     private val _profile = MutableStateFlow(
@@ -142,6 +143,13 @@ class PowerManager private constructor(context: Context) : LifecycleEventObserve
                 refreshProfile()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to register process lifecycle observer: ${e.message}")
+            }
+        }
+        // Faro: modo emergencia (alguien ha pedido ayuda): buscar móviles más a menudo.
+        scope.launch {
+            EmergencyMode.active.collect { on ->
+                emergency = on
+                refreshProfile()
             }
         }
         scope.launch {
@@ -256,7 +264,8 @@ class PowerManager private constructor(context: Context) : LifecycleEventObserve
             batteryLevel = batteryLevel,
             isCharging = isCharging,
             isBackground = isAppInBackground,
-            hasDirectPeers = hasDirectPeers
+            hasDirectPeers = hasDirectPeers,
+            emergency = emergency
         )
         if (_profile.value != next) {
             Log.i(
@@ -290,7 +299,8 @@ internal object PowerProfileResolver {
         batteryLevel: Int,
         isCharging: Boolean,
         isBackground: Boolean,
-        hasDirectPeers: Boolean
+        hasDirectPeers: Boolean,
+        emergency: Boolean = false
     ): PowerManager.RuntimePerformanceProfile {
         val batteryBand = when {
             batteryLevel <= AppConstants.Power.CRITICAL_BATTERY_PERCENT ->
@@ -313,6 +323,16 @@ internal object PowerProfileResolver {
         }
 
         val ble = when {
+            // Faro, modo emergencia con la app cerrada: busca más a menudo para que los avisos
+            // lleguen en segundos, pero baja el ritmo con la batería para aguantar muchas horas.
+            emergency && isBackground && !isCharging && batteryLevel > 50 ->
+                PowerManager.BleSchedule(scanOnMs = 3_000L, scanOffMs = 12_000L, continuousScan = false)
+            emergency && isBackground && !isCharging && batteryLevel > 20 ->
+                PowerManager.BleSchedule(scanOnMs = 2_000L, scanOffMs = 18_000L, continuousScan = false)
+            emergency && isBackground && !isCharging ->
+                PowerManager.BleSchedule(scanOnMs = 2_000L, scanOffMs = 28_000L, continuousScan = false)
+            emergency && isBackground ->
+                PowerManager.BleSchedule(scanOnMs = 4_000L, scanOffMs = 6_000L, continuousScan = false)
             isBackground && hasDirectPeers ->
                 PowerManager.BleSchedule(
                     scanOnMs = 1_000L,
@@ -336,6 +356,8 @@ internal object PowerProfileResolver {
         }
 
         val announcementInterval = when {
+            emergency && batteryLevel > 20 -> 30_000L
+            emergency -> 60_000L
             isBackground && batteryBand == PowerManager.BatteryBand.NORMAL -> 60_000L
             isBackground && batteryBand == PowerManager.BatteryBand.LOW -> 120_000L
             isBackground -> 300_000L

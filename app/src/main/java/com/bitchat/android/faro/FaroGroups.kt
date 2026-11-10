@@ -260,6 +260,14 @@ object FaroGroups {
         }
     }
 
+    /** Alguien de mis grupos ha pedido ayuda en [windowMs] y su última posición sigue siendo de ayuda. */
+    fun someoneNeedsHelp(windowMs: Long): Boolean {
+        val now = System.currentTimeMillis()
+        return _positions.value.values.any { m ->
+            m.values.any { it.position.status == FaroProtocol.Position.Status.NEED_HELP && now - it.timestampMs < windowMs }
+        }
+    }
+
     /** Pide a una persona que envíe su ubicación cada 30 s durante [minutes] minutos (0 = parar). */
     fun sendFollow(personId: String, minutes: Int) {
         val target = personId.hexToBytes() ?: return
@@ -364,6 +372,7 @@ object FaroGroups {
                     if (old != null && old.timestampMs >= inner.timestampMs) return@update all
                     all + (g.id to (current + (inner.authorId to MemberPosition(inner.authorId, inner.authorName, pos, inner.timestampMs))))
                 }
+                FaroLocation.refreshEmergency()
             }
             FaroProtocol.Kind.HELLO -> Unit
             FaroProtocol.Kind.FOLLOW -> {
