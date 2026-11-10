@@ -237,11 +237,14 @@ object FaroUpdater {
     }
 
     private const val PREFS_READY = "faro_update_ready"
+    private const val SHOW_NOTIFICATION = false
 
     internal fun notifyUpdateReady(context: Context, apk: File, info: VersionInfo) {
         // Se guarda para que la app lo ofrezca con una ventana al abrirse.
         context.getSharedPreferences(PREFS_READY, Context.MODE_PRIVATE).edit()
             .putString("apk", apk.absolutePath).putLong("code", info.versionCode).putString("name", info.versionName).apply()
+        // Faro: el aviso es solo la ventana dentro de la app (FaroMainScreen), sin notificación.
+        if (SHOW_NOTIFICATION.not()) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
