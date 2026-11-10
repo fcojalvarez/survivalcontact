@@ -139,3 +139,14 @@ Decisiones tomadas pantalla a pantalla. Las imágenes son maquetas; se aplicará
 ## Demo navegable
 
 `demo.html` es una maqueta navegable con datos de ejemplo (sin radio real). Se puede abrir en el navegador para probar todos los flujos antes de programarlos.
+
+## 9. Familia en el día a día (propuesta)
+
+![Funciones de familia](14-familia.png)
+
+Para que la app se use cada día (y esté instalada cuando haga falta):
+
+1. **Estado de cada uno en Inicio:** en casa, en el cole, en camino; batería baja de alguien en Importantes; llegadas y salidas en Novedades. «Estoy bien» junto a «Pedir ayuda».
+2. **Lugares** (Casa, Cole, Trabajo) con aviso al llegar y al salir. Los vigila Android (geovallas), sin GPS encendido todo el rato.
+3. **Preguntar si está bien:** la otra persona contesta desde la notificación («Estoy bien» / «Necesito ayuda»).
+4. **Voy para allá:** destino, cómo vas y hora de llegada; se apaga solo al llegar.
