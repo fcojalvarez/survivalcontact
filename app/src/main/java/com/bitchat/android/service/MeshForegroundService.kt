@@ -35,6 +35,7 @@ class MeshForegroundService : Service() {
         const val ACTION_STOP = "com.bitchat.android.service.STOP"
         const val ACTION_QUIT = "com.bitchat.android.service.QUIT"
         const val ACTION_UPDATE_NOTIFICATION = "com.bitchat.android.service.UPDATE_NOTIFICATION"
+        const val ACTION_PAUSE = "com.bitchat.android.service.PAUSE"
 
         fun start(context: Context) {
             val intent = Intent(context, MeshForegroundService::class.java).apply { action = ACTION_START }
@@ -60,13 +61,21 @@ class MeshForegroundService : Service() {
             }
         }
 
+        /** Faro: deja de ser servicio en primer plano (quita la notificación) sin destruir la malla. */
+        fun pause(context: Context) {
+            val intent = Intent(context, MeshForegroundService::class.java).apply { action = ACTION_PAUSE }
+            context.startService(intent)
+        }
+
         fun stop(context: Context) {
             val intent = Intent(context, MeshForegroundService::class.java).apply { action = ACTION_STOP }
             context.startService(intent)
         }
 
         private fun shouldStartAsForeground(context: Context): Boolean {
+            // Faro: solo cuando hace falta la red cercana con la app cerrada (ver FaroMeshPolicy).
             return MeshServicePreferences.isBackgroundEnabled(true) &&
+                    com.bitchat.android.faro.FaroMeshPolicy.backgroundWanted() &&
                     hasBluetoothPermissionsStatic(context)
         }
 
@@ -151,6 +160,15 @@ class MeshForegroundService : Service() {
             return START_NOT_STICKY
         }
         when (intent?.action) {
+            ACTION_PAUSE -> {
+                updateJob?.cancel()
+                updateJob = null
+                try { stopForeground(true) } catch (_: Exception) { }
+                clearMeshNotifications()
+                isInForeground = false
+                stopSelf()
+                return START_NOT_STICKY
+            }
             ACTION_STOP -> {
                 // Stop FGS and mesh cleanly
                 updateJob?.cancel()

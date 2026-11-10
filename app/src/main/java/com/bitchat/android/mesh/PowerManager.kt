@@ -147,7 +147,7 @@ class PowerManager private constructor(context: Context) : LifecycleEventObserve
         }
         // Faro: modo emergencia (alguien ha pedido ayuda): buscar móviles más a menudo.
         scope.launch {
-            EmergencyMode.active.collect { on ->
+            kotlinx.coroutines.flow.combine(EmergencyMode.active, EmergencyMode.boosting) { a, b -> a || b }.collect { on ->
                 emergency = on
                 refreshProfile()
             }

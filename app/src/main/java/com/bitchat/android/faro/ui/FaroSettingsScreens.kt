@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.SystemUpdate
+import androidx.compose.material.icons.outlined.WifiTethering
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material3.AlertDialog
@@ -63,13 +64,14 @@ import com.bitchat.android.ui.VerificationSheet
 import com.bitchat.android.update.FaroUpdater
 
 /** Páginas de Ajustes. */
-internal enum class SettingsPage { MAIN, NAME, SHARE, ALERTS, BATTERY, MAP, UPDATES, PRIVACY, LANGUAGE, SHARE_APP }
+internal enum class SettingsPage { MAIN, NEARBY, NAME, SHARE, ALERTS, BATTERY, MAP, UPDATES, PRIVACY, LANGUAGE, SHARE_APP }
 
 @Composable
 internal fun SettingsScreen(nav: FaroNav, page: SettingsPage, chatViewModel: ChatViewModel, onWelcome: () -> Unit) {
     when (page) {
         SettingsPage.MAIN -> SettingsMain(nav, chatViewModel, onWelcome)
         SettingsPage.NAME -> NamePage(nav, chatViewModel)
+        SettingsPage.NEARBY -> NearbyPage(nav)
         SettingsPage.SHARE -> SharePage(nav)
         SettingsPage.ALERTS -> AlertsPage(nav)
         SettingsPage.BATTERY -> BatteryPage(nav)
@@ -110,6 +112,7 @@ private fun SettingsMain(nav: FaroNav, chatViewModel: ChatViewModel, onWelcome: 
         Group {
             Item(Icons.Outlined.Place, "Compartir mi ubicación", value = "${groups.count { it.shareLocation }} de ${groups.size}") { nav.page(SettingsPage.SHARE) }
             Item(Icons.Outlined.Notifications, "Avisos") { nav.page(SettingsPage.ALERTS) }
+            Item(Icons.Outlined.WifiTethering, "Red cercana (Bluetooth)", value = meshName(FaroSettings.meshMode)) { nav.page(SettingsPage.NEARBY) }
             Item(Icons.Outlined.BatteryStd, "Batería", value = batteryName(FaroSettings.battery)) { nav.page(SettingsPage.BATTERY) }
             Item(Icons.Outlined.Map, "Mapa sin conexión", value = if (offline is FaroOfflineMap.State.Ready) "Guardado" else "No guardado") { nav.page(SettingsPage.MAP) }
         }
@@ -128,6 +131,25 @@ private fun SettingsMain(nav: FaroNav, chatViewModel: ChatViewModel, onWelcome: 
             modifier = Modifier.fillMaxWidth().padding(16.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
     }
+}
+
+private fun meshName(m: FaroSettings.MeshMode) = when (m) {
+    FaroSettings.MeshMode.AUTO -> "Automática"
+    FaroSettings.MeshMode.ALWAYS -> "Siempre"
+    FaroSettings.MeshMode.APP_OPEN -> "Con la app abierta"
+}
+
+@Composable
+private fun NearbyPage(nav: FaroNav) {
+    var mode by remember { mutableStateOf(FaroSettings.meshMode) }
+    fun set(m: FaroSettings.MeshMode) { mode = m; FaroSettings.meshMode = m }
+    BackBar("Red cercana", onBack = { nav.back() })
+    Explain("Es lo que os mantiene en contacto por Bluetooth, de móvil en móvil, cuando no hay internet.")
+    Radio("Automática (recomendada)", "Con internet no gasta nada. Si te quedas sin internet 1 minuto, se enciende sola y busca a los demás más a menudo durante 3 minutos.", mode == FaroSettings.MeshMode.AUTO) { set(FaroSettings.MeshMode.AUTO) }
+    Radio("Siempre encendida", "Tu móvil también hace de repetidor para otros aunque tengas internet. Gasta algo más de batería.", mode == FaroSettings.MeshMode.ALWAYS) { set(FaroSettings.MeshMode.ALWAYS) }
+    Radio("Solo con la app abierta", "Lo que menos gasta. Con la app cerrada solo se enciende si alguien pide ayuda.", mode == FaroSettings.MeshMode.APP_OPEN) { set(FaroSettings.MeshMode.APP_OPEN) }
+    Gap(8.dp)
+    Hint("Pedir ayuda, o que alguien de tu familia la pida, la enciende siempre.")
 }
 
 private fun batteryName(b: FaroSettings.Battery) = when (b) {

@@ -91,7 +91,9 @@ class BitchatApplication : Application() {
         // Initialize mesh service preferences
         try { com.bitchat.android.service.MeshServicePreferences.init(this) } catch (_: Exception) { }
 
-        // Proactively start the foreground service to keep mesh alive
+        // Faro: la red cercana con la app cerrada solo se enciende cuando hace falta
+        // (sin internet, pidiendo ayuda o si el usuario lo elige). Ver FaroMeshPolicy.
+        try { com.bitchat.android.faro.FaroMeshPolicy.init(this) } catch (_: Exception) { }
         try { com.bitchat.android.service.MeshForegroundService.start(this) } catch (_: Exception) { }
 
         // TorManager already initialized above

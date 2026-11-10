@@ -15,4 +15,18 @@ object EmergencyMode {
     fun set(on: Boolean) {
         _active.value = on
     }
+
+    /** Un rato buscando más a menudo (por ejemplo, justo al perder internet). */
+    private val _boosting = MutableStateFlow(false)
+    val boosting: StateFlow<Boolean> = _boosting.asStateFlow()
+    @Volatile private var boostUntil = 0L
+
+    fun boost(ms: Long) {
+        boostUntil = System.currentTimeMillis() + ms
+        _boosting.value = true
+        Thread {
+            Thread.sleep(ms)
+            if (System.currentTimeMillis() >= boostUntil) _boosting.value = false
+        }.apply { isDaemon = true }.start()
+    }
 }

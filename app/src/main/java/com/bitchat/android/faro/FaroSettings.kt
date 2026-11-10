@@ -45,6 +45,13 @@ object FaroSettings {
         prefs?.edit()?.putStringSet("ocultos", set)?.apply()
     }
 
+    /** Red cercana con la app cerrada: automática (sin internet), siempre o solo con la app abierta. */
+    enum class MeshMode { AUTO, ALWAYS, APP_OPEN }
+
+    var meshMode: MeshMode
+        get() = runCatching { MeshMode.valueOf(prefs?.getString("red_cercana", null) ?: "AUTO") }.getOrDefault(MeshMode.AUTO)
+        set(v) { prefs?.edit()?.putString("red_cercana", v.name)?.apply(); FaroMeshPolicy.evaluate() }
+
     var welcomeDone: Boolean
         get() = bool("bienvenida_hecha", false)
         set(v) = setBool("bienvenida_hecha", v)

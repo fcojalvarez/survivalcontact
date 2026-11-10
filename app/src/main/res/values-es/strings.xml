@@ -345,7 +345,7 @@
   <string name="dismiss">cerrar</string>
   <string name="location_notes_input_placeholder">agrega una nota para este lugar</string>
     <string name="bluetooth_recommended">Bluetooth recomendado</string>
-    <string name="mesh_service_notification_content">Red activa — %1$d personas cerca</string>
+    <string name="mesh_service_notification_content">Red cercana activa · %1$d móviles cerca</string>
 
   <string name="verify_title">verificar</string>
   <string name="verify_my_qr_title">escanear para verificarme</string>
