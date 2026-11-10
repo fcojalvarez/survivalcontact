@@ -59,6 +59,7 @@ internal fun MapTab(nav: FaroNav) {
     )
     LaunchedEffect(Unit) { FaroLocation.refreshForDisplay() }
     val handle = remember { MapHandle() }
+    val myTrip by FaroLocation.trip.collectAsStateWithLifecycle()
 
     val filter = nav.mapFilter?.takeIf { f -> groups.any { it.id == f } }
     val shown = groups.filter { filter == null || it.id == filter }
@@ -82,6 +83,11 @@ internal fun MapTab(nav: FaroNav) {
     Column(Modifier.fillMaxSize()) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             FaroMapView(points = points, modifier = Modifier.fillMaxSize(), handle = handle, onPointClick = { nav.selected = it })
+            if (myTrip == null && groups.isNotEmpty()) Text(
+                "Voy para allá", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FaroColors.AccentInk,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp).clip(RoundedCornerShape(50))
+                    .background(FaroColors.Accent).clickable { nav.go(Route.Trip) }.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
             Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     MapChip("Todos", null, filter == null) { nav.mapFilter = null }
@@ -93,6 +99,14 @@ internal fun MapTab(nav: FaroNav) {
                     online -> "● Mapa en línea"
                     offline is FaroOfflineMap.State.Ready -> "● Mapa guardado · sin internet"
                     else -> "● Sin internet · sin mapa guardado"
+                }
+                myTrip?.let { t ->
+                    Text(
+                        "Vas a ${t.destName} · llegas ${hhmm(t.etaMs)} · Parar", fontSize = 12.5.sp, color = FaroColors.Ok,
+                        modifier = Modifier.clip(RoundedCornerShape(50)).background(FaroColors.Card)
+                            .border(1.5.dp, FaroColors.Ok, RoundedCornerShape(50)).clickable { FaroLocation.stopTrip() }
+                            .padding(horizontal = 11.dp, vertical = 6.dp),
+                    )
                 }
                 Text(
                     status, fontSize = 12.sp, color = Color(0xFFBDBDBD),

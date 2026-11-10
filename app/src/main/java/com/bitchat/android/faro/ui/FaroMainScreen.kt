@@ -76,6 +76,9 @@ internal sealed class Route {
     object Tabs : Route()
     object Nearby : Route()
     object Create : Route()
+    object Places : Route()
+    object AddPlace : Route()
+    object Trip : Route()
     object Scan : Route()
     data class Group(val id: String) : Route()
     data class Info(val id: String) : Route()
@@ -157,6 +160,9 @@ fun FaroMainScreen(chatViewModel: ChatViewModel) {
             is Route.Info -> Screen { GroupInfoScreen(nav, r.id) }
             is Route.Invite -> Screen { InviteScreen(nav, r.id) }
             is Route.Guide -> Screen { GuideScreen(nav, r.personId) }
+            Route.Places -> Screen { PlacesScreen(nav) }
+            Route.AddPlace -> Screen { AddPlaceScreen(nav) }
+            Route.Trip -> Screen { TripScreen(nav) }
             is Route.Settings -> Screen { SettingsScreen(nav, r.page, chatViewModel, onWelcome = { welcome = true }) }
         }
         if (sos && !sosHidden) SosActiveScreen(onOpenChat = { id -> sosHidden = true; nav.home(Tab.INICIO); nav.go(Route.Group(id)) })
@@ -233,6 +239,13 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
     val lastRead by FaroGroups.lastRead.collectAsStateWithLifecycle()
     val requests by FaroGroups.joinRequests.collectAsStateWithLifecycle()
     val me by FaroLocation.myLocation.collectAsStateWithLifecycle()
+    val places by FaroGroups.places.collectAsStateWithLifecycle()
+    val trips by FaroGroups.trips.collectAsStateWithLifecycle()
+    val asks by FaroGroups.asks.collectAsStateWithLifecycle()
+    val events by FaroGroups.events.collectAsStateWithLifecycle()
+    val myTrip by FaroLocation.trip.collectAsStateWithLifecycle()
+    var okSent by remember { mutableStateOf(false) }
+    LaunchedEffect(okSent) { if (okSent) { kotlinx.coroutines.delay(4000); okSent = false } }
     var confirmSos by remember { mutableStateOf(false) }
     val dismissed = remember { mutableStateListOf<String>() }
     val open = remember { mutableStateListOf<String>() }
@@ -281,7 +294,9 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                         val sub = when {
                             p.needsHelp -> "ayuda"
                             p.pos == null -> "—"
+                            trips[p.id] != null -> "llega " + hhmm(trips[p.id]!!.second.etaMs)
                             p.silent -> hoursText(p.silentFor ?: 0L)
+                            placeOf(p, places) != null -> "en " + placeOf(p, places)!!.name
                             else -> me?.let { m -> p.location()?.let { l -> formatDistance(m.distanceTo(l)) } } ?: ago(p.pos.timestampMs).removePrefix("hace ")
                         }
                         Column(
@@ -310,6 +325,8 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                         }
                     }
                 }
+                Text("Lugares", fontSize = 13.sp, color = FaroColors.Accent, fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = 10.dp).clickable { nav.go(Route.Places) })
                 Text("Gestionar", fontSize = 13.sp, color = FaroColors.Accent, fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(start = 10.dp).clickable { nav.tab = Tab.CHATS })
             }
@@ -347,9 +364,59 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
             val help = ppl.filter { it.needsHelp }
             val silent = ppl.filter { !it.needsHelp && it.silent && (it.silentFor ?: 0L) < 48 * HOUR && it.id !in dismissed }
             val myRequests = requests.filter { r -> groups.any { it.id == r.groupId && it.admin } }
-            if (help.isNotEmpty() || silent.isNotEmpty() || myRequests.isNotEmpty()) {
+            val lowBattery = ppl.filter { p -> p.pos != null && p.pos.position.batteryPct in 1..14 && !p.silent && "bat" + p.id !in dismissed }
+            val otherTrips = trips.filterKeys { k -> ppl.any { it.id == k } }
+            val unanswered = asks.filter { (_, ts) -> System.currentTimeMillis() - ts > 30 * 60_000L }.keys.mapNotNull { k -> ppl.firstOrNull { it.id == k } }
+            if (help.isNotEmpty() || silent.isNotEmpty() || myRequests.isNotEmpty() || lowBattery.isNotEmpty() ||
+                otherTrips.isNotEmpty() || unanswered.isNotEmpty() || myTrip != null) {
                 SectionTitle("Importantes")
                 Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    myTrip?.let { t ->
+                        InfoCardRow(
+                            key = "mytrip", open = open, border = FaroColors.Ok,
+                            leading = { Avatar(FaroGroups.myName(), "#A7C7E7", 34.dp) },
+                            title = bold("Vas a ${t.destName}", ""),
+                            sub = "llegas a las ${hhmm(t.etaMs)} · tu familia lo ve",
+                            subColor = FaroColors.Ok, alwaysOpen = true,
+                        ) {
+                            Chip("Ya he llegado", primary = true) { FaroLocation.stopTrip() }
+                            Chip("Parar") { FaroLocation.stopTrip() }
+                        }
+                    }
+                    otherTrips.forEach { (id, v) ->
+                        val (name, t) = v
+                        InfoCardRow(
+                            key = "trip$id", open = open, border = FaroColors.Accent,
+                            leading = { Avatar(name, colorFor(id), 34.dp) },
+                            title = bold(name, " va para ${t.destName}"),
+                            sub = "llega a las ${hhmm(t.etaMs)}",
+                        ) {
+                            Chip("Ver en el mapa", primary = true) { nav.showPerson(id) }
+                        }
+                    }
+                    unanswered.forEach { p ->
+                        InfoCardRow(
+                            key = "ask" + p.id, open = open, border = FaroColors.Warn,
+                            leading = { Avatar(p.name, colorFor(p.id), 34.dp) },
+                            title = bold(p.name, " no ha contestado si está bien"),
+                            sub = (p.pos?.let { "última ubicación " + ago(it.timestampMs) } ?: "sin ubicación") + distanceSuffix(me, p),
+                            subColor = FaroColors.Warn,
+                        ) {
+                            Chip("Ver en el mapa", primary = true) { nav.showPerson(p.id) }
+                            Chip("Preguntar otra vez") { FaroGroups.askIfOk(p.id) }
+                        }
+                    }
+                    lowBattery.forEach { p ->
+                        InfoCardRow(
+                            key = "bat" + p.id, open = open, border = FaroColors.Warn,
+                            leading = { Avatar(p.name, colorFor(p.id), 34.dp) },
+                            title = bold("A ${p.name}", " le queda un ${p.pos?.position?.batteryPct} % de batería"),
+                            sub = "puede que pronto no la veas",
+                        ) {
+                            Chip("Escribirle", primary = true) { nav.go(Route.Group(p.groupIds.first())) }
+                            Chip("Entendido") { dismissed.add("bat" + p.id) }
+                        }
+                    }
                     help.forEach { p ->
                         val gid = p.groupIds.first()
                         InfoCardRow(
@@ -388,13 +455,36 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
                 .sortedByDescending { it.timestampMs }.take(8)
             SectionTitle("Novedades", "últimas 24 h")
             val seenList by FaroGroups.seenBy.collectAsStateWithLifecycle()
-            if (news.isEmpty() && seenList.isNotEmpty()) {
+            val familyEvents = events.filter { it.timestampMs > since }.sortedByDescending { it.timestampMs }.take(8)
+            if (news.isEmpty() && familyEvents.isNotEmpty()) {
+                Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SeenCard(open, nav)
+                    familyEvents.forEach { e ->
+                        InfoCardRow(
+                            key = "ev" + e.timestampMs + e.authorId, open = open, border = hex(groupColorHex(groups, e.groupId)),
+                            leading = { Avatar(e.authorName, colorFor(e.authorId), 34.dp) },
+                            title = bold(e.text, ""), sub = hhmm(e.timestampMs),
+                        ) {
+                            Chip("Ver en el mapa", primary = true) { nav.showPerson(e.authorId) }
+                        }
+                    }
+                }
+            } else if (news.isEmpty() && seenList.isNotEmpty()) {
                 Column(Modifier.padding(horizontal = 16.dp)) { SeenCard(open, nav) }
             } else if (news.isEmpty()) {
                 Hint("Aquí verás lo último de tus grupos. Lo que tenga más de 24 h desaparece solo.")
             } else {
                 Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     SeenCard(open, nav)
+                    familyEvents.forEach { e ->
+                        InfoCardRow(
+                            key = "ev" + e.timestampMs + e.authorId, open = open, border = hex(groupColorHex(groups, e.groupId)),
+                            leading = { Avatar(e.authorName, colorFor(e.authorId), 34.dp) },
+                            title = bold(e.text, ""), sub = hhmm(e.timestampMs),
+                        ) {
+                            Chip("Ver en el mapa", primary = true) { nav.showPerson(e.authorId) }
+                        }
+                    }
                     news.forEach { m ->
                         val unread = m.timestampMs > (lastRead[m.groupId] ?: 0L)
                         InfoCardRow(
@@ -414,16 +504,24 @@ private fun HomeTab(nav: FaroNav, onSettings: () -> Unit, onShowSos: () -> Unit)
         }
         }
 
-        Text(
-            if (sosOn) "Has pedido ayuda · ver" else "Pedir ayuda",
-            color = FaroColors.Danger,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(16.dp).fillMaxWidth()
-                .clip(RoundedCornerShape(50)).border(1.5.dp, FaroColors.Danger, RoundedCornerShape(50))
-                .clickable { if (sosOn) onShowSos() else confirmSos = true }.padding(vertical = 15.dp),
-        )
+        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (!sosOn && groups.isNotEmpty()) Text(
+                if (okSent) "Enviado ✓" else "Estoy bien",
+                color = FaroColors.Accent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f).clip(RoundedCornerShape(50)).border(1.5.dp, FaroColors.Accent, RoundedCornerShape(50))
+                    .clickable(enabled = !okSent) { FaroGroups.sendImOk(); okSent = true }.padding(vertical = 15.dp),
+            )
+            Text(
+                if (sosOn) "Has pedido ayuda · ver" else "Pedir ayuda",
+                color = FaroColors.Danger,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f)
+                    .clip(RoundedCornerShape(50)).border(1.5.dp, FaroColors.Danger, RoundedCornerShape(50))
+                    .clickable { if (sosOn) onShowSos() else confirmSos = true }.padding(vertical = 15.dp),
+            )
+        }
     }
 
     if (confirmSos) {

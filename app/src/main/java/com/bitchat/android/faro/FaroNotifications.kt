@@ -77,6 +77,53 @@ object FaroNotifications {
         )
     }
 
+    /** Avisos de la familia: llegadas, salidas, «estoy bien», viajes. */
+    fun family(ctx: Context, groupId: String, title: String, text: String) {
+        if (!canNotify(ctx) || !FaroSettings.notifyMessages) return
+        val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
+        ensureChannels(nm)
+        val id = ("fam" + groupId + title).hashCode()
+        nm.notify(
+            id,
+            NotificationCompat.Builder(ctx, CHANNEL_MESSAGES)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(openApp(ctx, id))
+                .setAutoCancel(true)
+                .build()
+        )
+    }
+
+    /** «¿Estás bien?»: se contesta desde la propia notificación, sin abrir la app. */
+    fun ask(ctx: Context, groupId: String, askerId: String, askerName: String) {
+        if (!canNotify(ctx)) return
+        val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
+        ensureChannels(nm)
+        val id = ("ask" + askerId).hashCode()
+        fun action(ok: Boolean): PendingIntent = PendingIntent.getBroadcast(
+            ctx, id + if (ok) 1 else 2,
+            Intent(ctx, FaroCheckReceiver::class.java)
+                .putExtra(FaroCheckReceiver.EXTRA_ASKER, askerId)
+                .putExtra(FaroCheckReceiver.EXTRA_OK, ok)
+                .putExtra(FaroCheckReceiver.EXTRA_NOTIF, id),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        nm.notify(
+            id,
+            NotificationCompat.Builder(ctx, CHANNEL_HELP)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("$askerName te pregunta si estás bien")
+                .setContentText("Contesta con un toque.")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(openApp(ctx, id))
+                .addAction(0, "Estoy bien", action(true))
+                .addAction(0, "Necesito ayuda", action(false))
+                .setAutoCancel(true)
+                .build()
+        )
+    }
+
     fun seen(ctx: Context, name: String) {
         if (!canNotify(ctx) || !FaroSettings.notifySeen) return
         val nm = ctx.getSystemService(NotificationManager::class.java) ?: return

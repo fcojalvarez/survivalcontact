@@ -137,4 +137,28 @@ class FaroProtocolTest {
         assertTrue(!FaroProtocol.matchesGroup(k, FaroProtocol.tagFor(k, hoy - 2)))
         assertTrue(!FaroProtocol.matchesGroup(FaroProtocol.newGroupKey(), FaroProtocol.tagFor(k, hoy)))
     }
+
+    @Test
+    fun `mensajes de familia se codifican y validan`() {
+        val k = ByteArray(32) { 7 }
+        val (type, target) = FaroProtocol.decodeCheck(FaroProtocol.encodeCheck(FaroProtocol.Check.ASK, k))!!
+        assertEquals(FaroProtocol.Check.ASK, type)
+        assertArrayEquals(k, target)
+        assertNull(FaroProtocol.decodeCheck(FaroProtocol.encodeCheck(FaroProtocol.Check.IM_OK))!!.second)
+
+        // Lugar con coordenadas sintéticas.
+        val place = FaroProtocol.Place(FaroProtocol.newPlaceId(), "Casa", 10.5, -20.25, 200)
+        val (p2, del) = FaroProtocol.decodePlace(FaroProtocol.encodePlace(place))!!
+        assertEquals(place, p2)
+        assertTrue(!del)
+        assertTrue(FaroProtocol.decodePlace(FaroProtocol.encodePlace(place, delete = true))!!.second)
+
+        val (id, enter) = FaroProtocol.decodeArrive(FaroProtocol.encodeArrive(place.id, true))!!
+        assertEquals(place.id, id)
+        assertTrue(enter)
+
+        val trip = FaroProtocol.Trip(true, "Casa", 10.5, -20.25, 1_700_000_000_000L, FaroProtocol.TravelMode.BUS)
+        assertEquals(trip, FaroProtocol.decodeTrip(FaroProtocol.encodeTrip(trip)))
+        assertNull(FaroProtocol.decodeTrip(ByteArray(3)))
+    }
 }

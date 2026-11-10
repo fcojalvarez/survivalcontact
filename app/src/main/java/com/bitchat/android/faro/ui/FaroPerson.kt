@@ -108,12 +108,17 @@ internal fun PersonSheet(nav: FaroNav, p: Person, handle: MapHandle, onClose: ()
                 OutlinePill("Abrir chat", Modifier.weight(1f)) { onClose(); nav.go(Route.Group(p.groupIds.first())) }
                 if (pos != null) FilledPill("Guiarme", Modifier.weight(1f)) { onClose(); nav.go(Route.Guide(p.id)) }
             }
+            val asks by FaroGroups.asks.collectAsStateWithLifecycle()
+            Gap(10.dp)
+            OutlinePill(
+                if (p.id in asks) "Preguntado · esperando respuesta" else "Preguntar si está bien",
+                Modifier.fillMaxWidth(),
+            ) { FaroGroups.askIfOk(p.id) }
             if (pos != null) {
                 if (pos.position.batteryPct >= 20) {
-                    Gap(10.dp)
+                    Gap(4.dp)
                     Row(
-                        Modifier.fillMaxWidth().height(50.dp).clip(RoundedCornerShape(50))
-                            .border(1.5.dp, FaroColors.Accent, RoundedCornerShape(50))
+                        Modifier.fillMaxWidth().height(46.dp).clip(RoundedCornerShape(50))
                             .clickable {
                                 FaroGroups.sendFollow(p.id, FOLLOW_MINUTES)
                                 FaroGroups.notifySeen(listOf(p.id), FaroProtocol.SeenHow.LIVE)

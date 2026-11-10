@@ -169,6 +169,9 @@ fun mapPoints(members: Collection<MemberPosition>, me: Location?, meName: String
 class MapHandle {
     internal var map: MapLibreMap? = null
 
+    /** Centro del mapa (para colocar un lugar). */
+    fun center(): Pair<Double, Double>? = map?.cameraPosition?.target?.let { it.latitude to it.longitude }
+
     fun focus(lat: Double, lon: Double, zoom: Double = 16.0, then: (() -> Unit)? = null) {
         val m = map ?: return
         m.animateCamera(

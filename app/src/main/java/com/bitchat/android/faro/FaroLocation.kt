@@ -78,6 +78,54 @@ object FaroLocation {
         requestSoon()
     }
 
+    // ---------- «Voy para allá» ----------
+
+    private val _trip = MutableStateFlow<FaroProtocol.Trip?>(null)
+    /** Mi viaje en curso, si hay. */
+    val trip: StateFlow<FaroProtocol.Trip?> = _trip.asStateFlow()
+    private const val ARRIVED_M = 150f
+
+    fun startTrip(destName: String, lat: Double, lon: Double, mode: FaroProtocol.TravelMode) {
+        val t = FaroProtocol.Trip(true, destName, lat, lon, etaFrom(_myLocation.value, lat, lon, mode), mode)
+        _trip.value = t
+        FaroGroups.sendTrip(t)
+        lastSentAt = 0L
+        requestSoon()
+    }
+
+    /** Fin del viaje: al llegar (solo o con «Ya he llegado») o al pararlo. */
+    fun stopTrip() {
+        val t = _trip.value ?: return
+        _trip.value = null
+        FaroGroups.sendTrip(t.copy(active = false))
+    }
+
+    private fun etaFrom(from: Location?, lat: Double, lon: Double, mode: FaroProtocol.TravelMode): Long {
+        val d = from?.let { val to = Location("faro").apply { latitude = lat; longitude = lon }; it.distanceTo(to) } ?: 0f
+        // Las calles no van en línea recta: se cuenta un 30 % más de camino.
+        val hours = d * 1.3 / 1000.0 / mode.kmh
+        return System.currentTimeMillis() + (hours * 3_600_000L).toLong()
+    }
+
+    // ---------- Llegadas y salidas de los lugares ----------
+
+    /** Lugares (grupo:lugar) en los que estoy. Null hasta la primera posición, para no avisar al arrancar. */
+    private var inside: Set<String>? = null
+
+    private fun checkPlaces(loc: Location) {
+        val now = FaroGroups.groups.value.filter { it.shareLocation }.flatMap { g ->
+            FaroGroups.places.value[g.id].orEmpty().filter { p ->
+                val to = Location("faro").apply { latitude = p.lat; longitude = p.lon }
+                loc.distanceTo(to) <= p.radiusM + (if (loc.hasAccuracy()) loc.accuracy.coerceAtMost(100f) else 0f)
+            }.map { g.id + ":" + it.id }
+        }.toSet()
+        val before = inside
+        inside = now
+        if (before == null) return
+        (now - before).forEach { k -> FaroGroups.sendArrival(k.substringBefore(":"), k.substringAfter(":"), enter = true) }
+        (before - now).forEach { k -> FaroGroups.sendArrival(k.substringBefore(":"), k.substringAfter(":"), enter = false) }
+    }
+
     /** La persona seguida corta el seguimiento desde su aviso. */
     fun stopFollowers() {
         _followers.value = emptyList()
@@ -144,8 +192,11 @@ object FaroLocation {
         val now0 = System.currentTimeMillis()
         _followers.update { list -> list.filter { it.untilMs > now0 } }
         val following = _followers.value.isNotEmpty() && battery >= 20
+        val traveling = _trip.value != null
         val interval = when {
             following -> 30_000L
+            // «Voy para allá»: cada 2 min mientras dura (con poca batería, cada 5).
+            traveling && !sos -> if (battery > 20) 2 * 60_000L else 5 * 60_000L
             // Pidiendo ayuda: la ubicación sale más espaciada según baja la batería, para que el
             // móvil aguante muchas horas (con el 50 % sobra para más de 7 h).
             sos && battery > 50 -> 2 * 60_000L
@@ -162,16 +213,26 @@ object FaroLocation {
 
         val loc = currentLocation(allowFresh = true, freshMs = if (following) 20_000L else FRESH_ENOUGH_MS) ?: return interval
         _myLocation.value = loc
+        checkPlaces(loc)
+        _trip.value?.let { t ->
+            val to = Location("faro").apply { latitude = t.lat; longitude = t.lon }
+            if (loc.distanceTo(to) <= ARRIVED_M) stopTrip()
+            else _trip.value = t.copy(etaMs = etaFrom(loc, t.lat, t.lon, t.mode)).also { FaroGroups.sendTrip(it) }
+        }
         val now = System.currentTimeMillis()
         val moved = lastSent?.distanceTo(loc) ?: Float.MAX_VALUE
-        if (!sos && !following && moved < MOVE_THRESHOLD_M && now - lastSentAt < MAX_SILENCE_MS) return interval
+        if (!sos && !following && _trip.value == null && moved < MOVE_THRESHOLD_M && now - lastSentAt < MAX_SILENCE_MS) return interval
 
         val pos = FaroProtocol.Position(
             lat = loc.latitude,
             lon = loc.longitude,
             accuracyM = if (loc.hasAccuracy()) loc.accuracy.toInt() else 0,
             batteryPct = battery,
-            status = if (sos) FaroProtocol.Position.Status.NEED_HELP else FaroProtocol.Position.Status.OK,
+            status = when {
+                sos -> FaroProtocol.Position.Status.NEED_HELP
+                _trip.value != null -> FaroProtocol.Position.Status.ON_THE_WAY
+                else -> FaroProtocol.Position.Status.OK
+            },
         )
         targets.forEach { FaroGroups.sendPosition(it.id, pos) }
         lastSent = loc

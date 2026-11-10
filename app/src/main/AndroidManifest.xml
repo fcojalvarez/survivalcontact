@@ -161,6 +161,11 @@
             android:enabled="true"
             android:exported="false" />
 
+        <!-- Faro: respuesta a «¿Estás bien?» desde la notificación -->
+        <receiver
+            android:name=".faro.FaroCheckReceiver"
+            android:exported="false" />
+
         <!-- Auto-start mesh service after boot if enabled -->
         <receiver
             android:name=".service.BootCompletedReceiver"

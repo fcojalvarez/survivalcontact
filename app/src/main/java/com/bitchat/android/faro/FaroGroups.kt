@@ -66,6 +66,15 @@ data class SeenEvent(
     val timestampMs: Long,
 )
 
+/** Algo que ha pasado en la familia para mostrar en Novedades (llegadas, «estoy bien»…). */
+data class FamilyEvent(
+    val groupId: String,
+    val authorId: String,
+    val authorName: String,
+    val text: String,
+    val timestampMs: Long,
+)
+
 data class MemberPosition(
     val authorId: String,
     val name: String,
@@ -83,6 +92,7 @@ object FaroGroups {
     private const val KEY_GROUPS = "groups"
     private const val KEY_REQUESTS = "join_requests"
     private const val KEY_READ = "last_read"
+    private const val KEY_PLACES = "places"
     /** Una solicitud sin respuesta caduca a los 7 días, como el enlace. */
     private const val REQUEST_TTL_MS = 7L * 24 * 3_600_000
     private const val MAX_MESSAGES = 300
@@ -113,6 +123,27 @@ object FaroGroups {
         if ((_lastRead.value[groupId] ?: 0L) >= last) return
         _lastRead.update { it + (groupId to last) }
         prefs?.edit()?.putString(KEY_READ, JSONObject(_lastRead.value as Map<*, *>).toString())?.apply()
+    }
+
+    /** Lugares de cada grupo (Casa, Cole…). */
+    private val _places = MutableStateFlow<Map<String, List<FaroProtocol.Place>>>(emptyMap())
+    val places: StateFlow<Map<String, List<FaroProtocol.Place>>> = _places.asStateFlow()
+
+    /** Viajes «Voy para allá» en curso de cada persona: id → (nombre, viaje). */
+    private val _trips = MutableStateFlow<Map<String, Pair<String, FaroProtocol.Trip>>>(emptyMap())
+    val trips: StateFlow<Map<String, Pair<String, FaroProtocol.Trip>>> = _trips.asStateFlow()
+
+    /** A quién he preguntado si está bien y cuándo (se borra al contestar). */
+    private val _asks = MutableStateFlow<Map<String, Long>>(emptyMap())
+    val asks: StateFlow<Map<String, Long>> = _asks.asStateFlow()
+
+    /** Llegadas, salidas, «estoy bien» y respuestas de las últimas 24 h (solo en memoria). */
+    private val _events = MutableStateFlow<List<FamilyEvent>>(emptyList())
+    val events: StateFlow<List<FamilyEvent>> = _events.asStateFlow()
+
+    private fun addEvent(e: FamilyEvent) {
+        val since = System.currentTimeMillis() - 24 * 3_600_000L
+        _events.update { list -> (list.filter { it.timestampMs > since } + e).sortedBy { it.timestampMs }.takeLast(100) }
     }
 
     /** Quién ha mirado dónde estoy en las últimas 24 h (solo en memoria). */
@@ -188,6 +219,8 @@ object FaroGroups {
         _groups.update { list -> list.filterNot { it.id == groupId } }
         _joinRequests.update { list -> list.filterNot { it.groupId == groupId } }
         saveRequests()
+        _places.update { it - groupId }
+        savePlaces()
         synchronized(pendingSaves) { pendingSaves.remove(groupId)?.cancel() }
         _messages.update { it - groupId }
         _positions.update { it - groupId }
@@ -258,6 +291,79 @@ object FaroGroups {
             ) ?: return@launch
             broadcastRaw(payload, FaroProtocol.tagFor(g.key).toHex())
         }
+    }
+
+    // ---------- Familia ----------
+
+    private fun hhmm(ms: Long) = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(ms))
+
+    /** «Estoy bien» a todos mis grupos. */
+    fun sendImOk() {
+        val body = FaroProtocol.encodeCheck(FaroProtocol.Check.IM_OK)
+        _groups.value.forEach { send(it, FaroProtocol.Kind.CHECK, body, System.currentTimeMillis()) }
+    }
+
+    private fun groupWith(personId: String): FaroGroup? =
+        _groups.value.firstOrNull { personId in it.members.keys || _positions.value[it.id]?.containsKey(personId) == true }
+
+    /** Pregunta a una persona si está bien. */
+    fun askIfOk(personId: String) {
+        val g = groupWith(personId) ?: return
+        val target = personId.hexToBytes() ?: return
+        _asks.update { it + (personId to System.currentTimeMillis()) }
+        send(g, FaroProtocol.Kind.CHECK, FaroProtocol.encodeCheck(FaroProtocol.Check.ASK, target), System.currentTimeMillis())
+    }
+
+    /** Contesto a quien me preguntó (desde la notificación o la app). */
+    fun answerAsk(askerId: String, ok: Boolean) {
+        val g = groupWith(askerId) ?: return
+        val target = askerId.hexToBytes() ?: return
+        val type = if (ok) FaroProtocol.Check.ANSWER_OK else FaroProtocol.Check.ANSWER_HELP
+        send(g, FaroProtocol.Kind.CHECK, FaroProtocol.encodeCheck(type, target), System.currentTimeMillis())
+        if (!ok) FaroLocation.sendSos(true)
+    }
+
+    fun savePlace(groupId: String, place: FaroProtocol.Place) {
+        val g = group(groupId) ?: return
+        applyPlace(groupId, place, delete = false)
+        send(g, FaroProtocol.Kind.PLACE, FaroProtocol.encodePlace(place), System.currentTimeMillis())
+    }
+
+    fun deletePlace(groupId: String, place: FaroProtocol.Place) {
+        val g = group(groupId) ?: return
+        applyPlace(groupId, place, delete = true)
+        send(g, FaroProtocol.Kind.PLACE, FaroProtocol.encodePlace(place, delete = true), System.currentTimeMillis())
+    }
+
+    private fun applyPlace(groupId: String, place: FaroProtocol.Place, delete: Boolean) {
+        _places.update { all ->
+            val list = all[groupId].orEmpty().filterNot { it.id == place.id }
+            all + (groupId to (if (delete) list else (list + place).take(20)))
+        }
+        savePlaces()
+    }
+
+    /** Aviso de que he llegado a un lugar de un grupo o he salido de él. */
+    fun sendArrival(groupId: String, placeId: String, enter: Boolean) {
+        val g = group(groupId) ?: return
+        send(g, FaroProtocol.Kind.ARRIVE, FaroProtocol.encodeArrive(placeId, enter), System.currentTimeMillis())
+    }
+
+    /** «Voy para allá» (o su fin) a los grupos con los que comparto ubicación. */
+    fun sendTrip(trip: FaroProtocol.Trip) {
+        val body = FaroProtocol.encodeTrip(trip)
+        _groups.value.filter { it.shareLocation }.forEach { send(it, FaroProtocol.Kind.TRIP, body, System.currentTimeMillis()) }
+    }
+
+    private fun savePlaces() {
+        val p = prefs ?: return
+        val o = JSONObject()
+        _places.value.forEach { (gid, list) ->
+            o.put(gid, JSONArray().apply {
+                list.forEach { put(JSONObject().put("id", it.id).put("n", it.name).put("la", it.lat).put("lo", it.lon).put("r", it.radiusM)) }
+            })
+        }
+        p.edit().putString(KEY_PLACES, o.toString()).apply()
     }
 
     /** Alguien de mis grupos ha pedido ayuda en [windowMs] y su última posición sigue siendo de ayuda. */
@@ -379,6 +485,48 @@ object FaroGroups {
                 val (target, minutes) = FaroProtocol.decodeFollow(inner.body) ?: return
                 if (target.toHex() != me || !g.shareLocation) return
                 FaroLocation.onFollowRequest(inner.authorId, inner.authorName, minutes)
+            }
+            FaroProtocol.Kind.CHECK -> {
+                val (type, target) = FaroProtocol.decodeCheck(inner.body) ?: return
+                val forMe = target?.toHex() == me
+                when (type) {
+                    FaroProtocol.Check.IM_OK -> {
+                        addEvent(FamilyEvent(g.id, inner.authorId, inner.authorName, "${inner.authorName}: Estoy bien", inner.timestampMs))
+                        appContext?.let { FaroNotifications.family(it, g.id, "${inner.authorName} está bien", "Lo ha avisado con «Estoy bien».") }
+                    }
+                    FaroProtocol.Check.ASK -> if (forMe) appContext?.let { FaroNotifications.ask(it, g.id, inner.authorId, inner.authorName) }
+                    FaroProtocol.Check.ANSWER_OK, FaroProtocol.Check.ANSWER_HELP -> if (forMe) {
+                        _asks.update { it - inner.authorId }
+                        val ok = type == FaroProtocol.Check.ANSWER_OK
+                        val text = if (ok) "${inner.authorName}: Estoy bien" else "${inner.authorName} necesita ayuda"
+                        addEvent(FamilyEvent(g.id, inner.authorId, inner.authorName, text, inner.timestampMs))
+                        appContext?.let { FaroNotifications.family(it, g.id, text, if (ok) "Ha contestado a tu pregunta." else "Ha contestado que necesita ayuda.") }
+                    }
+                }
+            }
+            FaroProtocol.Kind.PLACE -> {
+                val (place, delete) = FaroProtocol.decodePlace(inner.body) ?: return
+                applyPlace(g.id, place, delete)
+            }
+            FaroProtocol.Kind.ARRIVE -> {
+                val (placeId, enter) = FaroProtocol.decodeArrive(inner.body) ?: return
+                val place = _places.value[g.id]?.firstOrNull { it.id == placeId } ?: return
+                val text = if (enter) "${inner.authorName} ha llegado a ${place.name}" else "${inner.authorName} ha salido de ${place.name}"
+                addEvent(FamilyEvent(g.id, inner.authorId, inner.authorName, text, inner.timestampMs))
+                appContext?.let { FaroNotifications.family(it, g.id, text, g.name) }
+            }
+            FaroProtocol.Kind.TRIP -> {
+                val trip = FaroProtocol.decodeTrip(inner.body) ?: return
+                val before = _trips.value[inner.authorId]
+                if (trip.active) {
+                    _trips.update { it + (inner.authorId to (inner.authorName to trip)) }
+                    if (before == null) appContext?.let {
+                        FaroNotifications.family(it, g.id, "${inner.authorName} va para ${trip.destName}", "Llega a las ${hhmm(trip.etaMs)}")
+                    }
+                } else {
+                    _trips.update { it - inner.authorId }
+                    if (before != null) addEvent(FamilyEvent(g.id, inner.authorId, inner.authorName, "${inner.authorName} ha llegado a ${trip.destName}", inner.timestampMs))
+                }
             }
             FaroProtocol.Kind.SEEN -> {
                 val (how, targets) = FaroProtocol.decodeSeen(inner.body) ?: return
@@ -544,6 +692,16 @@ object FaroGroups {
             }.getOrNull()
         }
         _groups.value = list
+        runCatching {
+            val po = JSONObject(p.getString(KEY_PLACES, "{}") ?: "{}")
+            _places.value = po.keys().asSequence().associateWith { gid ->
+                val a = po.getJSONArray(gid)
+                (0 until a.length()).map { i ->
+                    val x = a.getJSONObject(i)
+                    FaroProtocol.Place(x.getString("id"), x.getString("n"), x.getDouble("la"), x.getDouble("lo"), x.getInt("r"))
+                }
+            }
+        }
         val readObj = runCatching { JSONObject(p.getString(KEY_READ, "{}") ?: "{}") }.getOrDefault(JSONObject())
         _lastRead.value = readObj.keys().asSequence().associateWith { readObj.optLong(it) }
         val ra = JSONArray(p.getString(KEY_REQUESTS, "[]"))

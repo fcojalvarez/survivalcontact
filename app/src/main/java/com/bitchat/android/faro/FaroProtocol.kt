@@ -45,7 +45,15 @@ object FaroProtocol {
         /** Pide a una persona que envíe su ubicación cada 30 s durante unos minutos. */
         FOLLOW(4),
         /** Aviso de que alguien ha mirado dónde están unas personas (solo por internet). */
-        SEEN(5);
+        SEEN(5),
+        /** «Estoy bien», «¿Estás bien?» y sus respuestas. */
+        CHECK(6),
+        /** Un lugar del grupo (Casa, Cole…): crear, cambiar o borrar. */
+        PLACE(7),
+        /** Alguien ha llegado a un lugar o ha salido de él. */
+        ARRIVE(8),
+        /** «Voy para allá»: destino y hora de llegada, o fin del viaje. */
+        TRIP(9);
 
         companion object {
             fun from(code: Byte): Kind? = entries.firstOrNull { it.code == code }
@@ -186,6 +194,83 @@ object FaroProtocol {
         val body = ByteArray(bb.remaining()).also { bb.get(it) }
         if (!verify(signature, unsigned, author)) return null
         Inner(kind, ts, author, name, body)
+    }.getOrNull()
+
+    // ---------- Familia: CHECK, PLACE, ARRIVE, TRIP ----------
+
+    enum class Check(val code: Byte) {
+        IM_OK(0), ASK(1), ANSWER_OK(2), ANSWER_HELP(3);
+        companion object { fun from(code: Byte) = entries.firstOrNull { it.code == code } }
+    }
+
+    /** CHECK: tipo (1 byte) + clave de la persona a la que va (32 bytes, ceros si es para todos). */
+    fun encodeCheck(type: Check, target: ByteArray? = null): ByteArray =
+        byteArrayOf(type.code) + (target?.takeIf { it.size == PUB_SIZE } ?: ByteArray(PUB_SIZE))
+
+    fun decodeCheck(body: ByteArray): Pair<Check, ByteArray?>? {
+        if (body.size != 1 + PUB_SIZE) return null
+        val type = Check.from(body[0]) ?: return null
+        val t = body.copyOfRange(1, body.size)
+        return type to (if (t.all { it == 0.toByte() }) null else t)
+    }
+
+    data class Place(val id: String, val name: String, val lat: Double, val lon: Double, val radiusM: Int)
+
+    private fun nameBytes(s: String, max: Int) = s.trim().toByteArray(Charsets.UTF_8).let { if (it.size > max) it.copyOf(max) else it }
+
+    /** PLACE: borrar (1 byte) + id (8) + lat, lon (8+8) + radio (2) + nombre. */
+    fun encodePlace(p: Place, delete: Boolean = false): ByteArray {
+        val id = p.id.hexToBytes()?.takeIf { it.size == 8 } ?: ByteArray(8)
+        val n = nameBytes(p.name, 40)
+        return ByteBuffer.allocate(1 + 8 + 16 + 2 + 1 + n.size).order(ByteOrder.BIG_ENDIAN)
+            .put(if (delete) 1 else 0).put(id).putDouble(p.lat).putDouble(p.lon)
+            .putShort(p.radiusM.coerceIn(50, 2000).toShort()).put(n.size.toByte()).put(n).array()
+    }
+
+    fun decodePlace(body: ByteArray): Pair<Place, Boolean>? = runCatching {
+        val bb = ByteBuffer.wrap(body).order(ByteOrder.BIG_ENDIAN)
+        val del = bb.get() == 1.toByte()
+        val id = ByteArray(8).also { bb.get(it) }.toHex()
+        val lat = bb.double; val lon = bb.double
+        val radius = bb.short.toInt() and 0xFFFF
+        val n = bb.get().toInt() and 0xFF
+        if (n > 40 || lat !in -90.0..90.0 || lon !in -180.0..180.0) return null
+        val name = ByteArray(n).also { bb.get(it) }.toString(Charsets.UTF_8)
+        Place(id, name, lat, lon, radius.coerceIn(50, 2000)) to del
+    }.getOrNull()
+
+    fun newPlaceId(): String = ByteArray(8).also(random::nextBytes).toHex()
+
+    /** ARRIVE: id del lugar (8) + 1 si llega, 0 si sale. */
+    fun encodeArrive(placeId: String, enter: Boolean): ByteArray =
+        (placeId.hexToBytes()?.takeIf { it.size == 8 } ?: ByteArray(8)) + byteArrayOf(if (enter) 1 else 0)
+
+    fun decodeArrive(body: ByteArray): Pair<String, Boolean>? =
+        if (body.size != 9) null else body.copyOfRange(0, 8).toHex() to (body[8] == 1.toByte())
+
+    enum class TravelMode(val code: Byte, val kmh: Double) {
+        WALK(0, 4.5), CAR(1, 30.0), BUS(2, 18.0);
+        companion object { fun from(code: Byte) = entries.firstOrNull { it.code == code } ?: WALK }
+    }
+
+    data class Trip(val active: Boolean, val destName: String, val lat: Double, val lon: Double, val etaMs: Long, val mode: TravelMode)
+
+    /** TRIP: activo (1) + modo (1) + lat, lon (16) + llegada en ms (8) + nombre del destino. */
+    fun encodeTrip(t: Trip): ByteArray {
+        val n = nameBytes(t.destName, 40)
+        return ByteBuffer.allocate(2 + 16 + 8 + 1 + n.size).order(ByteOrder.BIG_ENDIAN)
+            .put(if (t.active) 1 else 0).put(t.mode.code).putDouble(t.lat).putDouble(t.lon)
+            .putLong(t.etaMs).put(n.size.toByte()).put(n).array()
+    }
+
+    fun decodeTrip(body: ByteArray): Trip? = runCatching {
+        val bb = ByteBuffer.wrap(body).order(ByteOrder.BIG_ENDIAN)
+        val active = bb.get() == 1.toByte()
+        val mode = TravelMode.from(bb.get())
+        val lat = bb.double; val lon = bb.double; val eta = bb.long
+        val n = bb.get().toInt() and 0xFF
+        if (n > 40) return null
+        Trip(active, ByteArray(n).also { bb.get(it) }.toString(Charsets.UTF_8), lat, lon, eta, mode)
     }.getOrNull()
 
     // ---------- Cuerpos de FOLLOW y SEEN ----------
